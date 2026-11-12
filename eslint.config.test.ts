@@ -27,7 +27,7 @@ const blocked: Record<string, string> = {
   "history-replace-state.ts": "no-restricted-globals",
   "window-name.ts": "no-restricted-globals",
   "reflect-get.ts": "no-restricted-globals",
-  "eval.ts": "no-eval",
+  "eval.ts": "no-restricted-globals",
   "preconnect.ts": "no-restricted-syntax",
   "prefetch-dns-namespace.ts": "no-restricted-properties",
   "meta-refresh.tsx": "no-restricted-syntax",
@@ -51,10 +51,6 @@ const blocked: Record<string, string> = {
 
 // Probes that the checks do not stop yet.
 const notStoppedYet = new Set([
-  "opfs.ts",
-  "history-replace-state.ts",
-  "reflect-get.ts",
-  "eval.ts",
   "preconnect.ts",
   "prefetch-dns-namespace.ts",
   "meta-refresh.tsx",

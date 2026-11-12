@@ -36,7 +36,20 @@ const guards: Guard[] = [
   },
   {
     message: `文章をブラウザの中にも残さないため、保存の仕組みは使えません。${readAdr0001}`,
-    names: ["localStorage", "sessionStorage", "indexedDB", "caches", "cookieStore", "cookie"],
+    names: [
+      "localStorage",
+      "sessionStorage",
+      "indexedDB",
+      "caches",
+      "cookieStore",
+      "cookie",
+      "storage",
+      "history",
+    ],
+  },
+  {
+    message: `Reflect と eval は名前を文字列で受け取るので、ほかの守りを回り込めます。そのため使えません。${readAdr0001}`,
+    globals: ["Reflect", "eval"],
   },
   {
     message: `ページの移動やワーカーは、文章を外に運んだり残したりできるため使えません。${readAdr0001}`,
