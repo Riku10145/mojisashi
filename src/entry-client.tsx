@@ -12,9 +12,12 @@ const app = (
     <App />
   </StrictMode>
 );
-// The dev server serves index.html without the prerendered markup, so there is nothing to hydrate.
-if (import.meta.env.DEV) {
-  createRoot(root).render(app);
-} else {
+// The dev server serves index.html as written, so #root holds only the placeholder comment.
+const isPrerendered = Array.from(root.childNodes).some(
+  (node) => node.nodeType !== Node.COMMENT_NODE,
+);
+if (isPrerendered) {
   hydrateRoot(root, app);
+} else {
+  createRoot(root).render(app);
 }
