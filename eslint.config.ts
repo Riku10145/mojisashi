@@ -6,8 +6,8 @@ import tseslint from "typescript-eslint";
 
 const readAdr0001 = "docs/adr/0001-keep-text-nowhere.md を読んでください。";
 
-const windowAliases = ["window", "globalThis", "self", "top", "parent", "frames", "opener"];
-
+// Each name is banned as a global and as a property of any object, so chains such as
+// window.window.fetch, iframe.contentWindow?.fetch and w["fetch"] are caught too.
 const guards = [
   {
     message: `文章を外に送らないため、通信の仕組みは使えません。${readAdr0001}`,
@@ -19,18 +19,12 @@ const guards = [
       "WebTransport",
       "RTCPeerConnection",
       "RTCDataChannel",
+      "sendBeacon",
     ],
-    properties: [{ property: "sendBeacon" }],
   },
   {
     message: `文章をブラウザの中にも残さないため、保存の仕組みは使えません。${readAdr0001}`,
-    names: ["localStorage", "sessionStorage", "indexedDB", "caches", "cookieStore"],
-    properties: [{ object: "document", property: "cookie" }],
-  },
-  {
-    message: `document.defaultView は window と同じなので、通信や保存の禁止をすり抜けられます。window を直接使ってください。${readAdr0001}`,
-    names: [],
-    properties: [{ property: "defaultView" }],
+    names: ["localStorage", "sessionStorage", "indexedDB", "caches", "cookieStore", "cookie"],
   },
 ];
 
@@ -69,12 +63,7 @@ export default defineConfig([
       ],
       "no-restricted-properties": [
         "error",
-        ...guards.flatMap(({ message, names, properties }) => [
-          ...properties.map((property) => ({ ...property, message })),
-          ...windowAliases.flatMap((object) =>
-            names.map((property) => ({ object, property, message })),
-          ),
-        ]),
+        ...guards.flatMap(({ message, names }) => names.map((property) => ({ property, message }))),
       ],
     },
   },
