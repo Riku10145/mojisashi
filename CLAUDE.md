@@ -16,7 +16,7 @@
 - `bun run format` で Oxfmt が整形します。`bun run format:check` は確かめるだけです。
 - `bun run test` で Vitest のテストを動かします。
 - `bun run build` で `dist/` にページを書き出します。
-- `bun run check` で、型、ESLint、整形、テスト、ビルドを順に確かめます。コミットの前にこれを通します。
+- `bun run check` で、型、ESLint、整形、テスト、ビルドを順に確かめます。コミットの前には lefthook が、PR では CI が、これを動かします。
 
 ## 守ること
 
