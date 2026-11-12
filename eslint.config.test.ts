@@ -51,21 +51,8 @@ const blocked: Record<string, string> = {
 
 // Probes that the checks do not stop yet.
 const notStoppedYet = new Set([
-  "open-self.ts",
-  "open-window-window.ts",
-  "open-default-view.ts",
-  "open-top.ts",
-  "open-parent.ts",
-  "navigation-navigate.ts",
-  "location-alias.ts",
-  "location-object-assign.ts",
-  "anchor-href.ts",
-  "anchor-object-assign.ts",
-  "anchor-set-attribute.ts",
-  "jsx-href.tsx",
   "opfs.ts",
   "history-replace-state.ts",
-  "window-name.ts",
   "reflect-get.ts",
   "eval.ts",
   "preconnect.ts",

@@ -7,7 +7,8 @@ import tseslint from "typescript-eslint";
 const readAdr0001 = "docs/adr/0001-keep-text-nowhere.md を読んでください。";
 const readAdr0003 = "docs/adr/0003-prefer-mechanical-guards.md を読んでください。";
 
-const locationObject = ":matches([object.name='location'], [object.property.name='location'])";
+// Navigation attributes, which CSP cannot stop. src, action and formAction are left to CSP.
+const navigationUrl = "/^(href|xlinkHref)$/";
 
 type Guard = {
   message: string;
@@ -39,15 +40,27 @@ const guards: Guard[] = [
   },
   {
     message: `ページの移動やワーカーは、文章を外に運んだり残したりできるため使えません。${readAdr0001}`,
-    names: ["Worker", "SharedWorker", "BroadcastChannel", "serviceWorker"],
-    globals: ["open"],
-    selectors: [
-      "MemberExpression[object.name=/^(window|globalThis)$/]:matches([computed=false][property.name='open'], [property.value='open'])",
-      "AssignmentExpression > Identifier.left[name='location']",
-      "AssignmentExpression > MemberExpression.left:matches([computed=false][property.name='location'], [property.value='location'])",
-      `AssignmentExpression > MemberExpression.left${locationObject}`,
-      `CallExpression > MemberExpression.callee${locationObject}:matches([property.name=/^(assign|replace)$/], [property.value=/^(assign|replace)$/])`,
+    names: [
+      "Worker",
+      "SharedWorker",
+      "BroadcastChannel",
+      "serviceWorker",
+      "open",
+      "location",
+      "navigation",
+      "setAttribute",
+      "setAttributeNS",
     ],
+    selectors: [
+      `AssignmentExpression > MemberExpression.left:matches([property.name=${navigationUrl}], [property.value=${navigationUrl}])`,
+      `Property:matches([key.name=${navigationUrl}], [key.value=${navigationUrl}])`,
+      `JSXAttribute[name.name=${navigationUrl}][value.type!='Literal']`,
+    ],
+  },
+  {
+    message: `window や別のウィンドウを取り出すと、ほかの守りを回り込んで文章を外に運べるため使えません。${readAdr0001}`,
+    names: ["defaultView", "contentWindow", "opener", "postMessage"],
+    globals: ["window", "self", "globalThis", "top", "parent", "frames"],
   },
   {
     message: `CSP（style-src 'self'）がインラインの style を止めるため、Tailwind のクラスで書いてください。${readAdr0003}`,
