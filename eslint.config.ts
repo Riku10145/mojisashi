@@ -35,7 +35,7 @@ const guards = [
 ];
 
 export default defineConfig([
-  globalIgnores(["dist", "dist-server"]),
+  globalIgnores(["dist"]),
   { linterOptions: { noInlineConfig: true } },
   {
     files: ["**/*.{ts,tsx}"],

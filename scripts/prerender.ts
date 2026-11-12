@@ -10,9 +10,10 @@ function isEntryServer(mod: unknown): mod is EntryServer {
 
 const root = new URL("../", import.meta.url);
 const templateFile = Bun.file(new URL("dist/index.html", root));
-const entryServer: unknown = await import(new URL("dist-server/entry-server.js", root).href);
+// A URL import keeps src/ out of this tsconfig project, so the module stays unknown until checked.
+const entryServer: unknown = await import(new URL("src/entry-server.tsx", root).href);
 if (!isEntryServer(entryServer)) {
-  throw new Error("dist-server/entry-server.js が render() を export していません");
+  throw new Error("src/entry-server.tsx が render() を export していません");
 }
 
 await Bun.write(templateFile, injectAppHtml(await templateFile.text(), entryServer.render()));
