@@ -4,4 +4,4 @@ mojisashi は、ほぼすべてのコードをAIのエージェントが書き�
 
 具体的には、TypeScript を最もきびしい設定（`strict`、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`）にし、ESLint で typescript-eslint の `strictTypeChecked` を使い、`any`、`!` による決めつけ、`as` による型の書き換えを禁止します。PRでは GitHub Actions が型チェック、ESLint、Oxfmt の整形チェック、Vitest のテスト、ビルドを動かし、1つでも失敗したらマージできません。コミットの前にも、lefthook で同じチェックを動かします。
 
-ページの設定（CSP）では `connect-src 'self'` を指定し、ブラウザが mojisashi 以外のサーバーと通信できないようにします。コードに間違いがあっても、文章が外に出ないようにするためです。パッケージは、`bunfig.toml` の `minimumReleaseAge` で、公開から7日以上たった版だけを入れます。
+文章を外に送らないこと（ADR 0001）は、2か所で止めます。ESLint では `fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource`、`navigator.sendBeacon` を使えなくし、通信のコードを書いた時点で止めます。ページの設定（CSP）では `connect-src 'self'` を指定し、ブラウザが mojisashi 以外のサーバーと通信できないようにします。コードに間違いがあっても、文章が外に出ないようにするためです。パッケージは、`bunfig.toml` の `minimumReleaseAge` で、公開から7日以上たった版だけを入れます。
