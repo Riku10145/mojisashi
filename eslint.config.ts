@@ -34,6 +34,14 @@ export default defineConfig([
         "error",
         ...networkGlobals.map((name) => ({ name, message: keepTextNowhere })),
       ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXAttribute[name.name='style']",
+          message:
+            "CSP（style-src 'self'）がインラインの style を止めるため、Tailwind のクラスで書いてください。docs/adr/0003-prefer-mechanical-guards.md を読んでください。",
+        },
+      ],
       "no-restricted-properties": [
         "error",
         { property: "sendBeacon", message: keepTextNowhere },
