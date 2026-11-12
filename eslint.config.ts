@@ -7,24 +7,14 @@ import tseslint from "typescript-eslint";
 const readAdr0001 = "docs/adr/0001-keep-text-nowhere.md を読んでください。";
 const readAdr0003 = "docs/adr/0003-prefer-mechanical-guards.md を読んでください。";
 
-const anyOf = (names: string[]) => `/^(${names.join("|")})$/`;
+const anyOf = (names: string[], flags = "") => `/^(${names.join("|")})$/${flags}`;
 
 // Navigation attributes, which CSP cannot stop. src, action and formAction are left to CSP.
 const navigationUrl = anyOf(["href", "xlinkHref"]);
 
 // React hoists <link>, <meta> and <style> into the head, and <meta http-equiv="refresh"> navigates.
-const bannedTags = anyOf([
-  "script",
-  "style",
-  "link",
-  "meta",
-  "base",
-  "iframe",
-  "frame",
-  "object",
-  "embed",
-  "portal",
-]);
+// One string, because each tag name on its own is a string literal the guards below ban.
+const bannedTags = "script style link meta base iframe frame object embed portal".split(" ");
 
 type Guard = {
   message: string;
@@ -102,8 +92,36 @@ const guards: Guard[] = [
   {
     message: `<script>、<style>、<link>、<meta> などの要素と dangerouslySetInnerHTML は使えません。CSP が止めるスクリプトやスタイル、CSP では止まらないページの移動や先読み、確かめていない HTML をページに入れる入り口になるためです。${readAdr0003}`,
     selectors: [
-      `JSXOpeningElement[name.name=${bannedTags}]`,
+      `JSXOpeningElement[name.name=${anyOf(bannedTags)}]`,
       "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+    ],
+  },
+  {
+    message: `JSX のスプレッド、createElement、innerHTML のように、属性や要素の名前や HTML を JSX の外から渡す仕組みは使えません。インラインの style、<script>、確かめていない HTML を、守りに気づかれずにページに入れられるためです。${readAdr0003}`,
+    names: [
+      "createElement",
+      "cloneElement",
+      "jsx",
+      "jsxs",
+      "jsxDEV",
+      "innerHTML",
+      "outerHTML",
+      "insertAdjacentHTML",
+      "srcdoc",
+      "write",
+      "writeln",
+      "createContextualFragment",
+      "setHTMLUnsafe",
+      "parseHTMLUnsafe",
+      "DOMParser",
+      "parseFromString",
+    ],
+    selectors: [
+      "JSXSpreadAttribute",
+      // const Script = "script"; <Script /> renders a <script>. Comparisons such as
+      // typeof value === "object" cannot become a tag, so they stay allowed.
+      `:not(JSXAttribute, BinaryExpression, SwitchCase) > Literal[value=${anyOf(bannedTags, "i")}]`,
+      `TemplateElement[value.cooked=${anyOf(bannedTags, "i")}]`,
     ],
   },
 ];

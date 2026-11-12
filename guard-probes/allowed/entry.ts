@@ -11,3 +11,7 @@ document.title = isPrerendered ? "文字数カウント" : "mojisashi";
 root.addEventListener("input", () => {
   root.classList.toggle("is-dirty", true);
 });
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}

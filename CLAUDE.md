@@ -30,6 +30,7 @@
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
 - React の `preconnect`、`prefetchDNS`、`preload`、`preloadModule`、`preinit`、`preinitModule` を使いません。ホスト名に入れた文章が、CSP を越えてほかのサーバーに届くためです（ADR 0001）。`react-dom` から読み込んでも、どのオブジェクトから取り出しても止まります。
 - インラインの `style` と `dangerouslySetInnerHTML` を書きません。`<script>`、`<style>`、`<link>`、`<meta>`、`<base>`、`<iframe>`、`<frame>`、`<object>`、`<embed>`、`<portal>` の要素も書きません。見た目は Tailwind のクラスで書きます。
+- 属性や要素や HTML を JSX の外から渡す仕組みも使いません。JSX のスプレッド（`{...props}`）、`createElement`、`cloneElement`、`jsx`、`jsxs`、`jsxDEV`、`innerHTML`、`outerHTML`、`insertAdjacentHTML`、`srcdoc`、`write`、`writeln`、`createContextualFragment`、`setHTMLUnsafe`、`parseHTMLUnsafe`、`DOMParser`、`parseFromString` が該当します。上の要素の名前と同じ文字列（`"script"` など）も、比べるとき以外は書けません。
 - `public/_headers` の CSP をゆるめません。
 - `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。
 - ADR をコードに合わせて書き換えません。決めたことを変えるときは、新しい ADR を足します。
