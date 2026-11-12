@@ -12,9 +12,12 @@ const app = (
     <App />
   </StrictMode>
 );
-// The dev server serves index.html as written, so #root holds only the placeholder comment.
-const isPrerendered = Array.from(root.childNodes).some(
-  (node) => node.nodeType !== Node.COMMENT_NODE,
+// The dev server serves index.html as written, so #root holds only the placeholder comment
+// and maybe the whitespace around it.
+const isPrerendered = Array.from(root.childNodes).some((node) =>
+  node.nodeType === Node.TEXT_NODE
+    ? node.textContent?.trim() !== ""
+    : node.nodeType !== Node.COMMENT_NODE,
 );
 if (isPrerendered) {
   hydrateRoot(root, app);
