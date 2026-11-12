@@ -22,6 +22,7 @@
 
 - 通信の仕組みを使いません。`fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource`、`WebTransport`、`RTCPeerConnection`、`RTCDataChannel`、`sendBeacon` が該当します（ADR 0001）。どのオブジェクトから取り出しても止まります。
 - ブラウザの中に文章を残す仕組みも使いません。`localStorage`、`sessionStorage`、`indexedDB`、`caches`、`cookieStore`、`cookie` が該当します（ADR 0001）。こちらも、どのオブジェクトから取り出しても止まります。
+- ページの移動とワーカーも使いません。文章を外に運んだり、残したりできるためです（ADR 0001）。`Worker`、`SharedWorker`、`BroadcastChannel`、`serviceWorker`、`open`、`window.open` が該当します。`location` への代入と、`location.assign`、`location.replace` も止まります。
 - `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
 - インラインの `style` と `<script>` を書きません。見た目は Tailwind のクラスで書きます。
