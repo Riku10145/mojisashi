@@ -20,7 +20,10 @@ https://mojisashi.app （準備中）
 
 ## 機能
 
-機能ごとの使い方は、それぞれの機能のREADMEに書きます（準備中）。
+機能ごとの使い方は、それぞれの機能のREADMEに書いています。
+
+- [文字数を数える](docs/features/count/README.md)
+- [テスト用の文章を作る](docs/features/generate/README.md)
 
 ## いまはやらないこと
 
