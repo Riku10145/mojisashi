@@ -49,14 +49,6 @@ const blocked: Record<string, string> = {
   "ts-expect-error.ts": "@typescript-eslint/ban-ts-comment",
 };
 
-// Probes that the checks do not stop yet.
-const notStoppedYet = new Set([
-  "definite-field.ts",
-  "definite-variable.ts",
-  "declare-variable.ts",
-  "ts-expect-error.ts",
-]);
-
 const results = await new ESLint({ cwd: root, ignore: false }).lintFiles(["guard-probes"]);
 const messagesOf = (file: string) =>
   results.find((result) => result.filePath === `${root}guard-probes/${file}`)?.messages;
@@ -67,7 +59,7 @@ it("guard-probes/blocked のファイルが、すべて表にある", async () =
 });
 
 for (const [file, rule] of Object.entries(blocked)) {
-  (notStoppedYet.has(file) ? it.fails : it)(`${file} を ${rule} が止める`, () => {
+  it(`${file} を ${rule} が止める`, () => {
     expect(messagesOf(`blocked/${file}`)?.map((message) => message.ruleId)).toContain(rule);
   });
 }

@@ -25,7 +25,7 @@
 - `Reflect` と `eval` も使いません。名前を文字列で受け取るので、ほかの守りを回り込めるためです（ADR 0001）。
 - ページの移動とワーカーも使いません。文章を外に運んだり、残したりできるためです（ADR 0001）。`Worker`、`SharedWorker`、`BroadcastChannel`、`serviceWorker`、`open`、`location`、`navigation`、`setAttribute`、`setAttributeNS` が該当し、どのオブジェクトから取り出しても止まります。`href` と `xlinkHref` は、JSX に文字列をそのまま書くときだけ使えます。
 - `window`、`self`、`globalThis`、`top`、`parent`、`frames` と、`defaultView`、`contentWindow`、`opener`、`postMessage` も使いません。別のウィンドウや window を通すと、ほかの守りを回り込めるためです（ADR 0001）。
-- `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。
+- `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。`text!: string` や `let target!: number` の `!`、`declare`、`// @ts-expect-error`、`// @ts-ignore`、`// @ts-nocheck` も止まります。
 - JavaScript のファイル（`.js`、`.jsx`、`.mjs`、`.cjs`）を書きません。型のチェックと ESLint の守りが届かないためです。TypeScript で書きます。
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
 - React の `preconnect`、`prefetchDNS`、`preload`、`preloadModule`、`preinit`、`preinitModule` を使いません。ホスト名に入れた文章が、CSP を越えてほかのサーバーに届くためです（ADR 0001）。`react-dom` から読み込んでも、どのオブジェクトから取り出しても止まります。

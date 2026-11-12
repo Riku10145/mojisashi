@@ -124,6 +124,13 @@ const guards: Guard[] = [
       `TemplateElement[value.cooked=${anyOf(bannedTags, "i")}]`,
     ],
   },
+  {
+    message: `\`text!: string\` のような \`!\` による決めつけと \`declare\` は、型と実際の値を食い違わせるため使えません。型の絞り込みで合わせてください。${readAdr0003}`,
+    selectors: [
+      ":matches(PropertyDefinition, AccessorProperty, VariableDeclarator)[definite=true]",
+      ":matches(VariableDeclaration, PropertyDefinition, AccessorProperty, ClassDeclaration, TSDeclareFunction, TSEnumDeclaration, TSModuleDeclaration)[declare=true]",
+    ],
+  },
 ];
 
 export default defineConfig([
@@ -160,6 +167,10 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        { "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true },
+      ],
       "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
       "no-restricted-globals": [
         "error",
