@@ -20,7 +20,7 @@
 
 ## 守ること
 
-- 通信の仕組みを使いません。`fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource`、`sendBeacon` が該当します（ADR 0001）。
+- 通信の仕組みを使いません。`fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource`、`WebTransport`、`RTCPeerConnection`、`RTCDataChannel`、`sendBeacon` が該当します（ADR 0001）。`window` や `top` などから取り出すことも、`document.defaultView` を使うこともできません。
 - `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
 - インラインの `style` と `<script>` を書きません。見た目は Tailwind のクラスで書きます。

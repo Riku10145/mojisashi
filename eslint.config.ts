@@ -4,11 +4,30 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-const keepTextNowhere =
-  "文章を外に送らないため、通信の仕組みは使えません。docs/adr/0001-keep-text-nowhere.md を読んでください。";
+const readAdr0001 = "docs/adr/0001-keep-text-nowhere.md を読んでください。";
 
-const networkGlobals = ["fetch", "XMLHttpRequest", "WebSocket", "EventSource"];
-const globalObjects = ["window", "globalThis", "self"];
+const windowAliases = ["window", "globalThis", "self", "top", "parent", "frames", "opener"];
+
+const guards = [
+  {
+    message: `文章を外に送らないため、通信の仕組みは使えません。${readAdr0001}`,
+    names: [
+      "fetch",
+      "XMLHttpRequest",
+      "WebSocket",
+      "EventSource",
+      "WebTransport",
+      "RTCPeerConnection",
+      "RTCDataChannel",
+    ],
+    properties: [{ property: "sendBeacon" }],
+  },
+  {
+    message: `document.defaultView は window と同じなので、通信の禁止をすり抜けられます。window を直接使ってください。${readAdr0001}`,
+    names: [],
+    properties: [{ property: "defaultView" }],
+  },
+];
 
 export default defineConfig([
   globalIgnores(["dist", "dist-server"]),
@@ -33,7 +52,7 @@ export default defineConfig([
       "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
       "no-restricted-globals": [
         "error",
-        ...networkGlobals.map((name) => ({ name, message: keepTextNowhere })),
+        ...guards.flatMap(({ message, names }) => names.map((name) => ({ name, message }))),
       ],
       "no-restricted-syntax": [
         "error",
@@ -45,10 +64,12 @@ export default defineConfig([
       ],
       "no-restricted-properties": [
         "error",
-        { property: "sendBeacon", message: keepTextNowhere },
-        ...globalObjects.flatMap((object) =>
-          networkGlobals.map((property) => ({ object, property, message: keepTextNowhere })),
-        ),
+        ...guards.flatMap(({ message, names, properties }) => [
+          ...properties.map((property) => ({ ...property, message })),
+          ...windowAliases.flatMap((object) =>
+            names.map((property) => ({ object, property, message })),
+          ),
+        ]),
       ],
     },
   },
