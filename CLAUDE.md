@@ -25,7 +25,7 @@
 - ページの移動とワーカーも使いません。文章を外に運んだり、残したりできるためです（ADR 0001）。`Worker`、`SharedWorker`、`BroadcastChannel`、`serviceWorker`、`open`、`window.open` が該当します。`location` への代入と、`location.assign`、`location.replace` も止まります。
 - `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
-- インラインの `style` と `<script>` を書きません。見た目は Tailwind のクラスで書きます。
+- インラインの `style`、`<script>`、`dangerouslySetInnerHTML` を書きません。見た目は Tailwind のクラスで書きます。
 - `public/_headers` の CSP をゆるめません。
 - `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。
 - ADR をコードに合わせて書き換えません。決めたことを変えるときは、新しい ADR を足します。

@@ -53,6 +53,13 @@ const guards: Guard[] = [
     message: `CSP（style-src 'self'）がインラインの style を止めるため、Tailwind のクラスで書いてください。${readAdr0003}`,
     selectors: ["JSXAttribute[name.name='style']"],
   },
+  {
+    message: `<script> と dangerouslySetInnerHTML は使えません。CSP（script-src 'self'）が止めるスクリプトや、確かめていない HTML をページに入れる入り口になるためです。${readAdr0003}`,
+    selectors: [
+      "JSXOpeningElement[name.name='script']",
+      "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+    ],
+  },
 ];
 
 export default defineConfig([
