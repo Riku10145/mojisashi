@@ -9,7 +9,7 @@
 
 ## コマンド
 
-- `bun install` で依存を入れます。lefthook のコミット前チェックも入ります。
+- `bun install` で依存を入れます。lefthook のコミット前チェックも入ります。lefthook が見つからないときは、コミットが止まります。そのときは、コミットするフォルダで `bun install` を動かします。
 - `bun run dev` で開発用のサーバーを動かします。
 - `bun run typecheck` で型を確かめます。
 - `bun run lint` で ESLint を動かします。警告が1つでもあれば失敗します。
