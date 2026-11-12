@@ -51,10 +51,6 @@ const blocked: Record<string, string> = {
 
 // Probes that the checks do not stop yet.
 const notStoppedYet = new Set([
-  "preconnect.ts",
-  "prefetch-dns-namespace.ts",
-  "meta-refresh.tsx",
-  "link-element.tsx",
   "spread-style.tsx",
   "spread-dangerously.tsx",
   "create-element.ts",
@@ -62,7 +58,6 @@ const notStoppedYet = new Set([
   "clone-element.tsx",
   "jsx-runtime.ts",
   "variable-tag.tsx",
-  "style-element.tsx",
   "inner-html.ts",
   "document-write.ts",
   "dom-parser.ts",

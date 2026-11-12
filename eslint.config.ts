@@ -7,12 +7,28 @@ import tseslint from "typescript-eslint";
 const readAdr0001 = "docs/adr/0001-keep-text-nowhere.md を読んでください。";
 const readAdr0003 = "docs/adr/0003-prefer-mechanical-guards.md を読んでください。";
 
+const anyOf = (names: string[]) => `/^(${names.join("|")})$/`;
+
 // Navigation attributes, which CSP cannot stop. src, action and formAction are left to CSP.
-const navigationUrl = "/^(href|xlinkHref)$/";
+const navigationUrl = anyOf(["href", "xlinkHref"]);
+
+// React hoists <link>, <meta> and <style> into the head, and <meta http-equiv="refresh"> navigates.
+const bannedTags = anyOf([
+  "script",
+  "style",
+  "link",
+  "meta",
+  "base",
+  "iframe",
+  "frame",
+  "object",
+  "embed",
+  "portal",
+]);
 
 type Guard = {
   message: string;
-  // Banned as a global and as a property of any object, so chains such as
+  // Banned as a global, as a property of any object and as an imported name, so chains such as
   // window.window.fetch, iframe.contentWindow?.fetch and w["fetch"] are caught too.
   names?: string[];
   // Banned only as a global, because the same property name is legitimate elsewhere.
@@ -76,13 +92,17 @@ const guards: Guard[] = [
     globals: ["window", "self", "globalThis", "top", "parent", "frames"],
   },
   {
+    message: `preconnect などのリソースヒントは、ホスト名に入れた文章を CSP（connect-src 'self'）を越えて届けるため使えません。${readAdr0001}`,
+    names: ["preconnect", "prefetchDNS", "preload", "preloadModule", "preinit", "preinitModule"],
+  },
+  {
     message: `CSP（style-src 'self'）がインラインの style を止めるため、Tailwind のクラスで書いてください。${readAdr0003}`,
     selectors: ["JSXAttribute[name.name='style']"],
   },
   {
-    message: `<script> と dangerouslySetInnerHTML は使えません。CSP（script-src 'self'）が止めるスクリプトや、確かめていない HTML をページに入れる入り口になるためです。${readAdr0003}`,
+    message: `<script>、<style>、<link>、<meta> などの要素と dangerouslySetInnerHTML は使えません。CSP が止めるスクリプトやスタイル、CSP では止まらないページの移動や先読み、確かめていない HTML をページに入れる入り口になるためです。${readAdr0003}`,
     selectors: [
-      "JSXOpeningElement[name.name='script']",
+      `JSXOpeningElement[name.name=${bannedTags}]`,
       "JSXAttribute[name.name='dangerouslySetInnerHTML']",
     ],
   },
@@ -137,8 +157,15 @@ export default defineConfig([
       ],
       "no-restricted-syntax": [
         "error",
-        ...guards.flatMap(({ message, selectors = [] }) =>
-          selectors.map((selector) => ({ selector, message })),
+        ...guards.flatMap(({ message, names = [], selectors = [] }) =>
+          [
+            ...(names.length > 0
+              ? [
+                  `:matches(ImportSpecifier[imported.name=${anyOf(names)}], ImportSpecifier[imported.value=${anyOf(names)}], ExportSpecifier[local.name=${anyOf(names)}])`,
+                ]
+              : []),
+            ...selectors,
+          ].map((selector) => ({ selector, message })),
         ),
       ],
     },
