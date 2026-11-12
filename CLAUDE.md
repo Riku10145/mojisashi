@@ -17,6 +17,7 @@
 - `bun run test` で Vitest のテストを動かします。
 - `bun run build` で `dist/` にページを書き出します。
 - `bun run check` で、型、ESLint、整形、テスト、ビルドを順に確かめます。コミットの前には lefthook が、PR では CI が、これを動かします。
+- `bun run check:release-age` で、`bun.lock` のすべての版が、公開から `bunfig.toml` の `minimumReleaseAge` 秒以上たっているかを確かめます。npm に問い合わせるので `bun run check` には入れず、CI が別に動かします。
 
 ## 守ること
 
@@ -33,5 +34,5 @@
 - 属性や要素や HTML を JSX の外から渡す仕組みも使いません。JSX のスプレッド（`{...props}`）、`createElement`、`cloneElement`、`jsx`、`jsxs`、`jsxDEV`、`innerHTML`、`outerHTML`、`insertAdjacentHTML`、`srcdoc`、`write`、`writeln`、`createContextualFragment`、`setHTMLUnsafe`、`parseHTMLUnsafe`、`DOMParser`、`parseFromString` が該当します。上の要素の名前と同じ文字列（`"script"` など）も、比べるとき以外は書けません。
 - `index.html` には、`src/entry-client.tsx` を読み込む `<script>` のほかに、スクリプト、`<style>`、`style` 属性、`on` で始まる属性を書きません。ESLint と型チェックが届かないためです。Vitest のテストが止めます。
 - `public/_headers` の CSP をゆるめません。
-- `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。
+- `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。`--minimum-release-age=0` のように1回だけ待ち時間を外して入れた版も、CI の `bun run check:release-age` が止めます。
 - ADR をコードに合わせて書き換えません。決めたことを変えるときは、新しい ADR を足します。

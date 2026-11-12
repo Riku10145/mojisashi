@@ -19,4 +19,5 @@ jobs:
         with:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
+      - run: bun run check:release-age
       - run: bun run check
