@@ -23,7 +23,12 @@ const guards = [
     properties: [{ property: "sendBeacon" }],
   },
   {
-    message: `document.defaultView は window と同じなので、通信の禁止をすり抜けられます。window を直接使ってください。${readAdr0001}`,
+    message: `文章をブラウザの中にも残さないため、保存の仕組みは使えません。${readAdr0001}`,
+    names: ["localStorage", "sessionStorage", "indexedDB", "caches", "cookieStore"],
+    properties: [{ object: "document", property: "cookie" }],
+  },
+  {
+    message: `document.defaultView は window と同じなので、通信や保存の禁止をすり抜けられます。window を直接使ってください。${readAdr0001}`,
     names: [],
     properties: [{ property: "defaultView" }],
   },
