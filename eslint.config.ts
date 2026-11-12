@@ -11,7 +11,7 @@ const networkGlobals = ["fetch", "XMLHttpRequest", "WebSocket", "EventSource"];
 const globalObjects = ["window", "globalThis", "self"];
 
 export default defineConfig([
-  globalIgnores(["dist"]),
+  globalIgnores(["dist", "dist-server"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
