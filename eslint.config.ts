@@ -12,6 +12,7 @@ const globalObjects = ["window", "globalThis", "self"];
 
 export default defineConfig([
   globalIgnores(["dist", "dist-server"]),
+  { linterOptions: { noInlineConfig: true } },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
