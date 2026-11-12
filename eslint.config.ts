@@ -63,7 +63,8 @@ const guards: Guard[] = [
 ];
 
 export default defineConfig([
-  globalIgnores(["dist"]),
+  // guard-probes holds code that breaks the rules on purpose; eslint.config.test.ts lints it.
+  globalIgnores(["dist", "guard-probes"]),
   { linterOptions: { noInlineConfig: true } },
   {
     files: ["**/*.{js,jsx,mjs,cjs}"],
