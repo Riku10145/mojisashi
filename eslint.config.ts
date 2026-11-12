@@ -66,7 +66,20 @@ export default defineConfig([
   globalIgnores(["dist"]),
   { linterOptions: { noInlineConfig: true } },
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["**/*.{js,jsx,mjs,cjs}"],
+    languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Program",
+          message: `JavaScript のファイルは書けません。型のチェックと ESLint の守りが届かないためです。TypeScript で書いてください。${readAdr0003}`,
+        },
+      ],
+    },
+  },
+  {
+    files: ["**/*.{ts,tsx,mts,cts}"],
     extends: [
       js.configs.recommended,
       tseslint.configs.strictTypeChecked,
