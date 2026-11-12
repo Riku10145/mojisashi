@@ -11,7 +11,8 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "test": "vitest run",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build"
   },
   "dependencies": {
     "react": "^19.3.1",
