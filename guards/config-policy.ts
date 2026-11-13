@@ -14,8 +14,10 @@ export const cspFloor: ReadonlyMap<string, readonly string[]> = new Map([
   ["default-src", ["'none'"]],
   ["script-src", ["'self'"]],
   ["style-src", ["'self'"]],
-  ["img-src", ["'self'", "data:"]],
-  ["font-src", ["'self'"]],
+  // The page shows no image and loads no font. CSS that picks an image per bit of the 文章 would
+  // otherwise send it to our own server, one request per bit.
+  ["img-src", ["'none'"]],
+  ["font-src", ["'none'"]],
   ["connect-src", ["'none'"]],
   ["object-src", ["'none'"]],
   ["base-uri", ["'none'"]],

@@ -159,7 +159,11 @@ export function htmlProblems(html: string): string[] {
   return problems;
 }
 
-/** Built CSS requests nothing: no @import, and no url() other than data: URLs. */
+// The CSS functions whose argument is a URL. image-set() and src() take a string or var() as well,
+// so a URL need not be spelled url(…).
+const urlFunctions = /(?<![\w-])(?:-webkit-)?(?:image-set|image|cross-fade|element|src)\(/gi;
+
+/** Built CSS requests nothing: no @import, no url() other than data: URLs, no other URL function. */
 export function cssProblems(name: string, css: string): string[] {
   const problems: string[] = [];
   if (/@import/i.test(css)) {
@@ -167,6 +171,9 @@ export function cssProblems(name: string, css: string): string[] {
   }
   for (const [url] of css.matchAll(/url\(\s*(?!["']?data:)[^)]*\)/gi)) {
     problems.push(`dist/${name} の ${url} はリクエストになります。${readAdr0007}`);
+  }
+  for (const [call] of css.matchAll(urlFunctions)) {
+    problems.push(`dist/${name} の ${call} はリクエストになります。${readAdr0007}`);
   }
   return problems;
 }

@@ -90,13 +90,14 @@ describe("書き出した CSS", () => {
     ["url()", "input[value^=a]{background:url(/a)}"],
     ["引用符つきの url()", 'p{background:url("https://example.com/a")}'],
     ["@import", '@import "https://example.com/a.css";'],
+    ["-webkit-image-set()", "p{background:-webkit-image-set(var(--u) 1x)}"],
+    ["src()", "p{background-image:src(var(--u))}"],
+    ["image()", "p{list-style-image:image('/a')}"],
   ])("%s を止める", (_, css) => {
     expect(cssProblems("a.css", css)).not.toEqual([]);
   });
 
-  // Fails until cssProblems sees image-set(): Tailwind builds it with no url() when the URL comes
-  // from a custom property.
-  it.fails("カスタムプロパティの文字列を読み込む image-set() を止める", () => {
+  it("カスタムプロパティの文字列を読み込む image-set() を止める", () => {
     const css =
       ".\\[--u\\:\\'\\/l\\/0-1\\'\\]{--u:'/l/0-1'}.b{background-image:image-set(var(--u) 1x)}";
     expect(cssProblems("a.css", css)).not.toEqual([]);

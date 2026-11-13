@@ -24,7 +24,7 @@ describe("public/_headers", () => {
   });
 
   it("CSP をきびしくするのは通る", () => {
-    expect(headersProblems(headers.replace("img-src 'self' data:", "img-src 'none'"))).toEqual([]);
+    expect(headersProblems(headers.replace("style-src 'self'", "style-src 'none'"))).toEqual([]);
   });
 
   it.each([
@@ -47,8 +47,7 @@ describe("public/_headers", () => {
   });
 });
 
-// Fails until img-src and font-src are 'none': the page loads no image and no font.
-it.fails.each([
+it.each([
   ["img-src", "img-src 'self' data:"],
   ["font-src", "font-src 'self'"],
 ])("CSP の %s で自分のサーバーから読み込めるのを止める", (name, directive) => {
