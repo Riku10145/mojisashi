@@ -15,16 +15,18 @@ const counted: Readonly<Record<CountingRule, readonly Kind[]>> = {
 };
 
 const graphemes = new Intl.Segmenter("ja", { granularity: "grapheme" });
-const blank = /^(\p{Zs}|\p{Zl}|\p{Zp}|\t|\r\n|\r|\n)$/u;
-const invisible = /^\p{Cf}+$/u;
+// Hangul fillers and the braille blank are letters to Unicode, but they show as a blank.
+const blank = /^(\p{Zs}|\p{Zl}|\p{Zp}|\t|\r\n|\r|\n|[\u115F\u1160\u2800\u3164\uFFA0])$/u;
+const invisiblePart = /[\p{Cf}\p{Variation_Selector}\u034F]/gu;
 const numbers = new Intl.NumberFormat("ja-JP");
 
 /** A grapheme is a blank when it looks like one, and invisible when it shows nothing (ADR 0008). */
 function kindOf(grapheme: string): Kind {
-  if (blank.test(grapheme)) {
-    return "blank";
+  const shown = grapheme.replace(invisiblePart, "");
+  if (shown === "") {
+    return "invisible";
   }
-  return invisible.test(grapheme) ? "invisible" : "visible";
+  return blank.test(shown) ? "blank" : "visible";
 }
 
 /** Counts each visible character once (ADR 0002), so \r\n is one newline. */
