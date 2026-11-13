@@ -24,18 +24,20 @@ describe("public/_headers", () => {
   });
 
   it("CSP をきびしくするのは通る", () => {
-    expect(headersProblems(headers.replace("connect-src 'self'", "connect-src 'none'"))).toEqual(
-      [],
-    );
+    expect(headersProblems(headers.replace("img-src 'self' data:", "img-src 'none'"))).toEqual([]);
   });
 
   it.each([
-    ["connect-src に *", (h: string) => h.replace("connect-src 'self'", "connect-src *")],
+    ["connect-src に *", (h: string) => h.replace("connect-src 'none'", "connect-src *")],
     [
       "script-src に 'unsafe-inline'",
       (h: string) => h.replace("script-src 'self'", "script-src 'self' 'unsafe-inline'"),
     ],
-    ["指定を消す", (h: string) => h.replace(" base-uri 'self';", "")],
+    [
+      "connect-src を 'self' に戻す",
+      (h: string) => h.replace("connect-src 'none'", "connect-src 'self'"),
+    ],
+    ["指定を消す", (h: string) => h.replace(" base-uri 'none';", "")],
     ["ほかの指定を足す", (h: string) => h.replace("default-src", "worker-src *; default-src")],
     ["/* のほかのパスに移す", (h: string) => h.replace("/*", "/index.html")],
     ["CSP を外す行", (h: string) => `${h}/x\n  ! Content-Security-Policy\n`],

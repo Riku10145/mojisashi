@@ -6,5 +6,9 @@ import { defineConfig } from "vite";
 // when dist/ differs, so a change here must be made there too.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  build: { assetsInlineLimit: 0 },
+  build: {
+    assetsInlineLimit: 0,
+    // The polyfill calls fetch(), which connect-src 'none' refuses; one chunk needs no preload.
+    modulePreload: { polyfill: false },
+  },
 });

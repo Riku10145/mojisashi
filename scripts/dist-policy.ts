@@ -30,6 +30,7 @@ export async function referenceBuild(root: string, input?: string): Promise<Buil
       write: false,
       // Every asset becomes its own file, so provenanceProblems sees where it came from.
       assetsInlineLimit: 0,
+      modulePreload: { polyfill: false },
       ...(input === undefined ? {} : { rolldownOptions: { input } }),
     },
   });

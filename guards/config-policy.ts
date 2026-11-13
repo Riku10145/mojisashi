@@ -11,16 +11,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** Each directive with every source it may hold. A directive not listed here may not appear. */
 export const cspFloor: ReadonlyMap<string, readonly string[]> = new Map([
-  ["default-src", ["'self'"]],
+  ["default-src", ["'none'"]],
   ["script-src", ["'self'"]],
   ["style-src", ["'self'"]],
   ["img-src", ["'self'", "data:"]],
   ["font-src", ["'self'"]],
-  ["connect-src", ["'self'"]],
+  ["connect-src", ["'none'"]],
   ["object-src", ["'none'"]],
-  ["base-uri", ["'self'"]],
+  ["base-uri", ["'none'"]],
   ["form-action", ["'none'"]],
   ["frame-ancestors", ["'none'"]],
+  // Trusted Types: innerHTML, document.write and script.src refuse plain strings.
+  ["require-trusted-types-for", ["'script'"]],
+  ["trusted-types", ["'none'"]],
 ]);
 
 function policyProblems(policy: string): string[] {
