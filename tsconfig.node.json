@@ -5,5 +5,5 @@
     "lib": ["ES2023"],
     "types": ["bun"]
   },
-  "include": ["vite.config.ts", "eslint.config.ts", "eslint.config.test.ts", "scripts"]
+  "include": ["guards", "vite.config.ts", "eslint.config.ts", "eslint.config.test.ts", "scripts"]
 }

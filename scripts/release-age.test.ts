@@ -33,8 +33,8 @@ test("npm の版でない依存は、公開日を確かめられないので止�
 });
 
 // bun installs from entry[1] when it is set, so this lock installs vite 8.3.8 while entry[0]
-// names 8.3.6. Found in the second review; test.fails records that pinsOf still accepts it.
-test.fails("取得先が npm のレジストリでない項目は止める", () => {
+// names 8.3.6.
+test("取得先が npm のレジストリでない項目は止める", () => {
   const lock = {
     packages: {
       vite: ["vite@8.3.6", "https://registry.npmjs.org/vite/-/vite-8.3.8.tgz", {}, "sha512-d"],

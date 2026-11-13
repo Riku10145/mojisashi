@@ -24,8 +24,16 @@ export function pinsOf(lock: unknown): Pin[] {
   const pins = new Map<string, Pin>();
   for (const entry of Object.values(packages)) {
     const id: unknown = Array.isArray(entry) ? entry[0] : undefined;
+    const resolved: unknown = Array.isArray(entry) ? entry[1] : undefined;
     if (typeof id !== "string") {
       throw new Error(`bun.lock の packages に読めない項目があります: ${JSON.stringify(entry)}`);
+    }
+    // bun installs from entry[1] when it is set, so a tarball URL there can install a version
+    // that id does not name. "" means the default registry, by id's name and version.
+    if (resolved !== "") {
+      throw new Error(
+        `${id} は npm のレジストリ以外（${JSON.stringify(resolved)}）から入るので、公開日を確かめられません`,
+      );
     }
     const at = id.lastIndexOf("@");
     const version = id.slice(at + 1);
