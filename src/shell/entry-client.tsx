@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import { App } from "./App";
+import { App } from "../app/App";
 import "./index.css";
 
 const root = document.getElementById("root");
@@ -14,11 +14,16 @@ const app = (
 );
 // The dev server serves index.html as written, so #root holds only the placeholder comment
 // and maybe the whitespace around it.
-const isPrerendered = Array.from(root.childNodes).some((node) =>
-  node.nodeType === Node.TEXT_NODE
-    ? node.textContent?.trim() !== ""
-    : node.nodeType !== Node.COMMENT_NODE,
-);
+let isPrerendered = false;
+for (const node of root.childNodes) {
+  if (
+    node.nodeType === Node.TEXT_NODE
+      ? node.textContent?.trim() !== ""
+      : node.nodeType !== Node.COMMENT_NODE
+  ) {
+    isPrerendered = true;
+  }
+}
 if (isPrerendered) {
   hydrateRoot(root, app);
 } else {
