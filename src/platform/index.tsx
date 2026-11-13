@@ -36,7 +36,7 @@ export function TextBox({ label, text, onText }: TextBoxProps): ReactNode {
  */
 export function wholeNumberIn(raw: string, min: number, max: number): number | undefined {
   const written = raw.normalize("NFKC").trim();
-  if (!/^(\d+|\d{1,3}(,\d{3})+)$/.test(written)) {
+  if (!/^(\d+|[1-9]\d{0,2}(,\d{3})+)$/.test(written)) {
     return undefined;
   }
   const value = Number(written.replaceAll(",", ""));
