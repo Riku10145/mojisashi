@@ -18,6 +18,22 @@ describe("countCharacters", () => {
     expect(countCharacters(`a${blank}b`)).toEqual({ withBlanks: 3, withoutBlanks: 2 });
   });
 
+  it.each([
+    ["NBSP", "a b"],
+    ["EN SPACE", "a b"],
+  ])("treats %s as a blank", (_, text) => {
+    expect(countCharacters(text)).toEqual({ withBlanks: 3, withoutBlanks: 2 });
+  });
+
+  it.each([
+    ["zero width space", "a​b"],
+    ["soft hyphen", "a­b"],
+    ["BOM", "﻿ab"],
+    ["left-to-right mark", "a‎b"],
+  ])("does not count a %s", (_, text) => {
+    expect(countCharacters(text)).toEqual({ withBlanks: 2, withoutBlanks: 2 });
+  });
+
   it("counts empty text as 0", () => {
     expect(countCharacters("")).toEqual({ withBlanks: 0, withoutBlanks: 0 });
   });

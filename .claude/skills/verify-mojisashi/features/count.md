@@ -6,6 +6,7 @@
 
 - `count-both` は、2つの数え方の文字数を同時に出す。
 - `count-grapheme` は、組み合わせの絵文字や、濁点を組み合わせた「が」を1文字と数える。
+- `count-blank-kinds` は、NBSP を空白として扱い、ゼロ幅スペースのような見えない文字をどちらの数え方でも数えない（ADR 0008）。
 - `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。
 - `count-rule` は、目標と比べる数え方を切り替える。
 - `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
@@ -29,6 +30,7 @@ Preconditions:
 - **最初の状態。** 2つの数え方とも `0文字` で、差の行はない。
 - **混ざった文章。** `今日は　晴れ。\nHello, 世界！ 👍🏽` を入れる。空白と改行を除くと16文字、含むと20文字。空白は、全角スペース、改行、半角スペース2つの4つ。
 - **見た目の1文字。** `👨‍👩‍👧` と、か（U+304B）に結合用の濁点（U+3099）を続けた「が」を入れる。どちらの数え方でも `2文字`。
+- **空白に見える文字と、見えない文字。** `a`、NBSP（U+00A0）、`b`、ゼロ幅スペース（U+200B）、`c` を入れる。除いた文字数は3文字、含む文字数は4文字。
 - **目標との差。** 混ざった文章に戻し、目標の文字数に全角の `１８` を入れる。`あと2文字` が出る。
 - **数え方の切り替え。** 「空白と改行を含む文字数」を選ぶ。`2文字オーバー` に変わる。
 - **範囲の外。** 目標の文字数に `0` を入れる。差の行が空になる。
@@ -56,6 +58,10 @@ export default async function ({ page, capture, step }) {
   await box.fill("👨‍👩‍👧\u304b\u3099");
   await without.filter({ hasText: /^2文字$/ }).waitFor({ timeout: 5000 });
   step("count-grapheme: joined emoji and combined が are 1 each", (await withBlanks.textContent()) === "2文字");
+
+  await box.fill("a\u00a0b\u200bc");
+  await withBlanks.filter({ hasText: /^4文字$/ }).waitFor({ timeout: 5000 });
+  step("count-blank-kinds: NBSP is a blank and a zero width space is not counted", (await without.textContent()) === "3文字", await without.textContent());
 
   await box.fill("今日は　晴れ。\nHello, 世界！ 👍🏽");
   await target.fill("１８");
