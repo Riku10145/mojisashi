@@ -73,6 +73,12 @@ describe("書き出した index.html", () => {
   ])("body の %s を止める", (_, body) => {
     expect(htmlProblems(page(head, body))).not.toEqual([]);
   });
+
+  // Fails until a textarea must carry autocomplete="off": without it Chrome writes the box to disk.
+  it.fails("autocomplete を止めていない入力欄を止める", () => {
+    const body = '<div id="root"><textarea id="t" spellcheck="false"></textarea></div>';
+    expect(htmlProblems(page(head, body))).not.toEqual([]);
+  });
 });
 
 describe("書き出した CSS", () => {
@@ -85,6 +91,14 @@ describe("書き出した CSS", () => {
     ["引用符つきの url()", 'p{background:url("https://example.com/a")}'],
     ["@import", '@import "https://example.com/a.css";'],
   ])("%s を止める", (_, css) => {
+    expect(cssProblems("a.css", css)).not.toEqual([]);
+  });
+
+  // Fails until cssProblems sees image-set(): Tailwind builds it with no url() when the URL comes
+  // from a custom property.
+  it.fails("カスタムプロパティの文字列を読み込む image-set() を止める", () => {
+    const css =
+      ".\\[--u\\:\\'\\/l\\/0-1\\'\\]{--u:'/l/0-1'}.b{background-image:image-set(var(--u) 1x)}";
     expect(cssProblems("a.css", css)).not.toEqual([]);
   });
 });

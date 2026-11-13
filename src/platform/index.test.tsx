@@ -21,3 +21,10 @@ test("文章の入力欄は、スペルチェックで文章を送らない", ()
   const html = renderToString(<TextBox label="文章" text="" onText={() => undefined} />);
   expect(html).toMatch(/<textarea[^>]* spellcheck="false"/i);
 });
+
+// Fails until the box carries autocomplete="off": without it Chrome writes the 文章 into the
+// profile's Sessions files and restores it after back and forward.
+test.fails("文章の入力欄は、文章をブラウザのディスクに残させない", () => {
+  const html = renderToString(<TextBox label="文章" text="" onText={() => undefined} />);
+  expect(html).toMatch(/<textarea[^>]* autocomplete="off"/i);
+});

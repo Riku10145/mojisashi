@@ -32,6 +32,22 @@ it("決めた種類のファイルだけがある", () => {
   expect(tracked.filter((file) => !allowedFile.some((pattern) => pattern.test(file)))).toEqual([]);
 });
 
+// Fails until the root holds only files listed by name: these are config files that a tool finds by
+// name and reads instead of the guarded one.
+it.fails("ルートに、ツールが名前で見つける設定のファイルを足せない", () => {
+  const added = [
+    "vitest.config.ts",
+    "vitest.workspace.json",
+    "postcss.config.ts",
+    ".postcssrc.json",
+    "tailwind.config.ts",
+    ".lefthook.yml",
+    "lefthook-local.yml",
+    ".config/lefthook.yml",
+  ];
+  expect(added.filter((file) => allowedFile.some((pattern) => pattern.test(file)))).toEqual([]);
+});
+
 it("guard-probes/ のファイルは、すべてテストが読む", () => {
   expect(
     tracked.filter(

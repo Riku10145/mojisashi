@@ -47,6 +47,14 @@ describe("public/_headers", () => {
   });
 });
 
+// Fails until img-src and font-src are 'none': the page loads no image and no font.
+it.fails.each([
+  ["img-src", "img-src 'self' data:"],
+  ["font-src", "font-src 'self'"],
+])("CSP の %s で自分のサーバーから読み込めるのを止める", (name, directive) => {
+  expect(headersProblems(headers.replace(new RegExp(`${name} [^;]*`), directive))).not.toEqual([]);
+});
+
 describe("bunfig.toml", () => {
   it("いまの設定は通る", () => {
     expect(bunfigProblems(bunfig)).toEqual([]);
@@ -84,6 +92,15 @@ describe("package.json", () => {
   ])("%s を止める", (_, change) => {
     expect(packageProblems({ ...(typeof pkg === "object" ? pkg : {}), ...change })).not.toEqual([]);
   });
+});
+
+// Fails until lint and test name their config: ESLint and Vitest prefer eslint.config.js and
+// vitest.config.js to the guarded files when they find one.
+it.fails.each([
+  ["eslint", { scripts: { lint: "eslint --max-warnings 0 ." } }],
+  ["vitest", { scripts: { test: "vitest run" } }],
+])("設定のファイルを名指ししない %s を止める", (_, change) => {
+  expect(packageProblems({ ...(typeof pkg === "object" ? pkg : {}), ...change })).not.toEqual([]);
 });
 
 describe("lefthook.yml", () => {
