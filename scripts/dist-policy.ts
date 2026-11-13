@@ -117,7 +117,7 @@ const bodyTags = new Set(
   ),
 );
 const bodyAttributes = new Set(
-  "id class for href lang role hidden title rows type min max value name checked disabled inputmode spellcheck".split(
+  "id class for href lang role hidden title rows type min max value name checked disabled inputmode spellcheck autocomplete".split(
     " ",
   ),
 );
@@ -146,9 +146,15 @@ export function htmlProblems(html: string): string[] {
     if (!bodyTags.has(name.toLowerCase())) {
       problems.push(`index.html の body に <${name}> は入れられません。${readAdr0007}`);
     }
-    // Chrome's enhanced spell check sends what is typed in a textarea to Google.
-    if (name.toLowerCase() === "textarea" && !/\sspellcheck="false"/i.test(attributes)) {
-      problems.push(`index.html の <textarea> に spellcheck="false" がありません。${readAdr0007}`);
+    // Chrome's enhanced spell check sends what is typed in a textarea to Google, and without
+    // autocomplete="off" Chrome writes it into the profile's Sessions files.
+    for (const required of ['spellcheck="false"', 'autocomplete="off"']) {
+      if (
+        name.toLowerCase() === "textarea" &&
+        !new RegExp(`\\s${required}`, "i").test(attributes)
+      ) {
+        problems.push(`index.html の <textarea> に ${required} がありません。${readAdr0007}`);
+      }
     }
     for (const [, attribute = ""] of attributes.matchAll(/([^\s=/]+)(?:="[^"]*")?/g)) {
       if (!bodyAttributes.has(attribute.toLowerCase()) && !attribute.startsWith("aria-")) {

@@ -48,8 +48,9 @@ describe("書き出した index.html", () => {
     expect(htmlProblems(page(head))).toEqual([]);
   });
 
-  it("スペルチェックを止めた入力欄は通る", () => {
-    const body = '<div id="root"><textarea id="t" rows="8" spellcheck="false"></textarea></div>';
+  it("スペルチェックと autocomplete を止めた入力欄は通る", () => {
+    const body =
+      '<div id="root"><textarea id="t" rows="8" spellcheck="false" autocomplete="off"></textarea></div>';
     expect(htmlProblems(page(head, body))).toEqual([]);
   });
 
@@ -74,8 +75,7 @@ describe("書き出した index.html", () => {
     expect(htmlProblems(page(head, body))).not.toEqual([]);
   });
 
-  // Fails until a textarea must carry autocomplete="off": without it Chrome writes the box to disk.
-  it.fails("autocomplete を止めていない入力欄を止める", () => {
+  it("autocomplete を止めていない入力欄を止める", () => {
     const body = '<div id="root"><textarea id="t" spellcheck="false"></textarea></div>';
     expect(htmlProblems(page(head, body))).not.toEqual([]);
   });

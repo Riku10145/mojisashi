@@ -16,6 +16,8 @@ export function TextBox({ label, text, onText }: TextBoxProps): ReactNode {
         rows={8}
         // Chrome's enhanced spell check sends the text to Google.
         spellCheck={false}
+        // Otherwise Chrome writes the text into the profile's Sessions files and restores it.
+        autoComplete="off"
         value={text}
         onChange={(event) => {
           onText(event.currentTarget.value);

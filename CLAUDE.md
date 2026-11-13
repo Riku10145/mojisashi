@@ -27,7 +27,7 @@
 - `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。`text!: string` や `let target!: number` の `!`、`declare`、`// @ts-expect-error`、`// @ts-ignore`、`// @ts-nocheck`、`/// <reference>` も止まります。
 - JavaScript のファイルと `.d.ts` を書きません。型のチェックと ESLint の守りが届かないためです。リポジトリのいちばん上には、名前を決めたファイルだけを置きます。ESLint や Vitest は設定のファイルを名前で探し、守りの設定より先に読むことがあるためです。`bun run check:files`（`guards/files.ts`）が、ほかのファイルを止めます。テストの中ではなく、`bun run check` の最初に動きます。
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
-- 文章の入力欄のスペルチェックは切ったままにします。Chrome の強化スペルチェックは、入力した文字を Google に送ります（ADR 0007）。
+- 文章の入力欄のスペルチェックは切ったままにします。Chrome の強化スペルチェックは、入力した文字を Google に送ります（ADR 0007）。`autocomplete="off"` も外しません。外すと Chrome が、入力欄の文章をプロファイルの `Sessions/` に書き、戻ったときに入れ直します（ADR 0001）。
 - `vite.config.ts` を変えたら、`scripts/dist-policy.ts` の `referenceBuild` も同じに変えます。`bun run build` の最後に `scripts/verify-dist.ts` が、2つのビルドの `dist/` が同じか、ページに入ったものの出どころ、書き出した `index.html` と CSS を確かめます。
 - `public/_headers` の CSP をゆるめません。`guards/config-policy.ts` が止めます。きびしくするのは自由です。
 - `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。`bun.lock` は npm のレジストリから入る版だけにします。`package.json` のスクリプト、lefthook、CI で動かせるコマンドは `guards/config-policy.ts` に並べたものだけで、`bunx` や `npx` は止まります。
