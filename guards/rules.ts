@@ -102,10 +102,16 @@ export const browserRule = createRule<
       const declaration = checker
         .getResolvedSignature(services.esTreeNodeToTSNodeMap.get(call))
         ?.getDeclaration();
-      if (declaration !== undefined && isBrowserDeclaration(program, declaration)) {
-        return true;
+      if (declaration === undefined) {
+        return false;
       }
-      return call.callee.type === T.Identifier && sinks.includes(call.callee.name);
+      // A sink is React's own function, not a local one that shares its name.
+      return (
+        isBrowserDeclaration(program, declaration) ||
+        (call.callee.type === T.Identifier &&
+          sinks.includes(call.callee.name) &&
+          declaration.getSourceFile().fileName.includes("/node_modules/@types/react-dom/"))
+      );
     };
 
     // Where a browser value may stand: as the object of a dotted member, as a callee, compared,
