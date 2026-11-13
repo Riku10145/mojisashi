@@ -4,7 +4,6 @@
     { "path": "./tsconfig.platform.json" },
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.shell.json" },
-    { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.guard-probes.json" }
+    { "path": "./tsconfig.node.json" }
   ]
 }

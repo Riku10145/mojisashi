@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.platform.json",
+  "compilerOptions": {
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "tsBuildInfoFile": "../../node_modules/.tmp/guard-probes-platform.tsbuildinfo"
+  },
+  "include": ["."]
+}
