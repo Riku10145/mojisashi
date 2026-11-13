@@ -28,11 +28,11 @@ Preconditions:
 - **欄の設定。** 「文章」の欄の `spellcheck` が `false`、`autocomplete` が `off`。
 - **長い文章。** 「あ」を100,000文字入れる。どちらの数え方でも `100,000文字` が出る。
 - **残さない。** 文章を入れたあと、cookie、Web Storage、IndexedDB が空。
-- **再読み込み。** ページを開き直すと、「文章」の欄が空。
+- **再読み込み。** ページを再読み込みすると、「文章」の欄が空。
 - **送らない、CSP。** 道具が最後に、住所の外への要求、コンソールのエラーと警告、捕まえていない例外がないことを確かめる。
 
 ```js scenario
-export default async function ({ page, open, storage, capture, step }) {
+export default async function ({ page, storage, capture, step }) {
   const box = page.getByRole("textbox", { name: "文章" });
   const without = page.getByRole("definition").nth(0);
 
@@ -52,7 +52,7 @@ export default async function ({ page, open, storage, capture, step }) {
     JSON.stringify(stored),
   );
 
-  await open();
+  await page.reload({ waitUntil: "load" });
   step("text-reload-clears: 文章 is empty after reload", (await box.inputValue()) === "", await box.inputValue());
   await capture("text-after-reload");
 }
@@ -61,5 +61,5 @@ export default async function ({ page, open, storage, capture, step }) {
 ## Gotchas
 
 - 道具は、`https://mojisashi.test/` 以外への要求を止めて記録します。ただ、CSP の `connect-src 'none'` がブラウザの中で先に止めるので、通信のコードがあっても、まず CSP の違反としてコンソールに出ます。どちらかが出たら失敗です。
-- `text-no-storage` は、ページが Web の仕組みで残すものだけを見ます。Chrome がプロファイルの `Sessions/` に書く入力欄の中身は、ヘッドレスの一時的なプロファイルでは確かめられません。そちらは `autocomplete="off"` が付いていることで代わりに確かめます。
+- `text-no-storage` は、ページが Web の仕組みで残すものだけを見ます。Chrome がプロファイルの `Sessions/` に書く入力欄の中身は、ヘッドレスの一時的なプロファイルでは確かめられません。そちらは `text-autocomplete-off` の属性の確認が守ります。`text-reload-clears` は、`autocomplete="off"` を外しても通ります。再読み込みの手順だけで ADR 0001 を確かめたことにしないでください。
 - 100,000文字の `fill` は数秒かかります。待つ時間を短くしすぎないでください。

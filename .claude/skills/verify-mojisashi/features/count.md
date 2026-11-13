@@ -8,7 +8,7 @@
 - `count-grapheme` は、組み合わせの絵文字や、濁点を組み合わせた「が」を1文字と数える。
 - `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。
 - `count-rule` は、目標と比べる数え方を切り替える。
-- `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さない。全角の数字は受け付ける。
+- `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
 
 ## How to get to it (user POV)
 
@@ -28,10 +28,10 @@ Preconditions:
 
 - **最初の状態。** 2つの数え方とも `0文字` で、差の行はない。
 - **混ざった文章。** `今日は　晴れ。\nHello, 世界！ 👍🏽` を入れる。空白と改行を除くと16文字、含むと20文字。空白は、全角スペース、改行、半角スペース2つの4つ。
-- **見た目の1文字。** `👨‍👩‍👧が`（「が」は、か＋結合用の濁点）を入れる。どちらの数え方でも `2文字`。
+- **見た目の1文字。** `👨‍👩‍👧` と、か（U+304B）に結合用の濁点（U+3099）を続けた「が」を入れる。どちらの数え方でも `2文字`。
 - **目標との差。** 混ざった文章に戻し、目標の文字数に全角の `１８` を入れる。`あと2文字` が出る。
 - **数え方の切り替え。** 「空白と改行を含む文字数」を選ぶ。`2文字オーバー` に変わる。
-- **範囲の外。** 目標の文字数に `0` を入れる。差の行が消える。
+- **範囲の外。** 目標の文字数に `0` を入れる。差の行が空になる。
 
 ```js scenario
 export default async function ({ page, capture, step }) {
@@ -53,13 +53,13 @@ export default async function ({ page, capture, step }) {
   step("count-both: 16 without blanks", (await without.textContent()) === "16文字");
   step("count-both: 20 with blanks", (await withBlanks.textContent()) === "20文字", await withBlanks.textContent());
 
-  await box.fill("👨‍👩‍👧が");
+  await box.fill("👨‍👩‍👧\u304b\u3099");
   await without.filter({ hasText: /^2文字$/ }).waitFor({ timeout: 5000 });
   step("count-grapheme: joined emoji and combined が are 1 each", (await withBlanks.textContent()) === "2文字");
 
   await box.fill("今日は　晴れ。\nHello, 世界！ 👍🏽");
   await target.fill("１８");
-  await gap.waitFor({ timeout: 5000 });
+  await page.getByText("あと2文字", { exact: true }).waitFor({ timeout: 5000 });
   step("count-gap: full-width 18 gives あと2文字", (await gap.textContent()) === "あと2文字", await gap.textContent());
 
   await page.getByRole("radio", { name: "空白と改行を含む文字数" }).check();
@@ -78,4 +78,5 @@ export default async function ({ page, capture, step }) {
 - 文字数の表示は `useDeferredValue` で少し遅れて変わります。`fill` の直後に読まず、期待する値が出るまで `waitFor` で待ちます。
 - `fill` で `\r\n` を入れても、ブラウザは入力欄の改行を `\n` にそろえます。Windows の改行が1文字になることは、`src/app/count.test.ts` のテストで確かめます。
 - 文字数の `dd` には役割の名前がありません。`getByRole("definition")` の並び順（除いた文字数が先、含む文字数が後）に頼っています。数え方の並びを変えたら、ここも直します。
-- 目標の文字数が範囲の外のときは、差の行そのものが消えます。エラーの文言はありません。
+- 目標の文字数が範囲の外のときは、差の行が空になります。エラーの文言はありません。
+- 合成済みの「が」（U+304C）は、どの数え方でも1文字です。結合文字を確かめるには、手順のように `\u304b\u3099` と書きます。エディターで「が」と打つと、合成済みになることがあります。
