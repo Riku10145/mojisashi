@@ -1,0 +1,6 @@
+assert_lefthook_installed: true
+
+pre-commit:
+  commands:
+    check:
+      run: bun run check

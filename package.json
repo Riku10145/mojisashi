@@ -1,0 +1,43 @@
+{
+  "name": "mojisashi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && NODE_ENV=production bun scripts/prerender.ts && NODE_ENV=production bun scripts/verify-dist.ts",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "lint": "eslint --config eslint.config.ts --max-warnings 0 .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "test": "vitest run --config vite.config.ts",
+    "prepare": "lefthook install",
+    "check:release-age": "bun scripts/check-release-age.ts",
+    "check:files": "bun scripts/check-files.ts",
+    "check": "bun run check:files && bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/bun": "^1.4.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@typescript-eslint/utils": "^8.72.1",
+    "@vitejs/plugin-react": "^6.2.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "jiti": "^2.7.0",
+    "lefthook": "^2.2.2",
+    "oxfmt": "0.76.0",
+    "tailwindcss": "^4.3.4",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}

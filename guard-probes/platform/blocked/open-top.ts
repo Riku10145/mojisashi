@@ -1,0 +1,4 @@
+// stopped-by: local/browser
+export function send(text: string): void {
+  top?.open(`https://example.com/?q=${encodeURIComponent(text)}`);
+}

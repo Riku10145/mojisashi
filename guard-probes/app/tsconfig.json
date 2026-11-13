@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../node_modules/.tmp/guard-probes-app.tsbuildinfo"
+  },
+  "references": [{ "path": "../../tsconfig.platform.json" }],
+  "include": ["."]
+}

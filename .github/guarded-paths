@@ -1,0 +1,21 @@
+# Files that decide what the guards are. The Guards workflow fails a pull request that changes any
+# of them, so a person reviews it before it merges. The workflow and this list are read from the
+# base branch, so the pull request cannot change them for its own check. See ADR 0007.
+.github/
+bunfig.toml
+lefthook.yml
+eslint.config.ts
+vite.config.ts
+tsconfig.json
+tsconfig.base.json
+tsconfig.app.json
+tsconfig.platform.json
+tsconfig.shell.json
+tsconfig.node.json
+index.html
+public/
+scripts/
+guards/
+guard-probes/
+src/platform/
+src/shell/
