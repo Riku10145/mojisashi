@@ -15,24 +15,22 @@
 - `bun run lint` で ESLint を動かします。警告が1つでもあれば失敗します。
 - `bun run format` で Oxfmt が整形します。`bun run format:check` は確かめるだけです。
 - `bun run test` で Vitest のテストを動かします。
-- `bun run build` で `dist/` にページを書き出します。
+- `bun run build` で `dist/` にページを書き出し、最後に `scripts/verify-dist.ts` で書き出したものを確かめます。
 - `bun run check` で、型、ESLint、整形、テスト、ビルドを順に確かめます。コミットの前には lefthook が、PR では CI が、これを動かします。
-- `bun run check:release-age` で、`bun.lock` のすべての版が、公開から `bunfig.toml` の `minimumReleaseAge` 秒以上たっているかを確かめます。npm に問い合わせるので `bun run check` には入れず、CI が別に動かします。
+- `bun run check:release-age` で、`bun.lock` のすべての版が、公開から `bunfig.toml` の `minimumReleaseAge` 秒以上たっているかを確かめます。npm に問い合わせるので `bun run check` には入れず、CI が `bun install` の前に別に動かします。
 
 ## 守ること
 
-- 通信の仕組みを使いません。`fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource`、`WebTransport`、`RTCPeerConnection`、`RTCDataChannel`、`sendBeacon` が該当します（ADR 0001）。どのオブジェクトから取り出しても止まります。
-- ブラウザの中に文章を残す仕組みも使いません。`localStorage`、`sessionStorage`、`indexedDB`、`caches`、`cookieStore`、`cookie`、`storage`、`history` が該当します（ADR 0001）。こちらも、どのオブジェクトから取り出しても止まります。
-- `Reflect` と `eval` も使いません。名前を文字列で受け取るので、ほかの守りを回り込めるためです（ADR 0001）。
-- ページの移動とワーカーも使いません。文章を外に運んだり、残したりできるためです（ADR 0001）。`Worker`、`SharedWorker`、`BroadcastChannel`、`serviceWorker`、`open`、`location`、`navigation`、`setAttribute`、`setAttributeNS` が該当し、どのオブジェクトから取り出しても止まります。`href` と `xlinkHref` は、JSX に文字列をそのまま書くときだけ使えます。
-- `window`、`self`、`globalThis`、`top`、`parent`、`frames` と、`defaultView`、`contentWindow`、`opener`、`postMessage` も使いません。別のウィンドウや window を通すと、ほかの守りを回り込めるためです（ADR 0001）。
-- `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。`text!: string` や `let target!: number` の `!`、`declare`、`// @ts-expect-error`、`// @ts-ignore`、`// @ts-nocheck` も止まります。
-- JavaScript のファイル（`.js`、`.jsx`、`.mjs`、`.cjs`）を書きません。型のチェックと ESLint の守りが届かないためです。TypeScript で書きます。
+- 機能のコードは `src/app/` に書きます。ここでは DOM の型がないので、`document`、`fetch`、`localStorage` のようなブラウザの仕組みは型のエラーになります（ADR 0007）。文章の入出力、コピー、乱数は `src/platform/` の部品を使います。
+- ブラウザに触れるのは `src/platform/` と `src/shell/` だけです。使ってよい要素、属性、パッケージ、ブラウザの仕組みは `guards/zones.ts` に並べてあり、並べていないものは ESLint が止めます。新しく使いたいものは、`guards/zones.ts` に足して、人に確かめてもらいます。
+- `globalThis`、`eval`、`Function`、`Reflect`、`import()` と、型をごまかす書き方（`x is T`、オーバーロード、`declare global`、`namespace`）は、`src/` で使えません。
+- `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。`text!: string` や `let target!: number` の `!`、`declare`、`// @ts-expect-error`、`// @ts-ignore`、`// @ts-nocheck`、`/// <reference>` も止まります。
+- JavaScript のファイルと `.d.ts` を書きません。型のチェックと ESLint の守りが届かないためです。`guards/files.test.ts` が、決めた種類のほかのファイルを止めます。
 - `eslint-disable` のコメントは効きません。ルールに引っかかったら、コードを直します。
-- React の `preconnect`、`prefetchDNS`、`preload`、`preloadModule`、`preinit`、`preinitModule` を使いません。ホスト名に入れた文章が、CSP を越えてほかのサーバーに届くためです（ADR 0001）。`react-dom` から読み込んでも、どのオブジェクトから取り出しても止まります。
-- インラインの `style` と `dangerouslySetInnerHTML` を書きません。`<script>`、`<style>`、`<link>`、`<meta>`、`<base>`、`<iframe>`、`<frame>`、`<object>`、`<embed>`、`<portal>` の要素も書きません。見た目は Tailwind のクラスで書きます。
-- 属性や要素や HTML を JSX の外から渡す仕組みも使いません。JSX のスプレッド（`{...props}`）、`createElement`、`cloneElement`、`jsx`、`jsxs`、`jsxDEV`、`innerHTML`、`outerHTML`、`insertAdjacentHTML`、`srcdoc`、`write`、`writeln`、`createContextualFragment`、`setHTMLUnsafe`、`parseHTMLUnsafe`、`DOMParser`、`parseFromString` が該当します。上の要素の名前と同じ文字列（`"script"` など）も、比べるとき以外は書けません。
-- `index.html` には、`src/entry-client.tsx` を読み込む `<script>` のほかに、スクリプト、`<style>`、`style` 属性、`on` で始まる属性を書きません。ESLint と型チェックが届かないためです。Vitest のテストが止めます。
-- `public/_headers` の CSP をゆるめません。
-- `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。`--minimum-release-age=0` のように1回だけ待ち時間を外して入れた版も、CI の `bun run check:release-age` が止めます。
+- 文章の入力欄のスペルチェックは切ったままにします。Chrome の強化スペルチェックは、入力した文字を Google に送ります（ADR 0007）。
+- `vite.config.ts` を変えたら、`scripts/dist-policy.ts` の `referenceBuild` も同じに変えます。`bun run build` の最後に `scripts/verify-dist.ts` が、2つのビルドの `dist/` が同じか、ページに入ったものの出どころ、書き出した `index.html` と CSS を確かめます。
+- `public/_headers` の CSP をゆるめません。`guards/config-policy.ts` が止めます。きびしくするのは自由です。
+- `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。`bun.lock` は npm のレジストリから入る版だけにします。`package.json` のスクリプト、lefthook、CI で動かせるコマンドは `guards/config-policy.ts` に並べたものだけで、`bunx` や `npx` は止まります。
+- 守りを試すコードは `guard-probes/` に置きます。止まるはずのものは `blocked/` に置き、1行目に `// stopped-by: TS2304` のように、止めるものを書きます。
+- `.github/guarded-paths` のファイルを変えた PR は、CI の「Guards」が失敗します。人が確かめてからマージします。
 - ADR をコードに合わせて書き換えません。決めたことを変えるときは、新しい ADR を足します。
