@@ -18,6 +18,7 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
-      - run: bun install --frozen-lockfile
+      # Before install: a young or off-registry package is refused before its files reach the runner.
       - run: bun run check:release-age
+      - run: bun install --frozen-lockfile
       - run: bun run check

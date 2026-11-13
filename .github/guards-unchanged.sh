@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Usage: guards-unchanged.sh <base> <head>. Exits 1 when <head> changes a guard. Reads git objects
+# only and never runs code from <head>.
+set -euo pipefail
+base="$1"
+head="$2"
+merge_base="$(git merge-base "$base" "$head")"
+mapfile -t paths < <(grep -v '^#' .github/guarded-paths | grep -v '^$')
+changed="$(git diff --name-only "$merge_base" "$head" -- "${paths[@]}")"
+# ADRs may be added, never changed or removed.
+adrs="$(git diff --name-only --diff-filter=MDR "$merge_base" "$head" -- docs/adr/)"
+# In package.json only dependency versions may change.
+fields='del(.dependencies, .devDependencies)'
+pkg=""
+if ! diff <(git show "$merge_base:package.json" | jq -S "$fields") <(git show "$head:package.json" | jq -S "$fields") >/dev/null; then
+  pkg="package.json (dependencies と devDependencies のほか)"
+fi
+specs="$(git show "$head:package.json" | jq -r '[.dependencies, .devDependencies] | add | to_entries[] | select(.value | test("^[~^]?[0-9]+\\.[0-9]+\\.[0-9]+$") | not) | "\(.key)@\(.value)"')"
+all="$(printf '%s\n' "$changed" "$adrs" "$pkg" "$specs" | grep -v '^$' || true)"
+if [ -n "$all" ]; then
+  echo "守りを決めるファイルが変わっています。人が確かめてからマージしてください（ADR 0007）:"
+  printf '%s\n' "$all" | sed 's/^/  /'
+  exit 1
+fi
+echo "守りを決めるファイルは変わっていません。"

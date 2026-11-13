@@ -129,6 +129,9 @@ const programs: readonly RegExp[] = [
   /^lefthook install$/,
   /^(NODE_ENV=production )?bun scripts\/[a-z-]+\.ts$/,
   /^bun install --frozen-lockfile$/,
+  // The Guards workflow: fetch the pull request without checking it out, then compare.
+  /^git fetch --no-tags origin "pull\/\$\{\{ github\.event\.pull_request\.number \}\}\/head:pr-head"$/,
+  /^bash \.github\/guards-unchanged\.sh "\$\{\{ github\.event\.pull_request\.base\.sha \}\}" pr-head$/,
 ];
 
 /** Each &&-separated part must be a listed program, or bun run with a script in package.json. */
