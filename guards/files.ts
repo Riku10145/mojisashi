@@ -31,12 +31,13 @@ const rootFiles = new Set([
 // Below the root, by kind. JavaScript and .d.ts files are out of reach of the type check and of
 // ESLint's zone rules, and a .d.ts can declare a value that does not exist. A folder whose name
 // starts with a dot, such as .config/, is where some tools look for config, so only .github/ is
-// allowed, file by file.
+// allowed, file by file, and the Markdown of Claude Code skills, which configures no tool.
 const nestedFile = [
   /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
   /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
   /^public\/_headers$/,
   /^\.github\/(guarded-paths|guards-unchanged\.sh|workflows\/[\w-]+\.yml)$/,
+  /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];
 
 // Every file under guard-probes/ belongs to a test that reads it.
