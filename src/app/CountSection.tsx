@@ -30,11 +30,10 @@ export function CountSection(): ReactNode {
       </dl>
       <NumberField label="目標の文字数" min={1} max={1_000_000} onNumber={setTarget} />
       <Choice legend="目標と比べる数え方" options={countingRules} value={rule} onChoose={setRule} />
-      {target !== undefined && (
-        <p aria-live="polite" className="font-bold text-slate-900">
-          {gapMessage(target, counts[rule])}
-        </p>
-      )}
+      {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
+      <p aria-live="polite" className="font-bold text-slate-900">
+        {target !== undefined && gapMessage(target, counts[rule])}
+      </p>
     </section>
   );
 }

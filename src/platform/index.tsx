@@ -15,7 +15,7 @@ export function TextBox({ label, text, onText }: TextBoxProps): ReactNode {
       </label>
       <textarea
         id={id}
-        className="mt-2 block w-full rounded-md border border-slate-400 bg-white p-3 leading-relaxed text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="mt-2 block w-full rounded-md border border-slate-500 bg-white p-3 leading-relaxed text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         rows={8}
         // Chrome's enhanced spell check sends the text to Google.
         spellCheck={false}
@@ -30,11 +30,17 @@ export function TextBox({ label, text, onText }: TextBoxProps): ReactNode {
   );
 }
 
-/** A whole number from min to max, or undefined. Full-width digits count, as an IME types them. */
+/**
+ * A whole number from min to max, or undefined. Full-width digits count, as an IME types them,
+ * and so do thousands separators in their places, as in 1,000.
+ */
 export function wholeNumberIn(raw: string, min: number, max: number): number | undefined {
-  const digits = raw.normalize("NFKC").trim();
-  const value = Number(digits);
-  return /^\d+$/.test(digits) && value >= min && value <= max ? value : undefined;
+  const written = raw.normalize("NFKC").trim();
+  if (!/^(\d+|\d{1,3}(,\d{3})+)$/.test(written)) {
+    return undefined;
+  }
+  const value = Number(written.replaceAll(",", ""));
+  return value >= min && value <= max ? value : undefined;
 }
 
 export type NumberFieldProps = {
@@ -55,7 +61,7 @@ export function NumberField({ label, min, max, onNumber }: NumberFieldProps): Re
       </label>
       <input
         id={id}
-        className="mt-2 block w-40 rounded-md border border-slate-400 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="mt-2 block w-40 rounded-md border border-slate-500 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         type="text"
         inputMode="numeric"
         value={raw}
