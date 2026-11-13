@@ -32,6 +32,17 @@ test("npm の版でない依存は、公開日を確かめられないので止�
   expect(() => pinsOf(lock)).toThrow(Error);
 });
 
+// bun installs from entry[1] when it is set, so this lock installs vite 8.3.8 while entry[0]
+// names 8.3.6. Found in the second review; test.fails records that pinsOf still accepts it.
+test.fails("取得先が npm のレジストリでない項目は止める", () => {
+  const lock = {
+    packages: {
+      vite: ["vite@8.3.6", "https://registry.npmjs.org/vite/-/vite-8.3.8.tgz", {}, "sha512-d"],
+    },
+  };
+  expect(() => pinsOf(lock)).toThrow(Error);
+});
+
 test("bun pm view の time から、その版の公開日を取り出す", () => {
   const times = { created: "2020-04-21T05:05:15.476Z", "8.3.8": "2026-11-11T02:49:46.387Z" };
   expect(publishedAtOf(times, "8.3.8")).toEqual(new Date("2026-11-11T02:49:46.387Z"));

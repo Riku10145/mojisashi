@@ -49,18 +49,37 @@ const blocked: Record<string, string> = {
   "ts-expect-error.ts": "@typescript-eslint/ban-ts-comment",
 };
 
+// Bypasses found in the second review that every rule above lets through. it.fails records that
+// the checks still miss them, so `bun run check` fails once a rule starts stopping one.
+const missed: string[] = [
+  "object-assign-cookie.ts",
+  "object-assign-location.ts",
+  "object-assign-inner-html.ts",
+  "anchor-search.ts",
+  "anchor-hash.ts",
+  "anchor-attribute-node.ts",
+  "image-src.ts",
+  "dynamic-import.ts",
+];
+
 const results = await new ESLint({ cwd: root, ignore: false }).lintFiles(["guard-probes"]);
 const messagesOf = (file: string) =>
   results.find((result) => result.filePath === `${root}guard-probes/${file}`)?.messages;
 
 it("guard-probes/blocked のファイルが、すべて表にある", async () => {
   const files = await readdir(new URL("guard-probes/blocked/", import.meta.url));
-  expect(files.toSorted()).toEqual(Object.keys(blocked).toSorted());
+  expect(files.toSorted()).toEqual([...Object.keys(blocked), ...missed].toSorted());
 });
 
 for (const [file, rule] of Object.entries(blocked)) {
   it(`${file} を ${rule} が止める`, () => {
     expect(messagesOf(`blocked/${file}`)?.map((message) => message.ruleId)).toContain(rule);
+  });
+}
+
+for (const file of missed) {
+  it.fails(`${file} を止める（まだ止まらない）`, () => {
+    expect(messagesOf(`blocked/${file}`)).not.toEqual([]);
   });
 }
 
