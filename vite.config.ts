@@ -1,20 +1,10 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { fileURLToPath } from "node:url";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 
-const guardProbes = fileURLToPath(new URL("guard-probes/", import.meta.url));
-
-// ESLint skips guard-probes, so the page must never load code from there.
-const keepGuardProbesOut: Plugin = {
-  name: "keep-guard-probes-out",
-  load(id) {
-    if (id.startsWith(guardProbes)) {
-      this.error(`${id} は ESLint の守りを試すためのコードなので、ページに入れられません。`);
-    }
-  },
-};
-
+// scripts/verify-dist.ts rebuilds the page with its own copy of these options and fails the build
+// when dist/ differs, so a change here must be made there too.
 export default defineConfig({
-  plugins: [keepGuardProbesOut, react(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
+  build: { assetsInlineLimit: 0 },
 });

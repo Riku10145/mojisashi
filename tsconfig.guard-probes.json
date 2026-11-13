@@ -6,5 +6,5 @@
     "types": [],
     "jsx": "react-jsx"
   },
-  "include": ["guard-probes"]
+  "include": ["guard-probes/blocked", "guard-probes/allowed"]
 }

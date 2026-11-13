@@ -5,11 +5,5 @@
     "lib": ["ES2023"],
     "types": ["bun"]
   },
-  "include": [
-    "vite.config.ts",
-    "eslint.config.ts",
-    "eslint.config.test.ts",
-    "index.html.test.ts",
-    "scripts"
-  ]
+  "include": ["vite.config.ts", "eslint.config.ts", "eslint.config.test.ts", "scripts"]
 }
