@@ -14,6 +14,8 @@ export function TextBox({ label, text, onText }: TextBoxProps): ReactNode {
       <textarea
         id={id}
         rows={8}
+        // Chrome's enhanced spell check sends the text to Google.
+        spellCheck={false}
         value={text}
         onChange={(event) => {
           onText(event.currentTarget.value);

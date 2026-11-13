@@ -71,10 +71,10 @@ export const zones = {
       "Clipboard.writeText",
     ],
     imports: { react: ["useId", "useState"] },
-    testImports: vitest,
+    testImports: { ...vitest, "react-dom/server": ["renderToString"] },
     tags: ["div", "p", "label", "textarea", "input", "fieldset", "legend", "button"],
     attributes:
-      "id key htmlFor rows value type inputMode name checked disabled role onChange onClick children".split(
+      "id key htmlFor rows value type inputMode name checked disabled role spellCheck onChange onClick children".split(
         " ",
       ),
     dynamicAttributes:

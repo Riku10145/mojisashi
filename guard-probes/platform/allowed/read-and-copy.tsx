@@ -5,6 +5,7 @@ export function Paste(props: { onText: (text: string) => void }): ReactNode {
   return (
     <div>
       <textarea
+        spellCheck={false}
         onChange={(event) => {
           props.onText(event.currentTarget.value);
         }}

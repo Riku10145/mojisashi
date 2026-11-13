@@ -1,5 +1,6 @@
+import { renderToString } from "react-dom/server";
 import { expect, test } from "vitest";
-import { wholeNumberIn } from "./index";
+import { TextBox, wholeNumberIn } from "./index";
 
 test("範囲の中の整数を読む", () => {
   expect(wholeNumberIn("400", 1, 100_000)).toBe(400);
@@ -14,4 +15,9 @@ test("整数でない、または範囲の外なら undefined", () => {
   for (const raw of ["", "abc", "1.5", "-3", "0", "100001", "1e3"]) {
     expect(wholeNumberIn(raw, 1, 100_000)).toBeUndefined();
   }
+});
+
+test("文章の入力欄は、スペルチェックで文章を送らない", () => {
+  const html = renderToString(<TextBox label="文章" text="" onText={() => undefined} />);
+  expect(html).toMatch(/<textarea[^>]* spellcheck="false"/i);
 });

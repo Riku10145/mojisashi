@@ -48,6 +48,11 @@ describe("書き出した index.html", () => {
     expect(htmlProblems(page(head))).toEqual([]);
   });
 
+  it("スペルチェックを止めた入力欄は通る", () => {
+    const body = '<div id="root"><textarea id="t" rows="8" spellcheck="false"></textarea></div>';
+    expect(htmlProblems(page(head, body))).toEqual([]);
+  });
+
   it.each([
     ["インラインのスクリプト", "<script>localStorage.draft = 1</script>"],
     ["インラインのスタイル", "<style>p { color: red }</style>"],
@@ -64,6 +69,7 @@ describe("書き出した index.html", () => {
     ["on で始まる属性", '<div id="root" onclick="fetch(1)"></div>'],
     ["style 属性", '<div id="root" style="color: red"></div>'],
     ["画像", '<div id="root"><img src="/pixel?t=x"></div>'],
+    ["スペルチェックが動く入力欄", '<div id="root"><textarea id="t"></textarea></div>'],
   ])("body の %s を止める", (_, body) => {
     expect(htmlProblems(page(head, body))).not.toEqual([]);
   });
