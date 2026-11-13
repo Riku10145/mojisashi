@@ -10,9 +10,12 @@ export function TextBox({ label, text, onText }: TextBoxProps): ReactNode {
   const id = useId();
   return (
     <div>
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id} className="block font-bold text-slate-900">
+        {label}
+      </label>
       <textarea
         id={id}
+        className="mt-2 block w-full rounded-md border border-slate-400 bg-white p-3 leading-relaxed text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         rows={8}
         // Chrome's enhanced spell check sends the text to Google.
         spellCheck={false}
@@ -47,9 +50,12 @@ export function NumberField({ label, min, max, onNumber }: NumberFieldProps): Re
   const [raw, setRaw] = useState("");
   return (
     <div>
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id} className="block font-bold text-slate-900">
+        {label}
+      </label>
       <input
         id={id}
+        className="mt-2 block w-40 rounded-md border border-slate-400 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         type="text"
         inputMode="numeric"
         value={raw}
@@ -80,10 +86,11 @@ export function Choice<T extends string>({
   const name = useId();
   return (
     <fieldset>
-      <legend>{legend}</legend>
+      <legend className="font-bold text-slate-900">{legend}</legend>
       {options.map((option) => (
-        <label key={option.value}>
+        <label key={option.value} className="mt-2 flex items-center gap-2 text-slate-900">
           <input
+            className="size-4 accent-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             type="radio"
             name={name}
             checked={option.value === value}
@@ -104,6 +111,7 @@ export type ButtonProps = { children: ReactNode; onPress: () => void; disabled?:
 export function Button({ children, onPress, disabled = false }: ButtonProps): ReactNode {
   return (
     <button
+      className="rounded-md bg-slate-900 px-4 py-2 font-bold text-white disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
       type="button"
       disabled={disabled}
       onClick={() => {
@@ -123,6 +131,7 @@ export function CopyButton({ text, children }: CopyButtonProps): ReactNode {
   return (
     <div>
       <button
+        className="rounded-md bg-slate-900 px-4 py-2 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         type="button"
         onClick={() => {
           navigator.clipboard.writeText(text).then(
@@ -137,7 +146,7 @@ export function CopyButton({ text, children }: CopyButtonProps): ReactNode {
       >
         {children}
       </button>
-      <p role="status">
+      <p role="status" className="mt-2 text-slate-600">
         {state === "copied" ? "コピーしました" : state === "failed" ? "コピーできませんでした" : ""}
       </p>
     </div>

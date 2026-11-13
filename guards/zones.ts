@@ -74,7 +74,7 @@ export const zones = {
     testImports: { ...vitest, "react-dom/server": ["renderToString"] },
     tags: ["div", "p", "label", "textarea", "input", "fieldset", "legend", "button"],
     attributes:
-      "id key htmlFor rows value type inputMode name checked disabled role spellCheck autoComplete onChange onClick children".split(
+      "className id key htmlFor rows value type inputMode name checked disabled role spellCheck autoComplete onChange onClick children".split(
         " ",
       ),
     dynamicAttributes:
