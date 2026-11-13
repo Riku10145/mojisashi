@@ -85,6 +85,8 @@ describe("package.json", () => {
     ["待ち時間を外す bun add", { scripts: { up: "bun add -d vite --minimum-release-age=0" } }],
     ["; でつなぐ", { scripts: { test: "vitest run; curl https://example.com" } }],
     ["ない script を呼ぶ", { scripts: { check: "bun run missing" } }],
+    ["設定のファイルを名指ししない eslint", { scripts: { lint: "eslint --max-warnings 0 ." } }],
+    ["設定のファイルを名指ししない vitest", { scripts: { test: "vitest run" } }],
     ["ほかの環境変数", { scripts: { x: "BUN_CONFIG_MINIMUM_RELEASE_AGE=0 bun scripts/x.ts" } }],
     ["git の依存", { dependencies: { react: "github:facebook/react" } }],
     ["trustedDependencies", { trustedDependencies: ["esbuild"] }],
@@ -92,15 +94,6 @@ describe("package.json", () => {
   ])("%s を止める", (_, change) => {
     expect(packageProblems({ ...(typeof pkg === "object" ? pkg : {}), ...change })).not.toEqual([]);
   });
-});
-
-// Fails until lint and test name their config: ESLint and Vitest prefer eslint.config.js and
-// vitest.config.js to the guarded files when they find one.
-it.fails.each([
-  ["eslint", { scripts: { lint: "eslint --max-warnings 0 ." } }],
-  ["vitest", { scripts: { test: "vitest run" } }],
-])("設定のファイルを名指ししない %s を止める", (_, change) => {
-  expect(packageProblems({ ...(typeof pkg === "object" ? pkg : {}), ...change })).not.toEqual([]);
 });
 
 describe("lefthook.yml", () => {

@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
+import { fileProblems } from "./files";
 import { zones } from "./zones";
 
 const root = new URL("../", import.meta.url);
@@ -8,60 +9,30 @@ const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "
   .split("\0")
   .filter((file) => file !== "");
 
-// JavaScript and .d.ts files are out of reach of the type check and of ESLint's zone rules, and a
-// .d.ts can declare a value that does not exist. .npmrc and similar files change where packages
-// come from. Everything not matched here fails.
-const allowedFile = [
-  /^(?!.*\.d\.ts$)[\w./-]+\.tsx?$/,
-  /^[\w./-]+\.(json|md|css|html|yml|toml)$/,
-  /^bun\.lock$/,
-  /^\.gitignore$/,
-  /^public\/_headers$/,
-  /^\.github\/guarded-paths$/,
-  /^\.github\/guards-unchanged\.sh$/,
-];
+describe("fileProblems", () => {
+  it("いまのファイルは通る", () => {
+    expect(fileProblems(tracked)).toEqual([]);
+  });
 
-// Every file under guard-probes/ belongs to a test that reads it.
-const claimedProbe = [
-  /^guard-probes\/(app|platform)\/tsconfig\.json$/,
-  /^guard-probes\/(app|platform)\/(blocked|allowed)\/[\w-]+\.tsx?$/,
-  /^guard-probes\/build\/(blocked|allowed|helpers)\/[\w-]+\.(ts|html)$/,
-];
-
-it("決めた種類のファイルだけがある", () => {
-  expect(tracked.filter((file) => !allowedFile.some((pattern) => pattern.test(file)))).toEqual([]);
-});
-
-// Fails until the root holds only files listed by name: these are config files that a tool finds by
-// name and reads instead of the guarded one.
-it.fails("ルートに、ツールが名前で見つける設定のファイルを足せない", () => {
-  const added = [
-    "vitest.config.ts",
-    "vitest.workspace.json",
-    "postcss.config.ts",
-    ".postcssrc.json",
-    "tailwind.config.ts",
-    ".lefthook.yml",
-    "lefthook-local.yml",
-    ".config/lefthook.yml",
-  ];
-  expect(added.filter((file) => allowedFile.some((pattern) => pattern.test(file)))).toEqual([]);
-});
-
-it("guard-probes/ のファイルは、すべてテストが読む", () => {
-  expect(
-    tracked.filter(
-      (file) =>
-        file.startsWith("guard-probes/") && !claimedProbe.some((pattern) => pattern.test(file)),
-    ),
-  ).toEqual([]);
-});
-
-it("src/ のファイルは、どれか1つのゾーンにある", () => {
-  const dirs = Object.values(zones).map((zone) => zone.dir);
-  expect(
-    tracked.filter((file) => file.startsWith("src/") && !dirs.some((dir) => file.startsWith(dir))),
-  ).toEqual([]);
+  it.each([
+    ["JavaScript", "src/app/leak.js"],
+    [".d.ts", "src/app/globals.d.ts"],
+    ["ESLint の設定", "eslint.config.js"],
+    ["Vitest の設定", "vitest.config.ts"],
+    ["Vitest のワークスペース", "vitest.workspace.json"],
+    ["PostCSS の設定", "postcss.config.ts"],
+    ["PostCSS の設定", ".postcssrc.json"],
+    ["Tailwind の設定", "tailwind.config.ts"],
+    ["lefthook の設定", ".lefthook.yml"],
+    ["lefthook の設定", "lefthook-local.yml"],
+    ["lefthook の設定", ".config/lefthook.yml"],
+    ["npm の設定", ".npmrc"],
+    ["環境変数", ".env.local"],
+    ["テストが読まない probe", "guard-probes/app/note.md"],
+    ["ゾーンの外のコード", "src/leak.ts"],
+  ])("%s を止める（%s）", (_, file) => {
+    expect(fileProblems([...tracked, file])).not.toEqual([]);
+  });
 });
 
 describe.each(Object.entries(zones))("%s ゾーンの tsconfig", (_, zone) => {

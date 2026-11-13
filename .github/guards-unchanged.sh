@@ -7,6 +7,8 @@ head="$2"
 merge_base="$(git merge-base "$base" "$head")"
 mapfile -t paths < <(grep -v '^#' .github/guarded-paths | grep -v '^$')
 changed="$(git diff --name-only "$merge_base" "$head" -- "${paths[@]}")"
+# Tools find their config by name in the root, so a file added there may replace a guarded one.
+added_root="$(git diff --name-only --diff-filter=A "$merge_base" "$head" -- ':(glob)*')"
 # ADRs may be added, never changed or removed.
 adrs="$(git diff --name-only --diff-filter=MDR "$merge_base" "$head" -- docs/adr/)"
 # In package.json only dependency versions may change.
@@ -16,7 +18,7 @@ if ! diff <(git show "$merge_base:package.json" | jq -S "$fields") <(git show "$
   pkg="package.json (dependencies と devDependencies のほか)"
 fi
 specs="$(git show "$head:package.json" | jq -r '[.dependencies, .devDependencies] | add | to_entries[] | select(.value | test("^[~^]?[0-9]+\\.[0-9]+\\.[0-9]+$") | not) | "\(.key)@\(.value)"')"
-all="$(printf '%s\n' "$changed" "$adrs" "$pkg" "$specs" | grep -v '^$' || true)"
+all="$(printf '%s\n' "$changed" "$added_root" "$adrs" "$pkg" "$specs" | grep -v '^$' || true)"
 if [ -n "$all" ]; then
   echo "守りを決めるファイルが変わっています。人が確かめてからマージしてください（ADR 0007）:"
   printf '%s\n' "$all" | sed 's/^/  /'

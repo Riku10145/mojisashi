@@ -7,13 +7,14 @@
     "build": "vite build && NODE_ENV=production bun scripts/prerender.ts && NODE_ENV=production bun scripts/verify-dist.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint --config eslint.config.ts --max-warnings 0 .",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "test": "vitest run",
+    "test": "vitest run --config vite.config.ts",
     "prepare": "lefthook install",
     "check:release-age": "bun scripts/check-release-age.ts",
-    "check": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build"
+    "check:files": "bun scripts/check-files.ts",
+    "check": "bun run check:files && bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build"
   },
   "dependencies": {
     "react": "^19.3.1",

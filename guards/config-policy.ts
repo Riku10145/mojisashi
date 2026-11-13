@@ -123,9 +123,10 @@ export function bunfigProblems(file: string): string[] {
 const programs: readonly RegExp[] = [
   /^vite( build| preview)?$/,
   /^tsc -b$/,
-  /^eslint --max-warnings 0 \.$/,
+  // ESLint and Vitest prefer a .js config they find to the guarded one, so the command names it.
+  /^eslint --config eslint\.config\.ts --max-warnings 0 \.$/,
   /^oxfmt( --check)?$/,
-  /^vitest run$/,
+  /^vitest run --config vite\.config\.ts$/,
   /^lefthook install$/,
   /^(NODE_ENV=production )?bun scripts\/[a-z-]+\.ts$/,
   /^bun install --frozen-lockfile$/,
