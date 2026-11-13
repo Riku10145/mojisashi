@@ -19,3 +19,4 @@ guards/
 guard-probes/
 src/platform/
 src/shell/
+.claude/
