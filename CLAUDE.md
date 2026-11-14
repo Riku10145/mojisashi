@@ -18,6 +18,7 @@
 - `bun run build` で `dist/` にページを書き出し、最後に `scripts/verify-dist.ts` で書き出したものを確かめます。
 - `bun run check` で、ファイルの種類、型、ESLint、整形、テスト、ビルドを順に確かめます。コミットの前には lefthook が、PR では CI が、これを動かします。
 - `bun run check:release-age` で、`bun.lock` のすべての版が、公開から `bunfig.toml` の `minimumReleaseAge` 秒以上たっているかを確かめます。npm に問い合わせるので `bun run check` には入れず、CI が `bun install` の前に別に動かします。
+- `bun run deploy:dev` で、`bun run build` で書き出した `dist/` を、ビルドし直さずに dev環境（`dev.mojisashi.app`）に公開します。`CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` が要ります。手元で動かすときは、cf が使い方の情報を Cloudflare に送らないように、`DO_NOT_TRACK=1` を付けます。`main` に push すると、GitHub Actions がこれを動かします（ADR 0009）。
 
 ## 守ること
 

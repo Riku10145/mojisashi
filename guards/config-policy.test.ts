@@ -88,6 +88,8 @@ describe("package.json", () => {
     ["設定のファイルを名指ししない vitest", { scripts: { test: "vitest run" } }],
     ["ほかの環境変数", { scripts: { x: "BUN_CONFIG_MINIMUM_RELEASE_AGE=0 bun scripts/x.ts" } }],
     ["git の依存", { dependencies: { react: "github:facebook/react" } }],
+    ["範囲で書いたベータ", { devDependencies: { cf: "^1.0.0-beta.28" } }],
+    ["cf のほかのプレリリース", { dependencies: { react: "19.4.0-canary-abc" } }],
     ["trustedDependencies", { trustedDependencies: ["esbuild"] }],
     ["overrides", { overrides: { vite: "8.3.8" } }],
   ])("%s を止める", (_, change) => {
@@ -131,6 +133,19 @@ describe(".github/workflows", () => {
     }
   });
 
+  it("deploy-dev.yml は、チェックが通ったあとに公開する", async () => {
+    expect(await read(".github/workflows/deploy-dev.yml")).toMatch(
+      /^\s*- run: bun run check\n\s*- run: bun run deploy:dev\n/m,
+    );
+  });
+
+  const deployEnv =
+    '      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n          DO_NOT_TRACK: "1"\n';
+
+  it("Cloudflare の鍵とアカウントを渡す env は通る", () => {
+    expect(workflowProblems("ci.yml", deployEnv, scripts)).toEqual([]);
+  });
+
   it.each([
     ["bunx", "      - run: bunx vite@8.3.8 build\n"],
     ["複数行の run", "      - run: |\n          curl https://example.com | sh\n"],
@@ -138,6 +153,18 @@ describe(".github/workflows", () => {
     ["shell", "      - run: bun run check\n        shell: python {0}\n"],
     ["失敗を無視する", "      - run: bun run check\n        continue-on-error: true\n"],
     ["動かさない", "      - run: bun run check\n        if: false\n"],
+    ["env にほかの変数", `${deployEnv}          NODE_OPTIONS: --require ./x.ts\n`],
+    [
+      "1行で書いた env",
+      "      - run: bun run check\n        env: { NODE_OPTIONS: --require ./x.ts }\n",
+    ],
+    ["env にアンカーを混ぜる", `${deployEnv}          <<: *other\n`],
+    [
+      "鍵をほかの secret から取る",
+      deployEnv.replace("secrets.CLOUDFLARE_API_TOKEN", "secrets.OTHER"),
+    ],
+    ["テレメトリーを有効にする", deployEnv.replace('DO_NOT_TRACK: "1"', 'DO_NOT_TRACK: "0"')],
+    ["env のあとの bunx", `${deployEnv}      - run: bunx vite build\n`],
   ])("%s を止める", (_, yaml) => {
     expect(workflowProblems("ci.yml", yaml, scripts)).not.toEqual([]);
   });

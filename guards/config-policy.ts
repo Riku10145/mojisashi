@@ -3,7 +3,7 @@
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
@@ -132,6 +132,9 @@ const programs: readonly RegExp[] = [
   /^lefthook install$/,
   /^(NODE_ENV=production )?bun scripts\/[a-z-]+\.ts$/,
   /^bun install --frozen-lockfile$/,
+  // Deploys an environment of cloudflare.config.ts from dist/ without building (ADR 0009).
+  /^bun scripts\/cloudflare-output\.ts [a-z]+$/,
+  /^cf deploy --prebuilt --mode [a-z]+$/,
   // The Guards workflow: fetch the pull request without checking it out, then compare.
   /^git fetch --no-tags origin "pull\/\$\{\{ github\.event\.pull_request\.number \}\}\/head:pr-head"$/,
   /^bash \.github\/guards-unchanged\.sh "\$\{\{ github\.event\.pull_request\.base\.sha \}\}" pr-head$/,
@@ -156,6 +159,10 @@ export function commandProblems(
 }
 
 const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
+// cf is in beta, so its prerelease is pinned exactly (ADR 0006). Every other package stays on a
+// release; .github/guards-unchanged.sh makes the same exception.
+const prereleaseDependencies = ["cf"];
+const pinnedPrerelease = /^\d+\.\d+\.\d+-[0-9A-Za-z.-]+$/;
 const packageKeys = ["name", "private", "type", "scripts", "dependencies", "devDependencies"];
 
 /** package.json: known fields, plain semver ranges from the registry, and allowed commands. */
@@ -169,7 +176,11 @@ export function packageProblems(pkg: unknown): string[] {
   for (const field of ["dependencies", "devDependencies"]) {
     const dependencies = pkg[field];
     for (const [name, range] of Object.entries(isRecord(dependencies) ? dependencies : {})) {
-      if (typeof range !== "string" || !dependencyRange.test(range)) {
+      const allowed =
+        typeof range === "string" &&
+        (dependencyRange.test(range) ||
+          (prereleaseDependencies.includes(name) && pinnedPrerelease.test(range)));
+      if (!allowed) {
         problems.push(`package.json の ${name} は npm の版の範囲で書きます。${readAdr0007}`);
       }
     }
@@ -189,6 +200,7 @@ export function packageProblems(pkg: unknown): string[] {
 const actions = [
   "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
   "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+  "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
 ];
 
 // Keys that change what interprets run:, where it runs, or whether a failure counts.
@@ -199,6 +211,14 @@ const workflowControlKeys = [
   "env",
   "working-directory",
   "defaults",
+];
+// An env: block may hold these lines only, each exactly: the Cloudflare account cf deploys to, and
+// cf's telemetry turned off. Any other variable, such as NODE_OPTIONS or BUN_CONFIG_*, changes how a
+// command runs.
+const workflowEnv = [
+  "CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}",
+  "CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}",
+  'DO_NOT_TRACK: "1"',
 ];
 const lefthookKeys = ["assert_lefthook_installed", "pre-commit", "commands", "check", "run"];
 
@@ -216,23 +236,52 @@ function runProblems(where: string, value: string, scripts: readonly string[]): 
     : commandProblems(where, value, scripts);
 }
 
-/** A workflow: every run: line is an allowed command and every uses: a pinned action. */
+/** Each line inside an env: block that is not in workflowEnv, and the lines outside every block. */
+function splitEnvBlocks(where: string, yaml: string): { problems: string[]; outside: string } {
+  const problems: string[] = [];
+  const outside: string[] = [];
+  let envColumn: number | undefined;
+  for (const line of yaml.split("\n")) {
+    const content = line.trim();
+    const skipped = content === "" || content.startsWith("#");
+    if (envColumn !== undefined && (skipped || line.search(/\S/) > envColumn)) {
+      if (!skipped && !workflowEnv.includes(content)) {
+        problems.push(`${where} の env の「${content}」は使えません。${readAdr0007}`);
+      }
+      continue;
+    }
+    envColumn = /^\s*(?:-\s+)?(?=env:\s*(?:#.*)?$)/.exec(line)?.[0].length;
+    if (envColumn === undefined) {
+      outside.push(line);
+    }
+  }
+  return { problems, outside: outside.join("\n") };
+}
+
+/**
+ * A workflow: every run: line is an allowed command, every uses: a pinned action, and every line of
+ * an env: block one of workflowEnv.
+ */
 export function workflowProblems(
   where: string,
   yaml: string,
   scripts: readonly string[],
 ): string[] {
-  return yamlEntriesOf(yaml).flatMap(({ key, value }) => {
-    if (key === "run") {
-      return runProblems(where, value, scripts);
-    }
-    if (key === "uses" && !actions.includes(value)) {
-      return [`${where} の ${value} は、決めたアクションではありません。${readAdr0007}`];
-    }
-    return workflowControlKeys.includes(key)
-      ? [`${where} の ${key}: は使えません。${readAdr0007}`]
-      : [];
-  });
+  const { problems, outside } = splitEnvBlocks(where, yaml);
+  return [
+    ...problems,
+    ...yamlEntriesOf(outside).flatMap(({ key, value }) => {
+      if (key === "run") {
+        return runProblems(where, value, scripts);
+      }
+      if (key === "uses" && !actions.includes(value)) {
+        return [`${where} の ${value} は、決めたアクションではありません。${readAdr0007}`];
+      }
+      return workflowControlKeys.includes(key)
+        ? [`${where} の ${key}: は使えません。${readAdr0007}`]
+        : [];
+    }),
+  ];
 }
 
 /** lefthook.yml: only the pre-commit check, which must not run when lefthook is missing. */
