@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   bunfigProblems,
   headersProblems,
+  isRecord,
   lefthookProblems,
   packageProblems,
   workflowProblems,
@@ -73,19 +74,28 @@ describe("bunfig.toml", () => {
 });
 
 describe("package.json", () => {
+  const fields = isRecord(pkg) ? pkg : {};
+  const pkgScripts = isRecord(fields["scripts"]) ? fields["scripts"] : {};
+  // Keeps every script the change does not name, so a case fails only for its own change.
+  const changed = (change: Record<string, unknown>) => ({
+    ...fields,
+    ...change,
+    scripts: { ...pkgScripts, ...(isRecord(change["scripts"]) ? change["scripts"] : {}) },
+  });
+
   it("いまの設定は通る", () => {
     expect(packageProblems(pkg)).toEqual([]);
   });
 
   it.each([
-    ["bunx", { scripts: { build: "bunx vite@8.3.8 build" } }],
-    ["bun x", { scripts: { build: "bun x vite build" } }],
-    ["npx", { scripts: { build: "npx vite build" } }],
+    ["bunx", { scripts: { x: "bunx vite@8.3.8 build" } }],
+    ["bun x", { scripts: { x: "bun x vite build" } }],
+    ["npx", { scripts: { x: "npx vite build" } }],
     ["待ち時間を外す bun add", { scripts: { up: "bun add -d vite --minimum-release-age=0" } }],
-    ["; でつなぐ", { scripts: { test: "vitest run; curl https://example.com" } }],
-    ["ない script を呼ぶ", { scripts: { check: "bun run missing" } }],
-    ["設定のファイルを名指ししない eslint", { scripts: { lint: "eslint --max-warnings 0 ." } }],
-    ["設定のファイルを名指ししない vitest", { scripts: { test: "vitest run" } }],
+    ["; でつなぐ", { scripts: { x: "vitest run; curl https://example.com" } }],
+    ["ない script を呼ぶ", { scripts: { x: "bun run missing" } }],
+    ["設定のファイルを名指ししない eslint", { scripts: { x: "eslint --max-warnings 0 ." } }],
+    ["設定のファイルを名指ししない vitest", { scripts: { x: "vitest run" } }],
     ["ほかの環境変数", { scripts: { x: "BUN_CONFIG_MINIMUM_RELEASE_AGE=0 bun scripts/x.ts" } }],
     ["git の依存", { dependencies: { react: "github:facebook/react" } }],
     ["範囲で書いたベータ", { devDependencies: { cf: "^1.0.0-beta.28" } }],
@@ -93,7 +103,46 @@ describe("package.json", () => {
     ["trustedDependencies", { trustedDependencies: ["esbuild"] }],
     ["overrides", { overrides: { vite: "8.3.8" } }],
   ])("%s を止める", (_, change) => {
-    expect(packageProblems({ ...(typeof pkg === "object" ? pkg : {}), ...change })).not.toEqual([]);
+    expect(packageProblems(changed(change))).not.toEqual([]);
+  });
+
+  const check = typeof pkgScripts["check"] === "string" ? pkgScripts["check"] : "";
+
+  it.each([
+    ["check から lint を外す", { check: check.replace(" && bun run lint", "") }],
+    [
+      "check で build を test より先にする",
+      {
+        check: check
+          .replace(" && bun run test", "")
+          .replace("bun run build", "bun run build && bun run test"),
+      },
+    ],
+    ["lint を oxfmt にする", { lint: "oxfmt" }],
+    ["build から確かめを外す", { build: "vite build" }],
+    ["format:check を整形にする", { "format:check": "oxfmt" }],
+  ])("%s のを止める", (_, change) => {
+    expect(packageProblems(changed({ scripts: change }))).not.toEqual([]);
+  });
+
+  it("check を消すのを止める", () => {
+    const scripts = Object.fromEntries(
+      Object.entries(pkgScripts).filter(([name]) => name !== "check"),
+    );
+    expect(packageProblems({ ...fields, scripts })).not.toEqual([]);
+  });
+
+  it.each([
+    ["check に手順を足す", { check: `${check} && bun run check:release-age` }],
+    [
+      "build に手順を足す",
+      {
+        build:
+          "bun scripts/check-files.ts && vite build && NODE_ENV=production bun scripts/prerender.ts && NODE_ENV=production bun scripts/verify-dist.ts",
+      },
+    ],
+  ])("%s のは通る", (_, change) => {
+    expect(packageProblems(changed({ scripts: change }))).toEqual([]);
   });
 });
 
