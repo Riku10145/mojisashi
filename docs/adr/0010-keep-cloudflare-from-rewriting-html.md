@@ -8,7 +8,9 @@ Cloudflare の無料プランでは、RUM（Real User Monitoring）が最初か�
 - ページを開くたびに、コンソールに CSP の違反が出ます。本当の不具合による違反と見分けにくくなります。
 - RUM を切る設定はダッシュボードで見つかりませんでした。画面の設定は変わることがあるので、設定には頼りません。
 
-そこで `public/_headers` で、HTML を返す `/` にだけ `Cache-Control: public, max-age=0, must-revalidate, no-transform` を付けます。`no-transform` があると、Cloudflare は中身を書き換えません。ほかの値は、Cloudflare が静的なファイルに付ける既定の値と同じです。
+そこで `public/_headers` で、HTML を返す `/` にだけ `Cache-Control: public, max-age=0, must-revalidate, no-transform` を付けます。`no-transform` があると、Cloudflare は中身を書き換えません。`no-transform` のほかの値は、Cloudflare が静的なファイルに付ける既定の値と同じです。
+
+このルール1つで足りるのは、HTML を返す URL が `/` だけだからです。ADR 0005 のとおりページは1つで、`/index.html` と `/index` は `/` へ転送されます。ページを足すときは、その URL にも `no-transform` を付けます。
 
 JS と CSS には `no-transform` を付けません。`no-transform` があると Cloudflare は圧縮もしなくなり、JS は gzip で約70KBになるところを、約223KBのまま届けることになります。スクリプトが書き足されるのは HTML だけなので、HTML にだけ付ければ足ります。HTML は3KBに満たないので、圧縮されなくても困りません。
 
