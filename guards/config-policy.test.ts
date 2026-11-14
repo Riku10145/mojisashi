@@ -139,7 +139,7 @@ describe(".github/workflows", () => {
   });
 
   const deployEnv =
-    "      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n";
+    '      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n          DO_NOT_TRACK: "1"\n';
 
   it("Cloudflare の鍵とアカウントを渡す env は通る", () => {
     expect(workflowProblems("ci.yml", deployEnv, scripts)).toEqual([]);
@@ -162,6 +162,7 @@ describe(".github/workflows", () => {
       "鍵をほかの secret から取る",
       deployEnv.replace("secrets.CLOUDFLARE_API_TOKEN", "secrets.OTHER"),
     ],
+    ["テレメトリーを有効にする", deployEnv.replace('DO_NOT_TRACK: "1"', 'DO_NOT_TRACK: "0"')],
     ["env のあとの bunx", `${deployEnv}      - run: bunx vite build\n`],
   ])("%s を止める", (_, yaml) => {
     expect(workflowProblems("ci.yml", yaml, scripts)).not.toEqual([]);

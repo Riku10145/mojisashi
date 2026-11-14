@@ -204,11 +204,13 @@ const workflowControlKeys = [
   "working-directory",
   "defaults",
 ];
-// An env: block may hold these lines only, each exactly: the Cloudflare account cf deploys to. Any
-// other variable, such as NODE_OPTIONS or BUN_CONFIG_*, changes how a command runs.
+// An env: block may hold these lines only, each exactly: the Cloudflare account cf deploys to, and
+// cf's telemetry turned off. Any other variable, such as NODE_OPTIONS or BUN_CONFIG_*, changes how a
+// command runs.
 const workflowEnv = [
   "CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}",
   "CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}",
+  'DO_NOT_TRACK: "1"',
 ];
 const lefthookKeys = ["assert_lefthook_installed", "pre-commit", "commands", "check", "run"];
 
