@@ -88,6 +88,7 @@ describe("package.json", () => {
     ["設定のファイルを名指ししない vitest", { scripts: { test: "vitest run" } }],
     ["ほかの環境変数", { scripts: { x: "BUN_CONFIG_MINIMUM_RELEASE_AGE=0 bun scripts/x.ts" } }],
     ["git の依存", { dependencies: { react: "github:facebook/react" } }],
+    ["範囲で書いたベータ", { devDependencies: { cf: "^1.0.0-beta.28" } }],
     ["trustedDependencies", { trustedDependencies: ["esbuild"] }],
     ["overrides", { overrides: { vite: "8.3.8" } }],
   ])("%s を止める", (_, change) => {

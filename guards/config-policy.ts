@@ -155,7 +155,8 @@ export function commandProblems(
     .map((part) => `${where} の「${part}」は、決めたコマンドではありません。${readAdr0007}`);
 }
 
-const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
+// A prerelease such as a cf beta is pinned exactly (ADR 0006).
+const dependencyRange = /^([~^]?\d+\.\d+\.\d+|\d+\.\d+\.\d+-[0-9A-Za-z.-]+)$/;
 const packageKeys = ["name", "private", "type", "scripts", "dependencies", "devDependencies"];
 
 /** package.json: known fields, plain semver ranges from the registry, and allowed commands. */
