@@ -1,8 +1,15 @@
 // ESLint rules that enforce the allowlists in guards/zones.ts (ADR 0007).
-import { AST_NODE_TYPES as T, ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
+import {
+  ASTUtils,
+  AST_NODE_TYPES as T,
+  ESLintUtils,
+  type TSESLint,
+  type TSESTree,
+} from "@typescript-eslint/utils";
 import ts from "typescript";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
+const readAdr0012 = "docs/adr/0012-require-a-label-for-every-field.md を読んでください。";
 const createRule = ESLintUtils.RuleCreator.withoutDocs;
 
 const stringList = { type: "array", items: { type: "string" } } as const;
@@ -352,6 +359,87 @@ export const importsRule = createRule<
       },
       ExportAllDeclaration(node) {
         check(node, node.source.value);
+      },
+    };
+  },
+});
+
+// ---- local/field-label ----------------------------------------------------------------------------
+
+const fields = ["input", "textarea", "select"];
+
+const tagOf = (node: TSESTree.JSXOpeningElement) =>
+  node.name.type === T.JSXIdentifier ? node.name.name : undefined;
+
+/**
+ * A field needs a <label>: one that wraps it, or one whose htmlFor is the field's id. The two match
+ * when they are the same string, or the same variable, so an id that only looks the same in another
+ * component does not count.
+ */
+export const fieldLabelRule = createRule<[], "unlabelled">({
+  meta: {
+    type: "problem",
+    messages: {
+      unlabelled: `<{{name}}> にラベルがありません。<label> で囲むか、<label htmlFor> と同じ id を付けます。${readAdr0012}`,
+    },
+    schema: [],
+    defaultOptions: [],
+  },
+  create(context) {
+    type Target = string | TSESLint.Scope.Variable;
+    const labelled = new Set<Target>();
+    const awaiting: { node: TSESTree.JSXOpeningElement; name: string; id: Target | undefined }[] =
+      [];
+
+    function targetOf(node: TSESTree.JSXOpeningElement, name: string): Target | undefined {
+      const attribute = node.attributes.find(
+        (candidate) =>
+          candidate.type === T.JSXAttribute &&
+          candidate.name.type === T.JSXIdentifier &&
+          candidate.name.name === name,
+      );
+      if (attribute?.type !== T.JSXAttribute || attribute.value === null) {
+        return undefined;
+      }
+      const value =
+        attribute.value.type === T.JSXExpressionContainer
+          ? attribute.value.expression
+          : attribute.value;
+      if (value.type === T.Literal) {
+        return typeof value.value === "string" && value.value !== "" ? value.value : undefined;
+      }
+      if (value.type === T.Identifier) {
+        return ASTUtils.findVariable(context.sourceCode.getScope(value), value) ?? undefined;
+      }
+      return undefined;
+    }
+
+    const insideLabel = (node: TSESTree.JSXOpeningElement) =>
+      context.sourceCode
+        .getAncestors(node)
+        .some(
+          (ancestor) =>
+            ancestor.type === T.JSXElement && tagOf(ancestor.openingElement) === "label",
+        );
+
+    return {
+      JSXOpeningElement(node) {
+        const name = tagOf(node);
+        if (name === "label") {
+          const target = targetOf(node, "htmlFor");
+          if (target !== undefined) {
+            labelled.add(target);
+          }
+        } else if (name !== undefined && fields.includes(name) && !insideLabel(node)) {
+          awaiting.push({ node, name, id: targetOf(node, "id") });
+        }
+      },
+      "Program:exit"() {
+        for (const { node, name, id } of awaiting) {
+          if (id === undefined || !labelled.has(id)) {
+            context.report({ node, messageId: "unlabelled", data: { name } });
+          }
+        }
       },
     };
   },

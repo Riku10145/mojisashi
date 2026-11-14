@@ -3,7 +3,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y-x";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint, { type CompatiblePlugin } from "typescript-eslint";
-import { browserRule, importsRule, jsxRule } from "./guards/rules";
+import { browserRule, fieldLabelRule, importsRule, jsxRule } from "./guards/rules";
 import { browserSinks, zones } from "./guards/zones";
 
 const readAdr0003 = "docs/adr/0003-prefer-mechanical-guards.md を読んでください。";
@@ -11,7 +11,12 @@ const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでくだ�
 
 const localPlugin = {
   meta: { name: "local" },
-  rules: { browser: browserRule, jsx: jsxRule, imports: importsRule },
+  rules: {
+    browser: browserRule,
+    jsx: jsxRule,
+    imports: importsRule,
+    "field-label": fieldLabelRule,
+  },
 };
 // typescript-eslint's plugin type accepts the rules that @typescript-eslint/utils creates.
 const local: CompatiblePlugin = localPlugin;
@@ -65,7 +70,17 @@ export default defineConfig([
       ],
     },
   },
-  { files: ["**/*.tsx"], extends: [jsxA11y.configs.strict] },
+  {
+    files: ["**/*.tsx"],
+    extends: [jsxA11y.configs.strict],
+    rules: {
+      // strict ships this rule off. Turning it on by severity alone keeps the options strict ships,
+      // which skip input and textarea: the rule cannot see a <label htmlFor>, so local/field-label
+      // checks those.
+      "jsx-a11y-x/control-has-associated-label": "error",
+      "local/field-label": "error",
+    },
+  },
   ...Object.values(zones).map((zone) => ({
     files: [zone.dir, ...("probes" in zone ? [zone.probes] : [])].map(
       (dir) => `${dir}**/*.{ts,tsx}`,
