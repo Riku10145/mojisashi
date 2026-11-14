@@ -158,8 +158,11 @@ export function commandProblems(
     .map((part) => `${where} の「${part}」は、決めたコマンドではありません。${readAdr0007}`);
 }
 
-// A prerelease such as a cf beta is pinned exactly (ADR 0006).
-const dependencyRange = /^([~^]?\d+\.\d+\.\d+|\d+\.\d+\.\d+-[0-9A-Za-z.-]+)$/;
+const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
+// cf is in beta, so its prerelease is pinned exactly (ADR 0006). Every other package stays on a
+// release; .github/guards-unchanged.sh makes the same exception.
+const prereleaseDependencies = ["cf"];
+const pinnedPrerelease = /^\d+\.\d+\.\d+-[0-9A-Za-z.-]+$/;
 const packageKeys = ["name", "private", "type", "scripts", "dependencies", "devDependencies"];
 
 /** package.json: known fields, plain semver ranges from the registry, and allowed commands. */
@@ -173,7 +176,11 @@ export function packageProblems(pkg: unknown): string[] {
   for (const field of ["dependencies", "devDependencies"]) {
     const dependencies = pkg[field];
     for (const [name, range] of Object.entries(isRecord(dependencies) ? dependencies : {})) {
-      if (typeof range !== "string" || !dependencyRange.test(range)) {
+      const allowed =
+        typeof range === "string" &&
+        (dependencyRange.test(range) ||
+          (prereleaseDependencies.includes(name) && pinnedPrerelease.test(range)));
+      if (!allowed) {
         problems.push(`package.json の ${name} は npm の版の範囲で書きます。${readAdr0007}`);
       }
     }
