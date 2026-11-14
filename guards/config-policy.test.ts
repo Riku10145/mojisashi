@@ -132,6 +132,12 @@ describe(".github/workflows", () => {
     }
   });
 
+  it("deploy-dev.yml は、チェックが通ったあとに公開する", async () => {
+    expect(await read(".github/workflows/deploy-dev.yml")).toMatch(
+      /^\s*- run: bun run check\n\s*- run: bun run deploy:dev\n/m,
+    );
+  });
+
   const deployEnv =
     "      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n";
 
