@@ -25,15 +25,18 @@ const origin = "https://mojisashi.test";
 await mkdir(evidence, { recursive: true });
 
 const headersFile = await readFile(join(repo, "public/_headers"), "utf8");
-const headers = Object.fromEntries(
-  headersFile
-    .split("\n")
-    .filter((line) => /^\s+\S+:/.test(line))
-    .map((line) => {
-      const [name, ...rest] = line.trim().split(":");
-      return [name.trim(), rest.join(":").trim()];
-    }),
-);
+// Only rules for a path apply here. A rule for another host, such as https://dev.mojisashi.app/*,
+// never reaches production, so the page must not get it either.
+const headers = {};
+let pattern = "";
+for (const line of headersFile.split("\n")) {
+  if (!/^\s/.test(line)) {
+    pattern = line.trim();
+  } else if (pattern.startsWith("/") && /^\s+\S+:/.test(line)) {
+    const [name, ...rest] = line.trim().split(":");
+    headers[name.trim()] = rest.join(":").trim();
+  }
+}
 if (!headers["Content-Security-Policy"]) throw new Error("public/_headers has no CSP");
 
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
