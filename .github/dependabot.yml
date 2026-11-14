@@ -4,21 +4,20 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    # Equal to minimumReleaseAge in bunfig.toml. A younger version fails bun run check:release-age in
-    # CI. See docs/adr/0012-pin-dependencies-and-update-with-dependabot.md.
+    # Dependabot does not read minimumReleaseAge in bunfig.toml, so this repeats it, and
+    # guards/config-policy.test.ts fails when it is shorter. See
+    # docs/adr/0012-pin-dependencies-and-update-with-dependabot.md.
     cooldown:
       default-days: 7
     commit-message:
       prefix: build
     groups:
-      # cf is a pinned beta, and the two packages that write its Build Output stay on the versions
-      # cf depends on (ADR 0006, 0009). So they get a pull request of their own.
+      # cf is a pinned beta (ADR 0006), so it gets a pull request of its own. Dependabot puts each
+      # dependency in the first group it matches, so packages takes everything but cf.
       cf:
-        patterns: [cf, "@cloudflare/build-output-utils", "@cloudflare/config"]
+        patterns: [cf]
       packages:
         patterns: ["*"]
-        exclude-patterns: [cf, "@cloudflare/build-output-utils", "@cloudflare/config"]
-        update-types: [major, minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:
