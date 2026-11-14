@@ -135,9 +135,6 @@ const programs: readonly RegExp[] = [
   // Deploys an environment of cloudflare.config.ts from dist/ without building (ADR 0009).
   /^bun scripts\/cloudflare-output\.ts [a-z]+$/,
   /^cf deploy --prebuilt --mode [a-z]+$/,
-  // The Guards workflow: fetch the pull request without checking it out, then compare.
-  /^git fetch --no-tags origin "pull\/\$\{\{ github\.event\.pull_request\.number \}\}\/head:pr-head"$/,
-  /^bash \.github\/guards-unchanged\.sh "\$\{\{ github\.event\.pull_request\.base\.sha \}\}" pr-head$/,
 ];
 
 /** Each &&-separated part must be a listed program, or bun run with a script in package.json. */
@@ -160,7 +157,7 @@ export function commandProblems(
 
 const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
 // cf is in beta, so its prerelease is pinned exactly (ADR 0006). Every other package stays on a
-// release; .github/guards-unchanged.sh makes the same exception.
+// release.
 const prereleaseDependencies = ["cf"];
 const pinnedPrerelease = /^\d+\.\d+\.\d+-[0-9A-Za-z.-]+$/;
 const packageKeys = ["name", "private", "type", "scripts", "dependencies", "devDependencies"];
