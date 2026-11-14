@@ -23,7 +23,7 @@
 ## 守ること
 
 - 機能のコードは `src/app/` に書きます。ここでは DOM の型がないので、`document`、`fetch`、`localStorage` のようなブラウザの仕組みは型のエラーになります（ADR 0007）。文章の入出力、コピー、乱数は `src/platform/` の部品を使います。
-- ブラウザに触れるのは `src/platform/` と `src/shell/` だけです。使ってよい要素、属性、パッケージ、ブラウザの仕組みは `guards/zones.ts` に並べてあり、並べていないものは ESLint が止めます。新しく使いたいものは、`guards/zones.ts` に足して、人に確かめてもらいます。
+- ブラウザに触れるのは `src/platform/` と `src/shell/` だけです。使ってよい要素、属性、パッケージ、ブラウザの仕組みは `guards/zones.ts` に並べてあり、並べていないものは ESLint が止めます。ESLint に止められたら、コードを直します。エラーを消すために `guards/zones.ts` へ足すことはしません。機能に要ると決めたときだけ足します（ADR 0012）。
 - `globalThis`、`eval`、`Function`、`Reflect`、`import()` と、型をごまかす書き方（`x is T`、オーバーロード、`declare global`、`namespace`）は、`src/` で使えません。
 - `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。`text!: string` や `let target!: number` の `!`、`declare`、`// @ts-expect-error`、`// @ts-ignore`、`// @ts-nocheck`、`/// <reference>` も止まります。
 - JavaScript のファイルと `.d.ts` を書きません。型のチェックと ESLint の守りが届かないためです。リポジトリのいちばん上には、名前を決めたファイルだけを置きます。ESLint や Vitest は設定のファイルを名前で探し、守りの設定より先に読むことがあるためです。`bun run check:files`（`guards/files.ts`）が、ほかのファイルを止めます。テストの中ではなく、`bun run check` の最初に動きます。
@@ -33,5 +33,4 @@
 - `public/_headers` の CSP をゆるめません。`guards/config-policy.ts` が止めます。きびしくするのは自由です。
 - `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。`bun.lock` は npm のレジストリから入る版だけにします。`package.json` のスクリプト、lefthook、CI で動かせるコマンドは `guards/config-policy.ts` に並べたものだけで、`bunx` や `npx` は止まります。
 - 守りを試すコードは `guard-probes/` に置きます。止まるはずのものは `blocked/` に置き、1行目に `// stopped-by: TS2304` のように、止めるものを書きます。
-- `.github/guarded-paths` のファイルを変えた PR は、CI の「Guards」が失敗します。人が確かめてからマージします。
 - ADR をコードに合わせて書き換えません。決めたことを変えるときは、新しい ADR を足します。
