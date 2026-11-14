@@ -12,12 +12,13 @@ added_root="$(git diff --name-only --diff-filter=A "$merge_base" "$head" -- ':(g
 # ADRs may be added, never changed or removed.
 adrs="$(git diff --name-only --diff-filter=MDR "$merge_base" "$head" -- docs/adr/)"
 # In package.json only dependency versions may change.
+# Each is one exact version; cf alone may be a prerelease (ADR 0006, 0012).
 fields='del(.dependencies, .devDependencies)'
 pkg=""
 if ! diff <(git show "$merge_base:package.json" | jq -S "$fields") <(git show "$head:package.json" | jq -S "$fields") >/dev/null; then
   pkg="package.json (dependencies と devDependencies のほか)"
 fi
-specs="$(git show "$head:package.json" | jq -r '[.dependencies, .devDependencies] | add | to_entries[] | select((.value | test("^[~^]?[0-9]+\\.[0-9]+\\.[0-9]+$")) or (.key == "cf" and (.value | test("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9A-Za-z.-]+$"))) | not) | "\(.key)@\(.value)"')"
+specs="$(git show "$head:package.json" | jq -r '[.dependencies, .devDependencies] | add | to_entries[] | select((.value | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) or (.key == "cf" and (.value | test("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9A-Za-z.-]+$"))) | not) | "\(.key)@\(.value)"')"
 all="$(printf '%s\n' "$changed" "$added_root" "$adrs" "$pkg" "$specs" | grep -v '^$' || true)"
 if [ -n "$all" ]; then
   echo "守りを決めるファイルが変わっています。人が確かめてからマージしてください（ADR 0007）:"

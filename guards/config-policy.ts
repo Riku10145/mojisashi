@@ -2,6 +2,8 @@
 // means the file is allowed. They are allowlists or floors, so tightening never needs an edit here.
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
+const readAdr0012 =
+  "docs/adr/0012-pin-dependencies-and-update-with-dependabot.md を読んでください。";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -160,14 +162,14 @@ export function commandProblems(
     .map((part) => `${where} の「${part}」は、決めたコマンドではありません。${readAdr0007}`);
 }
 
-const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
-// cf is in beta, so its prerelease is pinned exactly (ADR 0006). Every other package stays on a
-// release; .github/guards-unchanged.sh makes the same exception.
+const exactVersion = /^\d+\.\d+\.\d+$/;
+// cf is in beta (ADR 0006). Every other package stays on a release; .github/guards-unchanged.sh
+// makes the same exception.
 const prereleaseDependencies = ["cf"];
 const pinnedPrerelease = /^\d+\.\d+\.\d+-[0-9A-Za-z.-]+$/;
 const packageKeys = ["name", "private", "type", "scripts", "dependencies", "devDependencies"];
 
-/** package.json: known fields, plain semver ranges from the registry, and allowed commands. */
+/** package.json: known fields, one exact version from the registry each, and allowed commands. */
 export function packageProblems(pkg: unknown): string[] {
   if (!isRecord(pkg)) {
     return ["package.json が読めません"];
@@ -177,13 +179,15 @@ export function packageProblems(pkg: unknown): string[] {
     .map((key) => `package.json の ${key} は使えません。${readAdr0007}`);
   for (const field of ["dependencies", "devDependencies"]) {
     const dependencies = pkg[field];
-    for (const [name, range] of Object.entries(isRecord(dependencies) ? dependencies : {})) {
+    for (const [name, version] of Object.entries(isRecord(dependencies) ? dependencies : {})) {
       const allowed =
-        typeof range === "string" &&
-        (dependencyRange.test(range) ||
-          (prereleaseDependencies.includes(name) && pinnedPrerelease.test(range)));
+        typeof version === "string" &&
+        (exactVersion.test(version) ||
+          (prereleaseDependencies.includes(name) && pinnedPrerelease.test(version)));
       if (!allowed) {
-        problems.push(`package.json の ${name} は npm の版の範囲で書きます。${readAdr0007}`);
+        problems.push(
+          `package.json の ${name} は ^ や ~ を付けず、1つの版に決めて書きます。${readAdr0012}`,
+        );
       }
     }
   }
