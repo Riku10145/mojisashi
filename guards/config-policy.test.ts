@@ -60,15 +60,31 @@ describe("bunfig.toml", () => {
   });
 
   it.each([
-    ["待ち時間を下げる", "[install]\nminimumReleaseAge = 86400\n"],
-    ["待ち時間を消す", "[install]\n"],
+    ["待ち時間を下げる", "[install]\nminimumReleaseAge = 86400\nexact = true\n"],
+    ["待ち時間を消す", "[install]\nexact = true\n"],
     [
       "取得先を変える",
-      '[install]\nminimumReleaseAge = 604800\nregistry = "https://example.com/"\n',
+      '[install]\nminimumReleaseAge = 604800\nexact = true\nregistry = "https://example.com/"\n',
     ],
-    ["ほかの表を足す", "[install]\nminimumReleaseAge = 604800\n[install.scopes]\n"],
+    ["ほかの表を足す", "[install]\nminimumReleaseAge = 604800\nexact = true\n[install.scopes]\n"],
+    ["版の範囲を書かせる", "[install]\nminimumReleaseAge = 604800\nexact = false\n"],
+    ["exact = true を消す", bunfig.replace(/^exact = true$/m, "")],
   ])("%s と止める", (_, file) => {
     expect(bunfigProblems(file)).not.toEqual([]);
+  });
+});
+
+describe(".github/dependabot.yml", () => {
+  // Dependabot does not read bunfig.toml. A shorter cooldown opens pull requests with versions
+  // that bun run check:release-age then refuses.
+  it("どの updates の cooldown も、minimumReleaseAge より短くない", async () => {
+    const seconds = Number(/^minimumReleaseAge = (\d+)$/m.exec(bunfig)?.[1]);
+    const updates = (await read(".github/dependabot.yml")).split(/^ {2}- /m).slice(1);
+    expect(updates).not.toEqual([]);
+    for (const update of updates) {
+      const days = Number(/^ +default-days: (\d+)$/m.exec(update)?.[1]);
+      expect(days * 86_400, update.split("\n")[0]).toBeGreaterThanOrEqual(seconds);
+    }
   });
 });
 
@@ -89,6 +105,8 @@ describe("package.json", () => {
     ["ほかの環境変数", { scripts: { x: "BUN_CONFIG_MINIMUM_RELEASE_AGE=0 bun scripts/x.ts" } }],
     ["git の依存", { dependencies: { react: "github:facebook/react" } }],
     ["範囲で書いたベータ", { devDependencies: { cf: "^1.0.0-beta.28" } }],
+    ["^ の範囲", { dependencies: { react: "^19.3.1" } }],
+    ["~ の範囲", { devDependencies: { typescript: "~6.0.3" } }],
     ["cf のほかのプレリリース", { dependencies: { react: "19.4.0-canary-abc" } }],
     ["trustedDependencies", { trustedDependencies: ["esbuild"] }],
     ["overrides", { overrides: { vite: "8.3.8" } }],
@@ -142,6 +160,12 @@ describe(".github/workflows", () => {
   const deployEnv =
     '      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n          DO_NOT_TRACK: "1"\n';
 
+  it("決めたアクションは、ほかのコミットに上げても通る", () => {
+    const uses =
+      "      - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567 # v8.0.0\n";
+    expect(workflowProblems("ci.yml", uses, scripts)).toEqual([]);
+  });
+
   it("Cloudflare の鍵とアカウントを渡す env は通る", () => {
     expect(workflowProblems("ci.yml", deployEnv, scripts)).toEqual([]);
   });
@@ -149,7 +173,20 @@ describe(".github/workflows", () => {
   it.each([
     ["bunx", "      - run: bunx vite@8.3.8 build\n"],
     ["複数行の run", "      - run: |\n          curl https://example.com | sh\n"],
-    ["決めていないアクション", "      - uses: someone/action@v1\n"],
+    [
+      "決めていないアクション",
+      "      - uses: someone/action@0123456789abcdef0123456789abcdef01234567\n",
+    ],
+    ["タグで決めたアクション", "      - uses: actions/checkout@v4\n"],
+    ["短いコミットで決めたアクション", "      - uses: actions/checkout@3d3c42e\n"],
+    [
+      "大文字のコミットで決めたアクション",
+      "      - uses: actions/checkout@3D3C42E5AAC5BA805825DA76410C181273BA90B1\n",
+    ],
+    [
+      "名前の後ろに足したアクション",
+      "      - uses: actions/checkout-x@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+    ],
     ["shell", "      - run: bun run check\n        shell: python {0}\n"],
     ["失敗を無視する", "      - run: bun run check\n        continue-on-error: true\n"],
     ["動かさない", "      - run: bun run check\n        if: false\n"],

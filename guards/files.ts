@@ -39,7 +39,7 @@ const nestedFile = [
   /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
   /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
   /^public\/_headers$/,
-  /^\.github\/(guarded-paths|guards-unchanged\.sh|workflows\/[\w-]+\.yml)$/,
+  /^\.github\/(dependabot\.yml|guarded-paths|guards-unchanged\.sh|workflows\/[\w-]+\.yml)$/,
   /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];
 
