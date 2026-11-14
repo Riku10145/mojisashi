@@ -25,7 +25,7 @@ test -f dist/index.html && echo "dist あり" || echo "dist なし: bun run buil
 ```
 
 ```bash
-find src public index.html vite.config.ts package.json bun.lock tsconfig*.json -newer dist/index.html | head
+find src public scripts index.html vite.config.ts package.json bun.lock tsconfig*.json -newer dist/index.html | head
 ```
 
 何か出たら、`dist/` がソースより古いので、`bun run build` をやり直します。
