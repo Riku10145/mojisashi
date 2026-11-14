@@ -4,7 +4,7 @@ import ts from "typescript";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 const fixNotAdd =
-  "コードを直してください。このエラーを消すために guards/zones.ts へ足すことはしません。機能に要ると決めたときだけ足します（docs/adr/0012-loosen-guards-only-on-purpose.md）。";
+  "コードを直してください。src/app/ では、src/platform/ の部品を使います。このエラーを消すために guards/zones.ts へ足すことはしません。機能に要ると決めたときだけ足します（docs/adr/0013-loosen-guards-only-on-purpose.md）。";
 const createRule = ESLintUtils.RuleCreator.withoutDocs;
 
 const stringList = { type: "array", items: { type: "string" } } as const;
@@ -273,13 +273,14 @@ export const jsxRule = createRule<
  */
 export const importsRule = createRule<
   [{ imports: Record<string, string[]>; testImports: Record<string, string[]> }],
-  "source" | "name" | "whole"
+  "source" | "name" | "query" | "whole"
 >({
   meta: {
     type: "problem",
     messages: {
       source: `{{source}} は、このゾーンで読み込めません。${fixNotAdd}${readAdr0007}`,
       name: `{{source}} の {{name}} は、このゾーンで読み込めません。${fixNotAdd}${readAdr0007}`,
+      query: `{{source}} のように、? や # を付けた読み込みは使えません。${readAdr0007}`,
       whole: `{{source}} は、名前を1つずつ読み込みます。${readAdr0007}`,
     },
     schema: [
@@ -308,7 +309,7 @@ export const importsRule = createRule<
     ) => {
       if (/^\.\.?\//.test(source)) {
         if (/[?#]/.test(source)) {
-          context.report({ node, messageId: "source", data: { source } });
+          context.report({ node, messageId: "query", data: { source } });
         }
         return;
       }
