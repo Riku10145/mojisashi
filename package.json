@@ -14,6 +14,7 @@
     "prepare": "lefthook install",
     "check:release-age": "bun scripts/check-release-age.ts",
     "check:files": "bun scripts/check-files.ts",
+    "deploy:dev": "bun scripts/cloudflare-output.ts dev && cf deploy --prebuilt --mode dev",
     "check": "bun run check:files && bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build"
   },
   "dependencies": {
@@ -21,6 +22,8 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@cloudflare/build-output-utils": "0.9.10",
+    "@cloudflare/config": "0.30.2",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.4",
     "@types/bun": "^1.4.4",

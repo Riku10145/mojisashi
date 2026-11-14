@@ -29,7 +29,8 @@ const typeLies = [
 
 export default defineConfig([
   // guard-probes holds code that breaks the rules on purpose; guards/probes.test.ts lints it.
-  globalIgnores(["dist", "guard-probes"]),
+  // .cloudflare holds a copy of dist/ that scripts/cloudflare-output.ts writes for cf deploy.
+  globalIgnores(["dist", ".cloudflare", "guard-probes"]),
   { linterOptions: { noInlineConfig: true } },
   {
     files: ["**/*.{ts,tsx,mts,cts}"],

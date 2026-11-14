@@ -5,8 +5,9 @@ import { zones } from "./zones";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 
-// ESLint, Vitest, Vite, PostCSS, lefthook, Bun and oxfmt each find their config by name in the root,
-// and several prefer another name to the one that is guarded. So the root holds these files only.
+// ESLint, Vitest, Vite, PostCSS, lefthook, Bun, oxfmt and cf each find their config by name in the
+// root, and several prefer another name to the one that is guarded. So the root holds these files
+// only.
 const rootFiles = new Set([
   ".gitignore",
   ".oxfmtrc.json",
@@ -15,6 +16,7 @@ const rootFiles = new Set([
   "README.md",
   "bun.lock",
   "bunfig.toml",
+  "cloudflare.config.ts",
   "eslint.config.ts",
   "index.html",
   "lefthook.yml",

@@ -3,6 +3,7 @@
 # base branch, so the pull request cannot change them for its own check. See ADR 0007.
 .github/
 bunfig.toml
+cloudflare.config.ts
 lefthook.yml
 eslint.config.ts
 vite.config.ts

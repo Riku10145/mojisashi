@@ -132,6 +132,9 @@ const programs: readonly RegExp[] = [
   /^lefthook install$/,
   /^(NODE_ENV=production )?bun scripts\/[a-z-]+\.ts$/,
   /^bun install --frozen-lockfile$/,
+  // Deploys an environment of cloudflare.config.ts from dist/ without building (ADR 0009).
+  /^bun scripts\/cloudflare-output\.ts [a-z]+$/,
+  /^cf deploy --prebuilt --mode [a-z]+$/,
   // The Guards workflow: fetch the pull request without checking it out, then compare.
   /^git fetch --no-tags origin "pull\/\$\{\{ github\.event\.pull_request\.number \}\}\/head:pr-head"$/,
   /^bash \.github\/guards-unchanged\.sh "\$\{\{ github\.event\.pull_request\.base\.sha \}\}" pr-head$/,
