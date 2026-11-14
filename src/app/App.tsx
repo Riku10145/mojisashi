@@ -1,3 +1,5 @@
+import { CountSection } from "./CountSection";
+
 export function App() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-12">
@@ -5,6 +7,7 @@ export function App() {
       <p className="mt-4 text-slate-600">
         文章の文字数を数えたり、決めた文字数の文章を作ったりする道具です。
       </p>
+      <CountSection />
     </main>
   );
 }

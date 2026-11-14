@@ -14,6 +14,10 @@ describe("fileProblems", () => {
     expect(fileProblems(tracked)).toEqual([]);
   });
 
+  it("スキルの Markdown は通る", () => {
+    expect(fileProblems([".claude/skills/verify-mojisashi/features/count.md"])).toEqual([]);
+  });
+
   it.each([
     ["JavaScript", "src/app/leak.js"],
     [".d.ts", "src/app/globals.d.ts"],
@@ -28,6 +32,10 @@ describe("fileProblems", () => {
     ["lefthook の設定", ".config/lefthook.yml"],
     ["npm の設定", ".npmrc"],
     ["環境変数", ".env.local"],
+    ["Claude Code の設定", ".claude/settings.json"],
+    ["Claude Code のフック", ".claude/hooks/check.ts"],
+    ["スキルの中のスクリプト", ".claude/skills/verify-mojisashi/drive.mjs"],
+    ["スキルの中の TypeScript", ".claude/skills/verify-mojisashi/drive.ts"],
     ["テストが読まない probe", "guard-probes/app/note.md"],
     ["ゾーンの外のコード", "src/leak.ts"],
   ])("%s を止める（%s）", (_, file) => {
