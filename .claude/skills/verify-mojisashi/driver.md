@@ -27,17 +27,26 @@ await mkdir(evidence, { recursive: true });
 const headersFile = await readFile(join(repo, "public/_headers"), "utf8");
 // Only rules for a path apply here. A rule for another host, such as https://dev.mojisashi.app/*,
 // never reaches production, so the page must not get it either.
-const headers = {};
-let pattern = "";
+const rules = [];
 for (const line of headersFile.split("\n")) {
   if (!/^\s/.test(line)) {
-    pattern = line.trim();
-  } else if (pattern.startsWith("/") && /^\s+\S+:/.test(line)) {
+    rules.push({ pattern: line.trim(), headers: {} });
+  } else if (/^\s+\S+:/.test(line) && rules.at(-1)?.pattern.startsWith("/")) {
     const [name, ...rest] = line.trim().split(":");
-    headers[name.trim()] = rest.join(":").trim();
+    rules.at(-1).headers[name.trim()] = rest.join(":").trim();
   }
 }
-if (!headers["Content-Security-Policy"]) throw new Error("public/_headers has no CSP");
+// A pattern is a path, or a path ending in * that matches everything below it.
+const headersFor = (path) =>
+  Object.assign(
+    {},
+    ...rules
+      .filter(({ pattern }) =>
+        pattern.endsWith("*") ? path.startsWith(pattern.slice(0, -1)) : path === pattern,
+      )
+      .map(({ headers }) => headers),
+  );
+if (!headersFor("/")["Content-Security-Policy"]) throw new Error("public/_headers has no CSP");
 
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
 const log = { blockedRequests: [], consoleErrors: [], pageErrors: [], steps: [] };
@@ -50,6 +59,7 @@ await context.route("**/*", async (route) => {
     log.blockedRequests.push(route.request().url());
     return route.abort();
   }
+  const headers = headersFor(url.pathname);
   const path = url.pathname === "/" ? "/index.html" : url.pathname;
   try {
     const body = await readFile(join(dist, path));

@@ -25,17 +25,23 @@ describe.each([...environments])("cloudflare.config.ts の %s", (mode, environme
   });
 });
 
-/** Each X-Robots-Tag in _headers, with the URL pattern of the rule it belongs to. */
-function robotsTags(text: string): [string, string][] {
+/** Each header in _headers as [URL pattern of its rule, header name in lower case, value]. */
+function headerRules(text: string): [string, string, string][] {
   let pattern = "";
-  return text.split("\n").flatMap((line): [string, string][] => {
+  return text.split("\n").flatMap((line): [string, string, string][] => {
     if (!/^\s/.test(line)) {
       pattern = line;
       return [];
     }
-    const value = /^\s+X-Robots-Tag:\s*(.*?)\s*$/i.exec(line)?.[1];
-    return value === undefined ? [] : [[pattern, value]];
+    const header = /^\s+([\w-]+):\s*(.*?)\s*$/.exec(line);
+    return header === null ? [] : [[pattern, (header[1] ?? "").toLowerCase(), header[2] ?? ""]];
   });
+}
+
+function rulesFor(name: string): [string, string][] {
+  return headerRules(headers)
+    .filter(([, header]) => header === name)
+    .map(([pattern, , value]) => [pattern, value]);
 }
 
 it("noindex は、本番ではない環境のホスト名だけに付ける", () => {
@@ -44,7 +50,15 @@ it("noindex は、本番ではない環境のホスト名だけに付ける", ()
   const hidden = [...environments.values()]
     .filter(({ domain }) => domain !== production)
     .map(({ domain }): [string, string] => [`https://${domain}/*`, "noindex"]);
-  expect(robotsTags(headers)).toEqual(hidden);
+  expect(rulesFor("x-robots-tag")).toEqual(hidden);
+});
+
+it("HTML だけは、Cloudflare に書き換えさせない", () => {
+  // Cloudflare injects its RUM script into HTML unless the response has no-transform, which also
+  // stops compression. So only the page at / gets it, and JS and CSS stay compressed (ADR 0010).
+  expect(rulesFor("cache-control")).toEqual([
+    ["/", "public, max-age=0, must-revalidate, no-transform"],
+  ]);
 });
 
 const buildOutputPackages = ["@cloudflare/build-output-utils", "@cloudflare/config"];
