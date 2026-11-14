@@ -22,10 +22,28 @@ describe.each([...environments])("cloudflare.config.ts の %s", (mode, environme
     });
     expect(parsed.data.containers).toEqual([]);
   });
+});
 
-  it.skipIf(environment.domain === production)("検索に載せない", () => {
-    expect(headers).toContain(`\nhttps://${environment.domain}/*\n  X-Robots-Tag: noindex\n`);
+/** Each X-Robots-Tag in _headers, with the URL pattern of the rule it belongs to. */
+function robotsTags(text: string): [string, string][] {
+  let pattern = "";
+  return text.split("\n").flatMap((line): [string, string][] => {
+    if (!/^\s/.test(line)) {
+      pattern = line;
+      return [];
+    }
+    const value = /^\s+X-Robots-Tag:\s*(.*?)\s*$/i.exec(line)?.[1];
+    return value === undefined ? [] : [[pattern, value]];
   });
+}
+
+it("noindex は、本番ではない環境のホスト名だけに付ける", () => {
+  // Production and dev publish the same _headers, so a noindex under /* would take mojisashi.app
+  // out of search.
+  const hidden = [...environments.values()]
+    .filter(({ domain }) => domain !== production)
+    .map(({ domain }): [string, string] => [`https://${domain}/*`, "noindex"]);
+  expect(robotsTags(headers)).toEqual(hidden);
 });
 
 it("決めていない --mode は止める", async () => {
