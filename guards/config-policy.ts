@@ -202,12 +202,14 @@ export function packageProblems(pkg: unknown): string[] {
   return problems;
 }
 
-// Actions pinned to a commit. Another action runs code that release age and bun.lock never see.
-const actions = [
-  "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-  "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
-  "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
-];
+// Another action runs code that release age and bun.lock never see. Each is pinned to a full commit
+// SHA, not to a tag its owner can move; Dependabot moves the SHA (ADR 0012).
+const actions = ["actions/checkout", "oven-sh/setup-bun", "actions/setup-node"];
+
+function isAllowedAction(uses: string): boolean {
+  const name = /^([\w.-]+\/[\w.-]+)@[0-9a-f]{40}$/.exec(uses)?.[1];
+  return name !== undefined && actions.includes(name);
+}
 
 // Keys that change what interprets run:, where it runs, or whether a failure counts.
 const workflowControlKeys = [
@@ -265,8 +267,8 @@ function splitEnvBlocks(where: string, yaml: string): { problems: string[]; outs
 }
 
 /**
- * A workflow: every run: line is an allowed command, every uses: a pinned action, and every line of
- * an env: block one of workflowEnv.
+ * A workflow: every run: line is an allowed command, every uses: an allowed action at a full SHA, and
+ * every line of an env: block one of workflowEnv.
  */
 export function workflowProblems(
   where: string,
@@ -280,8 +282,10 @@ export function workflowProblems(
       if (key === "run") {
         return runProblems(where, value, scripts);
       }
-      if (key === "uses" && !actions.includes(value)) {
-        return [`${where} の ${value} は、決めたアクションではありません。${readAdr0007}`];
+      if (key === "uses" && !isAllowedAction(value)) {
+        return [
+          `${where} の ${value} は、決めたアクションを 40 桁のコミットで指したものではありません。${readAdr0012}`,
+        ];
       }
       return workflowControlKeys.includes(key)
         ? [`${where} の ${key}: は使えません。${readAdr0007}`]

@@ -145,6 +145,12 @@ describe(".github/workflows", () => {
   const deployEnv =
     '      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n          DO_NOT_TRACK: "1"\n';
 
+  it("決めたアクションは、ほかのコミットに上げても通る", () => {
+    const uses =
+      "      - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567 # v8.0.0\n";
+    expect(workflowProblems("ci.yml", uses, scripts)).toEqual([]);
+  });
+
   it("Cloudflare の鍵とアカウントを渡す env は通る", () => {
     expect(workflowProblems("ci.yml", deployEnv, scripts)).toEqual([]);
   });
@@ -152,7 +158,20 @@ describe(".github/workflows", () => {
   it.each([
     ["bunx", "      - run: bunx vite@8.3.8 build\n"],
     ["複数行の run", "      - run: |\n          curl https://example.com | sh\n"],
-    ["決めていないアクション", "      - uses: someone/action@v1\n"],
+    [
+      "決めていないアクション",
+      "      - uses: someone/action@0123456789abcdef0123456789abcdef01234567\n",
+    ],
+    ["タグで決めたアクション", "      - uses: actions/checkout@v4\n"],
+    ["短いコミットで決めたアクション", "      - uses: actions/checkout@3d3c42e\n"],
+    [
+      "大文字のコミットで決めたアクション",
+      "      - uses: actions/checkout@3D3C42E5AAC5BA805825DA76410C181273BA90B1\n",
+    ],
+    [
+      "名前の後ろに足したアクション",
+      "      - uses: actions/checkout-x@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+    ],
     ["shell", "      - run: bun run check\n        shell: python {0}\n"],
     ["失敗を無視する", "      - run: bun run check\n        continue-on-error: true\n"],
     ["動かさない", "      - run: bun run check\n        if: false\n"],
