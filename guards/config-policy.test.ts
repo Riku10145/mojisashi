@@ -74,6 +74,20 @@ describe("bunfig.toml", () => {
   });
 });
 
+describe(".github/dependabot.yml", () => {
+  // Dependabot does not read bunfig.toml. A shorter cooldown opens pull requests with versions
+  // that bun run check:release-age then refuses.
+  it("どの updates の cooldown も、minimumReleaseAge より短くない", async () => {
+    const seconds = Number(/^minimumReleaseAge = (\d+)$/m.exec(bunfig)?.[1]);
+    const updates = (await read(".github/dependabot.yml")).split(/^ {2}- /m).slice(1);
+    expect(updates).not.toEqual([]);
+    for (const update of updates) {
+      const days = Number(/^ +default-days: (\d+)$/m.exec(update)?.[1]);
+      expect(days * 86_400, update.split("\n")[0]).toBeGreaterThanOrEqual(seconds);
+    }
+  });
+});
+
 describe("package.json", () => {
   it("いまの設定は通る", () => {
     expect(packageProblems(pkg)).toEqual([]);
