@@ -13,6 +13,8 @@ test("全角の数字も読む", () => {
 
 test("桁区切りのカンマも読む", () => {
   expect(wholeNumberIn("1,000", 1, 1_000_000)).toBe(1000);
+  expect(wholeNumberIn("10,000", 1, 1_000_000)).toBe(10_000);
+  expect(wholeNumberIn("100,000", 1, 1_000_000)).toBe(100_000);
   expect(wholeNumberIn("１，０００，０００", 1, 1_000_000)).toBe(1_000_000);
 });
 
