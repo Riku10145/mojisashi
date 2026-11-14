@@ -93,7 +93,7 @@ export function headersProblems(file: string): string[] {
 
 export const minimumReleaseAgeFloor = 604_800;
 
-/** Reads the small TOML subset bunfig.toml uses: [table] lines and key = number lines. */
+/** Reads the small TOML subset bunfig.toml uses: [table] lines, key = number lines and exact = true. */
 export function bunfigProblems(file: string): string[] {
   const problems: string[] = [];
   let table = "";
@@ -107,6 +107,8 @@ export function bunfigProblems(file: string): string[] {
       table = tableName;
     } else if (table === "install" && entry?.[1] === "minimumReleaseAge") {
       age = Number(entry[2]);
+    } else if (table === "install" && line === "exact = true") {
+      continue;
     } else {
       problems.push(`bunfig.toml の「${line}」は使えません。${readAdr0007}`);
     }

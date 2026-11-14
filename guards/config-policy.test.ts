@@ -67,6 +67,7 @@ describe("bunfig.toml", () => {
       '[install]\nminimumReleaseAge = 604800\nregistry = "https://example.com/"\n',
     ],
     ["ほかの表を足す", "[install]\nminimumReleaseAge = 604800\n[install.scopes]\n"],
+    ["版の範囲を書かせる", "[install]\nminimumReleaseAge = 604800\nexact = false\n"],
   ])("%s と止める", (_, file) => {
     expect(bunfigProblems(file)).not.toEqual([]);
   });
