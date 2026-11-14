@@ -162,7 +162,7 @@ export function commandProblems(
 // The steps check runs, in order, and the parts each step's own script holds, in order. lefthook
 // and CI run only `bun run check`, so dropping or rewriting a step turns it off with every command
 // still allowed.
-export const checkSteps: ReadonlyMap<string, readonly string[]> = new Map([
+const checkSteps: ReadonlyMap<string, readonly string[]> = new Map([
   ["check:files", ["bun scripts/check-files.ts"]],
   ["typecheck", ["tsc -b"]],
   ["lint", ["eslint --config eslint.config.ts --max-warnings 0 ."]],
@@ -206,6 +206,40 @@ function checkStepProblems(scripts: Record<string, unknown>): string[] {
   });
 }
 
+// The parts that may sit in one script only, once: the formatter would rewrite files before
+// format:check reads them, and a second vite build replaces the dist/ that verify-dist checked.
+// `bun run format` reaches the formatter from any script, so no script may hold it.
+const soleParts: ReadonlyMap<string, string | undefined> = new Map([
+  ["oxfmt", "format"],
+  ["vite build", "build"],
+  ["bun run format", undefined],
+]);
+
+function scriptProblems(name: string, command: string, scripts: readonly string[]): string[] {
+  const problems = commandProblems(`package.json の ${name}`, command, scripts);
+  // bun run runs pre<name> and post<name> around <name>, out of sight of check. prepare is the
+  // hook bun install runs, and preview is one only while a view script exists.
+  const lifecycle = /^(?:pre|post)(.*)$/.exec(name);
+  if (
+    lifecycle !== null &&
+    (scripts.includes(lifecycle[1] ?? "") || !["prepare", "preview"].includes(name))
+  ) {
+    problems.push(
+      `package.json の ${name} は、ほかの script の前かあとに、check に並ばずに動きます。${readAdr0003}`,
+    );
+  }
+  const parts = partsOf(command);
+  for (const [part, home] of soleParts) {
+    if (parts.filter((each) => each === part).length > (name === home ? 1 : 0)) {
+      const where = home === undefined ? "どの script にも書けません" : `${home} にだけ1度書けます`;
+      problems.push(
+        `package.json の ${name} の「${part}」は使えません。「${part}」は、${where}。${readAdr0003}`,
+      );
+    }
+  }
+  return problems;
+}
+
 const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
 // cf is in beta, so its prerelease is pinned exactly (ADR 0006). Every other package stays on a
 // release; .github/guards-unchanged.sh makes the same exception.
@@ -237,7 +271,7 @@ export function packageProblems(pkg: unknown): string[] {
   for (const [name, command] of Object.entries(scripts)) {
     problems.push(
       ...(typeof command === "string"
-        ? commandProblems(`package.json の ${name}`, command, Object.keys(scripts))
+        ? scriptProblems(name, command, Object.keys(scripts))
         : [`package.json の ${name} が読めません`]),
     );
   }
