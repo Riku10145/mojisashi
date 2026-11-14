@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: monthly
+    # Equal to minimumReleaseAge in bunfig.toml. A younger version fails bun run check:release-age in
+    # CI. See docs/adr/0012-pin-dependencies-and-update-with-dependabot.md.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+    groups:
+      # cf is a pinned beta, and the two packages that write its Build Output stay on the versions
+      # cf depends on (ADR 0006, 0009). So they get a pull request of their own.
+      cf:
+        patterns: [cf, "@cloudflare/build-output-utils", "@cloudflare/config"]
+      packages:
+        patterns: ["*"]
+        exclude-patterns: [cf, "@cloudflare/build-output-utils", "@cloudflare/config"]
+        update-types: [major, minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
