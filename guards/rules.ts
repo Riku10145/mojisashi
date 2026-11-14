@@ -3,6 +3,8 @@ import { AST_NODE_TYPES as T, ESLintUtils, type TSESTree } from "@typescript-esl
 import ts from "typescript";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
+const fixNotAdd =
+  "コードを直してください。src/app/ では、src/platform/ の部品を使います。このエラーを消すために guards/zones.ts へ足すことはしません。機能に要ると決めたときだけ足します（docs/adr/0013-loosen-guards-only-on-purpose.md）。";
 const createRule = ESLintUtils.RuleCreator.withoutDocs;
 
 const stringList = { type: "array", items: { type: "string" } } as const;
@@ -47,7 +49,7 @@ export const browserRule = createRule<
   meta: {
     type: "problem",
     messages: {
-      notAllowed: `{{key}} は、このゾーンで使えるブラウザの仕組みにありません。guards/zones.ts を見てください。${readAdr0007}`,
+      notAllowed: `{{key}} は、このゾーンで使えるブラウザの仕組みにありません。${fixNotAdd}${readAdr0007}`,
       escapes: `ブラウザの値（{{type}}）を、この形では使えません。メンバーを読むか、比べるか、呼ぶだけにします。${readAdr0007}`,
     },
     schema: [
@@ -197,8 +199,8 @@ export const jsxRule = createRule<
   meta: {
     type: "problem",
     messages: {
-      tag: `<{{name}}> は、このゾーンで書ける要素にありません。guards/zones.ts を見てください。${readAdr0007}`,
-      attribute: `{{name}} は、このゾーンで書ける属性にありません。guards/zones.ts を見てください。${readAdr0007}`,
+      tag: `<{{name}}> は、このゾーンで書ける要素にありません。${fixNotAdd}${readAdr0007}`,
+      attribute: `{{name}} は、このゾーンで書ける属性にありません。${fixNotAdd}${readAdr0007}`,
       literal: `{{name}} には、文字列をそのまま書きます。${readAdr0007}`,
       spread: `JSX のスプレッドは使えません。属性を1つずつ書きます。${readAdr0007}`,
       name: `JSX の名前は、要素の名前かコンポーネントの名前だけにします。${readAdr0007}`,
@@ -271,13 +273,14 @@ export const jsxRule = createRule<
  */
 export const importsRule = createRule<
   [{ imports: Record<string, string[]>; testImports: Record<string, string[]> }],
-  "source" | "name" | "whole"
+  "source" | "name" | "query" | "whole"
 >({
   meta: {
     type: "problem",
     messages: {
-      source: `{{source}} は、このゾーンで読み込めません。guards/zones.ts を見てください。${readAdr0007}`,
-      name: `{{source}} の {{name}} は、このゾーンで読み込めません。guards/zones.ts を見てください。${readAdr0007}`,
+      source: `{{source}} は、このゾーンで読み込めません。${fixNotAdd}${readAdr0007}`,
+      name: `{{source}} の {{name}} は、このゾーンで読み込めません。${fixNotAdd}${readAdr0007}`,
+      query: `{{source}} のように、? や # を付けた読み込みは使えません。${readAdr0007}`,
       whole: `{{source}} は、名前を1つずつ読み込みます。${readAdr0007}`,
     },
     schema: [
@@ -306,7 +309,7 @@ export const importsRule = createRule<
     ) => {
       if (/^\.\.?\//.test(source)) {
         if (/[?#]/.test(source)) {
-          context.report({ node, messageId: "source", data: { source } });
+          context.report({ node, messageId: "query", data: { source } });
         }
         return;
       }
