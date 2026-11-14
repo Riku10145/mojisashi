@@ -201,6 +201,12 @@ const workflowControlKeys = [
   "working-directory",
   "defaults",
 ];
+// An env: block may hold these lines only, each exactly: the Cloudflare account cf deploys to. Any
+// other variable, such as NODE_OPTIONS or BUN_CONFIG_*, changes how a command runs.
+const workflowEnv = [
+  "CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}",
+  "CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}",
+];
 const lefthookKeys = ["assert_lefthook_installed", "pre-commit", "commands", "check", "run"];
 
 function yamlEntriesOf(yaml: string): { key: string; value: string }[] {
@@ -217,23 +223,52 @@ function runProblems(where: string, value: string, scripts: readonly string[]): 
     : commandProblems(where, value, scripts);
 }
 
-/** A workflow: every run: line is an allowed command and every uses: a pinned action. */
+/** Each line inside an env: block that is not in workflowEnv, and the lines outside every block. */
+function splitEnvBlocks(where: string, yaml: string): { problems: string[]; outside: string } {
+  const problems: string[] = [];
+  const outside: string[] = [];
+  let envColumn: number | undefined;
+  for (const line of yaml.split("\n")) {
+    const content = line.trim();
+    const skipped = content === "" || content.startsWith("#");
+    if (envColumn !== undefined && (skipped || line.search(/\S/) > envColumn)) {
+      if (!skipped && !workflowEnv.includes(content)) {
+        problems.push(`${where} の env の「${content}」は使えません。${readAdr0007}`);
+      }
+      continue;
+    }
+    envColumn = /^\s*(?:-\s+)?(?=env:\s*(?:#.*)?$)/.exec(line)?.[0].length;
+    if (envColumn === undefined) {
+      outside.push(line);
+    }
+  }
+  return { problems, outside: outside.join("\n") };
+}
+
+/**
+ * A workflow: every run: line is an allowed command, every uses: a pinned action, and every line of
+ * an env: block one of workflowEnv.
+ */
 export function workflowProblems(
   where: string,
   yaml: string,
   scripts: readonly string[],
 ): string[] {
-  return yamlEntriesOf(yaml).flatMap(({ key, value }) => {
-    if (key === "run") {
-      return runProblems(where, value, scripts);
-    }
-    if (key === "uses" && !actions.includes(value)) {
-      return [`${where} の ${value} は、決めたアクションではありません。${readAdr0007}`];
-    }
-    return workflowControlKeys.includes(key)
-      ? [`${where} の ${key}: は使えません。${readAdr0007}`]
-      : [];
-  });
+  const { problems, outside } = splitEnvBlocks(where, yaml);
+  return [
+    ...problems,
+    ...yamlEntriesOf(outside).flatMap(({ key, value }) => {
+      if (key === "run") {
+        return runProblems(where, value, scripts);
+      }
+      if (key === "uses" && !actions.includes(value)) {
+        return [`${where} の ${value} は、決めたアクションではありません。${readAdr0007}`];
+      }
+      return workflowControlKeys.includes(key)
+        ? [`${where} の ${key}: は使えません。${readAdr0007}`]
+        : [];
+    }),
+  ];
 }
 
 /** lefthook.yml: only the pre-commit check, which must not run when lefthook is missing. */

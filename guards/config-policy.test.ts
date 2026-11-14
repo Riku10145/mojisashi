@@ -132,6 +132,13 @@ describe(".github/workflows", () => {
     }
   });
 
+  const deployEnv =
+    "      - run: bun run check\n        env:\n          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}\n";
+
+  it("Cloudflare の鍵とアカウントを渡す env は通る", () => {
+    expect(workflowProblems("ci.yml", deployEnv, scripts)).toEqual([]);
+  });
+
   it.each([
     ["bunx", "      - run: bunx vite@8.3.8 build\n"],
     ["複数行の run", "      - run: |\n          curl https://example.com | sh\n"],
@@ -139,6 +146,17 @@ describe(".github/workflows", () => {
     ["shell", "      - run: bun run check\n        shell: python {0}\n"],
     ["失敗を無視する", "      - run: bun run check\n        continue-on-error: true\n"],
     ["動かさない", "      - run: bun run check\n        if: false\n"],
+    ["env にほかの変数", `${deployEnv}          NODE_OPTIONS: --require ./x.ts\n`],
+    [
+      "1行で書いた env",
+      "      - run: bun run check\n        env: { NODE_OPTIONS: --require ./x.ts }\n",
+    ],
+    ["env にアンカーを混ぜる", `${deployEnv}          <<: *other\n`],
+    [
+      "鍵をほかの secret から取る",
+      deployEnv.replace("secrets.CLOUDFLARE_API_TOKEN", "secrets.OTHER"),
+    ],
+    ["env のあとの bunx", `${deployEnv}      - run: bunx vite build\n`],
   ])("%s を止める", (_, yaml) => {
     expect(workflowProblems("ci.yml", yaml, scripts)).not.toEqual([]);
   });
