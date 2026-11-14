@@ -91,7 +91,7 @@ export function headersProblems(file: string): string[] {
   return problems;
 }
 
-// ---- bunfig.toml: the wait never shrinks, and nothing else changes how packages are installed. -----
+// ---- bunfig.toml: the wait never shrinks, bun add writes one version, and nothing else changes. ---
 
 export const minimumReleaseAgeFloor = 604_800;
 
@@ -100,6 +100,7 @@ export function bunfigProblems(file: string): string[] {
   const problems: string[] = [];
   let table = "";
   let age: number | undefined;
+  let exact = false;
   for (const line of file.split("\n").map((raw) => raw.replace(/#.*$/, "").trim())) {
     const tableName = /^\[([\w.]+)\]$/.exec(line)?.[1];
     const entry = /^(\w+)\s*=\s*(\d+)$/.exec(line);
@@ -110,7 +111,7 @@ export function bunfigProblems(file: string): string[] {
     } else if (table === "install" && entry?.[1] === "minimumReleaseAge") {
       age = Number(entry[2]);
     } else if (table === "install" && line === "exact = true") {
-      continue;
+      exact = true;
     } else {
       problems.push(`bunfig.toml の「${line}」は使えません。${readAdr0007}`);
     }
@@ -119,6 +120,9 @@ export function bunfigProblems(file: string): string[] {
     problems.push(
       `bunfig.toml の minimumReleaseAge は ${String(minimumReleaseAgeFloor)} 以上にします。${readAdr0007}`,
     );
+  }
+  if (!exact) {
+    problems.push(`bunfig.toml の [install] には exact = true がいります。${readAdr0012}`);
   }
   return problems;
 }

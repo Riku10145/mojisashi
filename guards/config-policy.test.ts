@@ -60,14 +60,15 @@ describe("bunfig.toml", () => {
   });
 
   it.each([
-    ["待ち時間を下げる", "[install]\nminimumReleaseAge = 86400\n"],
-    ["待ち時間を消す", "[install]\n"],
+    ["待ち時間を下げる", "[install]\nminimumReleaseAge = 86400\nexact = true\n"],
+    ["待ち時間を消す", "[install]\nexact = true\n"],
     [
       "取得先を変える",
-      '[install]\nminimumReleaseAge = 604800\nregistry = "https://example.com/"\n',
+      '[install]\nminimumReleaseAge = 604800\nexact = true\nregistry = "https://example.com/"\n',
     ],
-    ["ほかの表を足す", "[install]\nminimumReleaseAge = 604800\n[install.scopes]\n"],
+    ["ほかの表を足す", "[install]\nminimumReleaseAge = 604800\nexact = true\n[install.scopes]\n"],
     ["版の範囲を書かせる", "[install]\nminimumReleaseAge = 604800\nexact = false\n"],
+    ["exact = true を消す", bunfig.replace(/^exact = true$/m, "")],
   ])("%s と止める", (_, file) => {
     expect(bunfigProblems(file)).not.toEqual([]);
   });
