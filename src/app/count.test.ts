@@ -26,6 +26,10 @@ describe("countCharacters", () => {
     ["LINE SEPARATOR", 0x2028],
     ["HANGUL FILLER", 0x3164],
     ["BRAILLE PATTERN BLANK", 0x2800],
+    ["HANGUL CHOSEONG FILLER", 0x115f],
+    ["HANGUL JUNGSEONG FILLER", 0x1160],
+    ["HALFWIDTH HANGUL FILLER", 0xffa0],
+    ["PARAGRAPH SEPARATOR", 0x2029],
   ])("leaves %s out only without blanks", (_, point) => {
     expect(countCharacters(`a${c(point)}b`)).toEqual({ withBlanks: 3, withoutBlanks: 2 });
   });
@@ -33,6 +37,11 @@ describe("countCharacters", () => {
   it("keeps a blank a blank when an invisible character joins it", () => {
     expect(countCharacters(`a${c(0x20, 0x200d)}b`)).toEqual({ withBlanks: 3, withoutBlanks: 2 });
     expect(countCharacters(c(0x3000, 0xfe0f))).toEqual({ withBlanks: 1, withoutBlanks: 0 });
+    expect(countCharacters(`a${c(0x20, 0x34f)}b`)).toEqual({ withBlanks: 3, withoutBlanks: 2 });
+  });
+
+  it("treats the two Hangul fillers written together as one blank", () => {
+    expect(countCharacters(`a${c(0x115f, 0x1160)}b`)).toEqual({ withBlanks: 3, withoutBlanks: 2 });
   });
 
   it.each([
