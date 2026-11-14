@@ -200,6 +200,7 @@ export function packageProblems(pkg: unknown): string[] {
 const actions = [
   "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
   "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+  "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
 ];
 
 // Keys that change what interprets run:, where it runs, or whether a failure counts.
