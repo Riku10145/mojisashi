@@ -33,6 +33,7 @@
     "@vitejs/plugin-react": "^6.2.1",
     "cf": "1.0.0-beta.28",
     "eslint": "^10.14.0",
+    "eslint-plugin-jsx-a11y-x": "^0.2.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
     "jiti": "^2.7.0",

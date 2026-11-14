@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import jsxA11y from "eslint-plugin-jsx-a11y-x";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint, { type CompatiblePlugin } from "typescript-eslint";
@@ -64,6 +65,7 @@ export default defineConfig([
       ],
     },
   },
+  { files: ["**/*.tsx"], extends: [jsxA11y.configs.strict] },
   ...Object.values(zones).map((zone) => ({
     files: [zone.dir, ...("probes" in zone ? [zone.probes] : [])].map(
       (dir) => `${dir}**/*.{ts,tsx}`,
