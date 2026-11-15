@@ -1,5 +1,5 @@
-import { CountSection } from "./CountSection";
-import { GenerateSection } from "./GenerateSection";
+import { CountSection } from "./count/components/CountSection";
+import { GenerateSection } from "./generate/components/GenerateSection";
 
 export function App() {
   return (
