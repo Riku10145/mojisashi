@@ -1,5 +1,5 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
-import { Choice, NumberField, TextBox } from "../platform";
+import { Choice, CopyButton, NumberField, TextBox } from "../platform";
 import {
   countCharacters,
   countingRules,
@@ -19,7 +19,12 @@ export function CountSection(): ReactNode {
   return (
     <section className="mt-8 space-y-6">
       <h2 className="text-xl font-bold text-slate-900">文字数を数える</h2>
-      <TextBox label="文章" text={text} onText={setText} />
+      <TextBox
+        label="文章"
+        text={text}
+        onText={setText}
+        action={<CopyButton text={text}>文章をコピー</CopyButton>}
+      />
       <dl className="space-y-1">
         {countingRules.map(({ value, label }) => (
           <div key={value} className="flex justify-between gap-4">

@@ -10,6 +10,8 @@
 - `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。
 - `count-rule` は、目標と比べる数え方を切り替える。
 - `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
+- `count-copy` は、「文章をコピー」で文章の欄の中身をそのままコピーする。文章が空のときは押せない。文章を書き換えると「コピーしました」が消える。
+- `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄の位置が変わらない。
 
 ## How to get to it (user POV)
 
@@ -17,23 +19,28 @@
 - 文章は、「文章」の欄に貼るか、そのまま書く。
 - 目標の文字数は、「目標の文字数」の欄に入れる。
 - 比べる数え方は、「目標と比べる数え方」のラジオボタンで選ぶ。
+- 文章のコピーは、「文章」の欄の右上の「文章をコピー」を押す。
 
 ## Driving it with drive.mjs
 
 Preconditions:
 
 - `bun run build` が通り、`dist/` がソースより新しい。
-- 道具を `$SCRATCH/drive.mjs` に取り出してある。
+- 道具を `$SCRATCH/drive.mjs` に取り出してある。道具はクリップボードの読み書きを許している。
 
 確かめること:
 
-- **最初の状態。** 2つの数え方とも `0文字` で、差の行はない。
+- **最初の状態。** 2つの数え方とも `0文字` で、差の行はない。「文章をコピー」は押せない。
 - **混ざった文章。** `今日は　晴れ。\nHello, 世界！ 👍🏽` を入れる。空白と改行を除くと16文字、含むと20文字。空白は、全角スペース、改行、半角スペース2つの4つ。
 - **見た目の1文字。** `👨‍👩‍👧` と、か（U+304B）に結合用の濁点（U+3099）を続けた「が」を入れる。どちらの数え方でも `2文字`。
 - **空白に見える文字と、見えない文字。** `a`、NBSP（U+00A0）、`b`、ゼロ幅スペース（U+200B）、`c`、ハングルの埋め字（U+3164）、`d` を入れる。除いた文字数は4文字、含む文字数は6文字。
 - **目標との差。** 混ざった文章に戻し、目標の文字数に全角の `１８` を入れる。`あと2文字` が出る。
 - **数え方の切り替え。** 「空白と改行を含む文字数」を選ぶ。`2文字オーバー` に変わる。
 - **範囲の外。** 目標の文字数に `0` を入れる。差の行が空になる。
+- **そのままコピーする。** `👨‍👩‍👧`、か（U+304B）に結合用の濁点（U+3099）を続けた「が」、空行、全角スペース、行末の半角スペース、最後の改行を含む文章を入れて、「文章をコピー」を押す。クリップボードの中身が欄の中身と同じ。
+- **書き換えると表示が消える。** 文章の最後に1文字足すと、「コピーしました」が消える。
+- **貼っても変わらない。** 欄を空にして貼ると、欄の中身がコピーした文章と同じになる。
+- **欄が動かない。** 幅320pxと375pxで、コピーできたときと、できなかったときの両方を試す。「コピーしました」や「コピーできませんでした」が出る前とあとで、文章の欄の上端の位置が同じ。できなかったときは、`navigator.clipboard.writeText` を失敗するものに置き換えて試す。
 
 ```js scenario
 export default async function ({ page, capture, step }) {
@@ -76,6 +83,48 @@ export default async function ({ page, capture, step }) {
   await target.fill("0");
   await gap.waitFor({ state: "detached", timeout: 5000 });
   step("count-target-range: 0 hides the gap line", (await gap.count()) === 0);
+
+  const copy = page.getByRole("button", { name: "文章をコピー" });
+  const copied = page.getByText("コピーしました", { exact: true });
+  await box.fill("");
+  step("count-copy: 文章をコピー is disabled while 文章 is empty", await copy.isDisabled());
+
+  const original = "👨‍👩‍👧と\u304b\u3099\n\n　二行目 end \n";
+  await box.fill(original);
+  await copy.click();
+  await copied.waitFor({ timeout: 5000 });
+  const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+  step("count-copy: the clipboard holds the 文章 as it is", clipboard === original, JSON.stringify(clipboard));
+
+  await box.press("End");
+  await box.pressSequentially("x");
+  await copied.waitFor({ state: "detached", timeout: 5000 });
+  step("count-copy: changing the 文章 clears コピーしました", true);
+
+  await box.fill("");
+  await box.focus();
+  await page.keyboard.press("ControlOrMeta+V");
+  step("count-copy: pasting gives back the same 文章", (await box.inputValue()) === original, JSON.stringify(await box.inputValue()));
+  await capture("count-copied");
+
+  for (const width of [320, 375]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const fails of [false, true]) {
+      await box.fill(`幅${width}の文章${fails ? "（失敗）" : ""}`);
+      const before = (await box.boundingBox()).y;
+      if (fails) {
+        await page.evaluate(() => {
+          navigator.clipboard.writeText = () => Promise.reject(new Error("denied"));
+        });
+      }
+      await copy.click();
+      await page.getByText(fails ? "コピーできませんでした" : "コピーしました", { exact: true }).waitFor({ timeout: 5000 });
+      const after = (await box.boundingBox()).y;
+      step(`count-copy-layout: at ${width}px the 文章 field stays put when copying ${fails ? "fails" : "works"}`, before === after, `${before} -> ${after}`);
+    }
+    await capture(`count-copy-${width}`);
+    await page.reload({ waitUntil: "load" });
+  }
 }
 ```
 
@@ -85,4 +134,7 @@ export default async function ({ page, capture, step }) {
 - `fill` で `\r\n` を入れても、ブラウザは入力欄の改行を `\n` にそろえます。Windows の改行が1文字になることは、`src/app/count.test.ts` のテストで確かめます。
 - 文字数の `dd` には役割の名前がありません。`getByRole("definition")` の並び順（除いた文字数が先、含む文字数が後）に頼っています。数え方の並びを変えたら、ここも直します。
 - 目標の文字数が範囲の外のときは、差の行が空になります。エラーの文言はありません。
+- 「文章をコピー」の手順は、道具がクリップボードの読み書きを許していることに頼っています。許していないと「コピーできませんでした」が出ます。
+- `count-copy-layout` は、`writeText` を置き換えたページを再読み込みで元に戻します。この手順のあとに、コピーの手順を足すときは、再読み込みのあとに置きます。
+- コピーする文章には `\r` を入れません。`fill` で入れると `\n` にそろうので、コピーした中身と比べられません。
 - 合成済みの「が」（U+304C）は、どの数え方でも1文字です。結合文字を確かめるには、手順のように `\u304b\u3099` と書きます。エディターで「が」と打つと、合成済みになることがあります。
