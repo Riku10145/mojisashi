@@ -2,6 +2,7 @@ import { readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  canonicalProblems,
   cssProblems,
   htmlProblems,
   provenanceProblems,
@@ -72,12 +73,20 @@ describe("書き出した index.html", () => {
     '<meta name="viewport" content="width=device-width, initial-scale=1.0" />',
     '<meta\n  name="description"\n  content="文章の文字数を数える道具です。"\n/>',
     "<title>文字数カウント | mojisashi</title>",
+    '<link rel="canonical" href="https://mojisashi.app/" />',
     '<script type="module" crossorigin src="/assets/index-h4HX25Dr.js"></script>',
     '<link rel="stylesheet" crossorigin href="/assets/index-Yy-386kU.css">',
   ].join("\n");
 
   it("ビルドが書き出す形は通る", () => {
     expect(htmlProblems(page(head))).toEqual([]);
+    expect(canonicalProblems(page(head))).toEqual([]);
+  });
+
+  it("canonical がないページと、2つあるページは止まる", () => {
+    const canonical = '<link rel="canonical" href="https://mojisashi.app/" />';
+    expect(canonicalProblems(page(head.replace(canonical, "")))).not.toEqual([]);
+    expect(canonicalProblems(page(`${head}\n${canonical}`))).not.toEqual([]);
   });
 
   it("検索とリンクのプレビューのためのタグは通る", () => {

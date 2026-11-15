@@ -199,6 +199,14 @@ export function htmlProblems(html: string): string[] {
 const urlFunctions = /(?<![\w-])(?:-webkit-)?(?:image-set|image|cross-fade|element|src)\(/gi;
 
 /** Built CSS requests nothing: no @import, no url() other than data: URLs, no other URL function. */
+/** The page names its one right URL, so a copy with a query string or at /index.html is not a page of its own (#30). */
+export function canonicalProblems(html: string): string[] {
+  const count = html.match(/<link rel="canonical"/g)?.length ?? 0;
+  return count === 1
+    ? []
+    : [`index.html の canonical は1つだけにします。いまは ${String(count)} 個です。${readAdr0015}`];
+}
+
 export function cssProblems(name: string, css: string): string[] {
   const problems: string[] = [];
   if (/@import/i.test(css)) {
