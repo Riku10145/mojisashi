@@ -13,7 +13,7 @@
 - `bun run dev` で開発用のサーバーを動かします。
 - `bun run typecheck` で型を確かめます。
 - `bun run lint` で ESLint を動かします。警告が1つでもあれば失敗します。
-- `bun run format` で Oxfmt が整形します。`bun run format:check` は確かめるだけです。
+- `bun run format` で Oxfmt が整形します。import の順番もそろえます。Node.js の組み込み、パッケージ、自分のファイルの順です。`bun run format:check` は確かめるだけです。
 - `bun run test` で Vitest のテストを動かします。
 - `bun run build` で `dist/` にページを書き出し、最後に `scripts/verify-dist.ts` で書き出したものを確かめます。
 - `bun run check` で、ファイルの種類、型、ESLint、整形、テスト、ビルドを順に確かめます。コミットの前には lefthook が、PR では CI が、これを動かします。
