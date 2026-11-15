@@ -35,8 +35,8 @@ const rootFiles = new Set([
 // starts with a dot, such as .config/, is where some tools look for config, so only .github/ is
 // allowed, file by file. So are Claude Code skills, as Markdown only.
 const nestedFile = [
-  /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
-  /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
+  /^(?!\.|public\/)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
+  /^(?!\.|public\/)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
   /^public\/_headers$/,
   // For search engines, AI crawlers and link previews; none is read by the page (ADR 0015).
   /^public\/(robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
