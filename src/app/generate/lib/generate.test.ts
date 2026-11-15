@@ -7,6 +7,10 @@ function everyByteInTurn(): (n: number) => Uint8Array {
   return (n) => Uint8Array.from({ length: n }, () => next++ % 256);
 }
 
+function noRandomness(): Uint8Array {
+  throw new Error("日本語 asked for random bytes");
+}
+
 function letterCounts(text: string): Map<string, number> {
   const counts = new Map<string, number>();
   for (const letter of text) {
@@ -15,15 +19,27 @@ function letterCounts(text: string): Map<string, number> {
   return counts;
 }
 
-describe("makeTestText", () => {
+describe("makeTestText japanese", () => {
+  it.each([1, 5, 6, 200, 100_000])("makes exactly %i characters of あいうえお", (length) => {
+    const text = makeTestText("japanese", length, noRandomness);
+    expect(text).toHaveLength(length);
+    expect(text).toMatch(/^[あいうえお]+$/);
+  });
+
+  it("repeats あいうえお and cuts it at the length", () => {
+    expect(makeTestText("japanese", 7, noRandomness)).toBe("あいうえおあい");
+  });
+});
+
+describe("makeTestText english", () => {
   it.each([1, 200, 201, 100_000])("makes exactly %i letters a to z", (length) => {
-    const text = makeTestText(length, everyByteInTurn());
+    const text = makeTestText("english", length, everyByteInTurn());
     expect(text).toHaveLength(length);
     expect(text).toMatch(/^[a-z]+$/);
   });
 
   it("uses every letter equally when every byte is equally likely", () => {
-    const counts = letterCounts(makeTestText(26 * 9 * 100, everyByteInTurn()));
+    const counts = letterCounts(makeTestText("english", 26 * 9 * 100, everyByteInTurn()));
     expect(counts.size).toBe(26);
     expect(new Set(counts.values())).toEqual(new Set([900]));
   });
@@ -37,6 +53,6 @@ describe("makeTestText", () => {
       }
       return Uint8Array.from(batch.slice(0, n));
     };
-    expect(makeTestText(3, someUnusable)).toBe("aaa");
+    expect(makeTestText("english", 3, someUnusable)).toBe("aaa");
   });
 });
