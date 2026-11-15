@@ -104,8 +104,6 @@ export function reproductionProblems(
 }
 
 // What the head of the shipped page may hold, tag by tag, with runs of whitespace made one space.
-// The tags for search engines and link previews request nothing in the browser (ADR 0015). Their
-// URLs point at production only, and dev stays out of search through X-Robots-Tag.
 const headTags = [
   /^<meta charset="UTF-8" \/>$/,
   /^<meta name="viewport" content="[^"<>]*" \/>$/,
@@ -120,14 +118,17 @@ const headTags = [
   /^<meta property="og:(title|description|type|site_name|locale|image:alt)" content="[^"<>]*" \/>$/,
   /^<meta name="twitter:(card|title|description|image:alt)" content="[^"<>]*" \/>$/,
 ];
-// Structured data is a script the browser does not run. Only the type attribute, and no < inside,
-// so the block cannot end early or hide a comment.
-const jsonLd = /<script\s+type="application\/ld\+json"\s*>([^<]*)<\/script>/g;
+const jsonLd = /<script type="application\/ld\+json">([^<]*)<\/script>/;
+const headToken = new RegExp(
+  `${jsonLd.source}|<title>[^<]*<\\/title>|<script\\b[^>]*><\\/script>|<[^>]*>`,
+  "g",
+);
+const wholeJsonLd = new RegExp(`^${jsonLd.source}$`);
 
 function isJsonObject(text: string): boolean {
   try {
     const value: unknown = JSON.parse(text);
-    return typeof value === "object" && value !== null;
+    return typeof value === "object" && value !== null && !Array.isArray(value);
   } catch {
     return false;
   }
@@ -154,21 +155,20 @@ export function htmlProblems(html: string): string[] {
   if (head === undefined || body === undefined) {
     return ["index.html に head と body がありません"];
   }
-  for (const [, data = ""] of head.matchAll(jsonLd)) {
-    if (!isJsonObject(data)) {
+  const tags = head.match(headToken) ?? [];
+  if (tags.join("").replace(/\s/g, "") !== head.replace(/\s/g, "")) {
+    problems.push(`index.html の head に、タグのほかの文字があります。${readAdr0007}`);
+  }
+  for (const tag of tags) {
+    const data = wholeJsonLd.exec(tag)?.[1];
+    const flat = tag.replace(/\s+/g, " ");
+    if (data !== undefined && !isJsonObject(data)) {
       problems.push(
         `index.html の JSON-LD が、JSON のオブジェクトとして読めません。${readAdr0015}`,
       );
     }
-  }
-  const rest = head.replace(jsonLd, "");
-  const tags = rest.match(/<title>[^<]*<\/title>|<script\b[^>]*><\/script>|<[^>]*>/g) ?? [];
-  if (tags.join("").replace(/\s/g, "") !== rest.replace(/\s/g, "")) {
-    problems.push(`index.html の head に、タグのほかの文字があります。${readAdr0007}`);
-  }
-  for (const tag of tags.map((tag) => tag.replace(/\s+/g, " "))) {
-    if (!headTags.some((pattern) => pattern.test(tag))) {
-      problems.push(`index.html の head に ${tag} は入れられません。${readAdr0007}`);
+    if (data === undefined && !headTags.some((pattern) => pattern.test(flat))) {
+      problems.push(`index.html の head に ${flat} は入れられません。${readAdr0007}`);
     }
   }
   for (const [, name = "", attributes = ""] of body.matchAll(/<([a-zA-Z][\w-]*)([^>]*)>/g)) {

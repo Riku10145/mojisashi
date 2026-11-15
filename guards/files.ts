@@ -37,9 +37,7 @@ const rootFiles = new Set([
 const nestedFile = [
   /^(?!\.|public\/)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
   /^(?!\.|public\/)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
-  /^public\/_headers$/,
-  // For search engines, AI crawlers and link previews; none is read by the page (ADR 0015).
-  /^public\/(robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
+  /^public\/(_headers|robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
   /^\.github\/workflows\/[\w-]+\.yml$/,
   /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];
@@ -49,6 +47,7 @@ const claimedProbe = [
   /^guard-probes\/(app|platform)\/tsconfig\.json$/,
   /^guard-probes\/(app|platform)\/(blocked|allowed)\/[\w-]+\.tsx?$/,
   /^guard-probes\/build\/(blocked|allowed|helpers)\/[\w-]+\.(ts|html)$/,
+  /^guard-probes\/build\/head\/(blocked|allowed)\/[\w-]+\.html$/,
 ];
 
 /** Problems with the tracked files: a kind or name not allowed, an unclaimed probe, src/ outside a zone. */

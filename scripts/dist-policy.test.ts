@@ -12,29 +12,27 @@ import {
 const root = fileURLToPath(new URL("../", import.meta.url));
 const probes = `${root}guard-probes/build/`;
 
-// A probe named head-*.html stands for index.html: its built page is checked like the shipped one.
-const isHeadProbe = (name: string) => name.startsWith("head-");
+async function provenanceOf(input: string): Promise<string[]> {
+  return provenanceProblems(root, input, await referenceBuild(root, input));
+}
 
-async function problemsOf(input: string): Promise<{ provenance: string[]; html: string[] }> {
+async function builtPageOf(input: string): Promise<{ provenance: string[]; html: string[] }> {
   const files = await referenceBuild(root, input);
   const decoder = new TextDecoder();
+  const pages = files.filter((file) => file.name.endsWith(".html"));
+  expect(pages).toHaveLength(1);
   return {
     provenance: provenanceProblems(root, input, files),
-    html: files
-      .filter((file) => file.name.endsWith(".html"))
-      .flatMap((file) =>
-        htmlProblems(
-          typeof file.content === "string" ? file.content : decoder.decode(file.content),
-        ),
-      ),
+    html: pages.flatMap((file) =>
+      htmlProblems(typeof file.content === "string" ? file.content : decoder.decode(file.content)),
+    ),
   };
 }
 
-describe("guard-probes/build/blocked のファイルを入口にしたビルドは止まる", async () => {
+describe("guard-probes/build/blocked のファイルを入口にしたビルドは、出どころで止まる", async () => {
   for (const name of await readdir(`${probes}blocked/`)) {
     it(name, async () => {
-      const { provenance, html } = await problemsOf(`${probes}blocked/${name}`);
-      expect(isHeadProbe(name) ? html : provenance).not.toEqual([]);
+      expect(await provenanceOf(`${probes}blocked/${name}`)).not.toEqual([]);
     });
   }
 });
@@ -42,8 +40,26 @@ describe("guard-probes/build/blocked のファイルを入口にしたビルド�
 describe("guard-probes/build/allowed のファイルを入口にしたビルドは通る", async () => {
   for (const name of await readdir(`${probes}allowed/`)) {
     it(name, async () => {
-      const { provenance, html } = await problemsOf(`${probes}allowed/${name}`);
-      expect([...provenance, ...(isHeadProbe(name) ? html : [])]).toEqual([]);
+      expect(await provenanceOf(`${probes}allowed/${name}`)).toEqual([]);
+    });
+  }
+});
+
+describe("guard-probes/build/head/blocked のページは、書き出した head で止まる", async () => {
+  for (const name of await readdir(`${probes}head/blocked/`)) {
+    it(name, async () => {
+      expect((await builtPageOf(`${probes}head/blocked/${name}`)).html).not.toEqual([]);
+    });
+  }
+});
+
+describe("guard-probes/build/head/allowed のページは通る", async () => {
+  for (const name of await readdir(`${probes}head/allowed/`)) {
+    it(name, async () => {
+      expect(await builtPageOf(`${probes}head/allowed/${name}`)).toEqual({
+        provenance: [],
+        html: [],
+      });
     });
   }
 });
@@ -108,10 +124,25 @@ describe("書き出した index.html", () => {
     ["数でない画像の幅", '<meta property="og:image:width" content="100%" />'],
     ["決めていない og:*", '<meta property="og:video" content="https://example.com/a.mp4" />'],
     ["決めていない twitter:*", '<meta name="twitter:site" content="@mojisashi" />'],
-    ["src 付きの JSON-LD", '<script type="application/ld+json" src="/a.json"></script>'],
+    ["src 付きの JSON-LD", '<script type="application/ld+json" src="/a.json">{}</script>'],
+    ["空白を足した JSON-LD", '<script  type="application/ld+json" >{}</script>'],
     ["JSON でない JSON-LD", '<script type="application/ld+json">fetch("/log")</script>'],
     ["オブジェクトでない JSON-LD", '<script type="application/ld+json">"mojisashi"</script>'],
-    ["< を含む JSON-LD", '<script type="application/ld+json">{"a":"</script><script>"}</script>'],
+    ["配列の JSON-LD", '<script type="application/ld+json">[{}]</script>'],
+    ["< を含む JSON-LD", '<script type="application/ld+json">{"a":"<b>"}</script>'],
+    [
+      "スクリプトのタグの中の JSON-LD",
+      '<script type="module" <script type="application/ld+json">{}</script>crossorigin src="/assets/a.js"></script>',
+    ],
+    [
+      "スタイルシートの URL の中の JSON-LD",
+      '<link rel="stylesheet" crossorigin href="/assets/a<script type="application/ld+json">{}</script>.css">',
+    ],
+    [
+      "meta の content の中の JSON-LD",
+      '<meta property="og:title" content="a<script type="application/ld+json">{}</script>b" />',
+    ],
+    ["title の中の JSON-LD", '<title>a<script type="application/ld+json">{}</script>b</title>'],
     [
       "属性を足した JSON-LD",
       '<script type="application/ld+json" id="ld">{"@type":"WebApplication"}</script>',
