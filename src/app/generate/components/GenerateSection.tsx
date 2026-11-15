@@ -3,10 +3,17 @@ import { Button, Choice, CopyButton, NumberField, randomBytes } from "../../../p
 import { formatNumber } from "../../lib/format-number";
 import { makeTestText, maxTestTextLength, testTextKinds, type TestTextKind } from "../lib/generate";
 
+// The whole text can be 100,000 characters. コピー gives all of it, so the page shows only the start.
+const previewLength = 500;
+
+type Made = { kind: TestTextKind; length: number; text: string };
+
 export function GenerateSection(): ReactNode {
   const [length, setLength] = useState<number | undefined>(undefined);
   const [kind, setKind] = useState<TestTextKind>("japanese");
-  const [made, setMade] = useState<string | undefined>(undefined);
+  const [made, setMade] = useState<Made | undefined>(undefined);
+  // A text made with other settings would be copied as if it matched the ones on screen.
+  const text = made?.kind === kind && made.length === length ? made.text : undefined;
 
   return (
     <section className="mt-12 space-y-6">
@@ -17,7 +24,7 @@ export function GenerateSection(): ReactNode {
         disabled={length === undefined}
         onPress={() => {
           if (length !== undefined) {
-            setMade(makeTestText(kind, length, randomBytes));
+            setMade({ kind, length, text: makeTestText(kind, length, randomBytes) });
           }
         }}
       >
@@ -26,14 +33,22 @@ export function GenerateSection(): ReactNode {
       <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
         <p aria-live="polite" className="font-bold text-slate-900">
-          {made !== undefined && `${formatNumber(made.length)}文字のテスト用の文章を作りました`}
+          {text !== undefined && `${formatNumber(text.length)}文字のテスト用の文章を作りました`}
         </p>
-        {made !== undefined && <CopyButton text={made}>コピー</CopyButton>}
+        {text !== undefined && <CopyButton text={text}>コピー</CopyButton>}
       </div>
-      {made !== undefined && (
-        <p className="max-h-48 overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3 break-all text-slate-900">
-          {made}
-        </p>
+      {text !== undefined && (
+        <div className="space-y-2">
+          <p className="rounded-md border border-slate-300 bg-slate-50 p-3 break-all text-slate-900">
+            {text.slice(0, previewLength)}
+          </p>
+          {text.length > previewLength && (
+            <p className="text-sm text-slate-600">
+              先頭の{formatNumber(previewLength)}
+              文字だけを表示しています。全部はコピーで取り出せます。
+            </p>
+          )}
+        </div>
       )}
     </section>
   );
