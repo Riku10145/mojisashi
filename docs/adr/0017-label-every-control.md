@@ -19,16 +19,22 @@ export const Bare = () => <div><textarea /><input type="text" /><button type="bu
 
 - **`jsx-a11y-x/control-has-associated-label`。** 中身のないボタンを止めます。除く要素は、プラグインの `recommended` と同じ7つです。`audio`、`canvas`、`embed`、`input`、`textarea`、`tr`、`video` です。このルールは、入力欄の外に置いた `<label htmlFor>` を見られません。`input` と `textarea` を除かないと、`TextBox` のような正しい組み合わせも止めます。`recommended` の `ignoreRoles` は使いません。`listbox` のような役割を付けた要素にも、名前を求めます。
 - **`local/control-label`（`guards/labels.ts`）。** `textarea` と `input` に、次のどちらかを求めます。
-  - `<label>` の中に置く。`Choice` のラジオボタンが、この形です。
-  - `id` を付け、同じファイルの `<label htmlFor>` が同じ値を指す。同じ値とは、同じ文字列か、同じ変数です。`TextBox` と `NumberField` は、`useId()` で作った変数を両方に渡します。
+  - `htmlFor` のない `<label>` の中に置く。`Choice` のラジオボタンが、この形です。`htmlFor` のある `<label>` は、`htmlFor` が指す要素だけのラベルになります。中の入力欄は、次の形で `id` を合わせたときだけ、ラベルが付きます。
+  - `id` を付け、同じファイルの `<label htmlFor>` が同じ値を指す。同じ値とは、同じ文字列か、同じ変数です。`"count"`、`{"count"}`、`` {`count`} `` は、どれも同じ文字列です。`TextBox` と `NumberField` は、`useId()` で作った変数を両方に渡します。
 
-`aria-label` と `aria-labelledby` は認めません。目で見て使う人にも、何をする欄かを見せるためです。ラベルと入力欄を別のファイルに分けると止まるので、同じファイルに置きます。別の関数の変数は、名前が同じ `id` でも、同じ値とはみなしません。
+  ラベルの要らない `input` もあります。
+  - `type="hidden"` は画面に出ないので、ラベルを求めません。
+  - `type="submit"`、`type="reset"`、`type="button"` は、`value` の文字が名前になり、`<label>` は名前になりません。そこで、ラベルの代わりに、空でない文字列の `value` を求めます。
+  - ほかの `type` には、ラベルを求めます。
+
+`aria-label` と `aria-labelledby` は認めません。目で見て使う人にも、何をする欄かを見せるためです。ラベルと入力欄を別のファイルに分けると止まるので、同じファイルに置きます。別の関数の変数は、名前が同じ `id` でも、同じ値とはみなしません。`props.id` のように `.` でたどる値は、同じものを指していても見分けられないので、止まります。`id` は、その関数の変数に入れてから渡します。
 
 ルールが働くことは、`guard-probes/` の probe で確かめます。
 
-- `blocked/` に、中身のないボタン、ラベルのない `textarea`、ラベルのない `input`、別の関数の `id` を指す `<label htmlFor>` を置きます。
+- `blocked/` に、中身のないボタン、ラベルのない `textarea`、ラベルのない `input`、別の関数の `id` を指す `<label htmlFor>`、ほかの `id` を指す `<label htmlFor>` の中の `input`、`value` のない `<input type="submit">` を置きます。
 - `<ul role="listbox">` も `blocked/` に置きます。`recommended` は通し、`strict` は止めるものです。`strict` を使っていることを確かめます。
-- `allowed/` に、正しい3つの形を置きます。`htmlFor` と `id` に同じ変数を渡すもの、同じ文字列を書くもの、`<label>` の中に置くものです。前からある `allowed/` の probe のうち、ラベルのない `textarea` を書いていた2つは、`<label>` の中に入れました。
+- 名前のない `<div role="listbox">` も `blocked/` に置きます。`control-has-associated-label` だけが止めます。`recommended` の `ignoreRoles` を足すと通ることを確かめました。`ignoreRoles` を使っていないことを確かめます。
+- `allowed/` に、正しい形を置きます。`htmlFor` と `id` に同じ変数を渡すもの、同じ文字列を書くもの、同じ文字列を `{}` の中に書くもの、`<label>` の中に置くもの、`type="hidden"`、`value` のある `<input type="submit">` です。前からある `allowed/` の probe のうち、ラベルのない `textarea` を書いていた2つは、`<label>` の中に入れました。
 
 ESLint はコードしか見ないので、書き出した HTML で `id` と `for` が合うかまでは確かめません。確かめるのは、コードで同じ変数か同じ文字列を指すことまでです。
 
