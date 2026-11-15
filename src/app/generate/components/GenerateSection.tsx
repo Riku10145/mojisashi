@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button, CopyButton, NumberField, randomBytes } from "../../../platform";
-import { formatNumber } from "../../count/lib/count";
+import { formatNumber } from "../../lib/format-number";
 import { makeTestText, maxTestTextLength } from "../lib/generate";
 
 export function GenerateSection(): ReactNode {
