@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { build, type Rolldown } from "vite";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
+const readAdr0015 = "docs/adr/0015-allow-tags-and-files-for-search.md を読んでください。";
 
 /** One file that a build writes into dist/, with the files it was made from. */
 export type BuiltFile = { name: string; content: string | Uint8Array; sources: string[] };
@@ -110,7 +111,28 @@ const headTags = [
   /^<title>[^<>]*<\/title>$/,
   /^<script type="module" crossorigin src="\/assets\/[\w-]+\.js"><\/script>$/,
   /^<link rel="stylesheet" crossorigin href="\/assets\/[\w-]+\.css">$/,
+  /^<link rel="canonical" href="https:\/\/mojisashi\.app\/" \/>$/,
+  /^<meta property="og:url" content="https:\/\/mojisashi\.app\/" \/>$/,
+  /^<meta (property="og|name="twitter):image" content="https:\/\/mojisashi\.app\/og\.png" \/>$/,
+  /^<meta property="og:image:(width|height)" content="\d+" \/>$/,
+  /^<meta property="og:(title|description|type|site_name|locale|image:alt)" content="[^"<>]*" \/>$/,
+  /^<meta name="twitter:(card|title|description|image:alt)" content="[^"<>]*" \/>$/,
 ];
+const jsonLd = /<script type="application\/ld\+json">([^<]*)<\/script>/;
+const headToken = new RegExp(
+  `${jsonLd.source}|<title>[^<]*<\\/title>|<script\\b[^>]*><\\/script>|<[^>]*>`,
+  "g",
+);
+const wholeJsonLd = new RegExp(`^${jsonLd.source}$`);
+
+function isJsonObject(text: string): boolean {
+  try {
+    const value: unknown = JSON.parse(text);
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  } catch {
+    return false;
+  }
+}
 const bodyTags = new Set(
   "div main section header footer h1 h2 h3 p span strong em small ul ol li dl dt dd br output a label textarea input fieldset legend button".split(
     " ",
@@ -133,13 +155,20 @@ export function htmlProblems(html: string): string[] {
   if (head === undefined || body === undefined) {
     return ["index.html に head と body がありません"];
   }
-  const tags = head.match(/<title>[^<]*<\/title>|<script\b[^>]*><\/script>|<[^>]*>/g) ?? [];
+  const tags = head.match(headToken) ?? [];
   if (tags.join("").replace(/\s/g, "") !== head.replace(/\s/g, "")) {
     problems.push(`index.html の head に、タグのほかの文字があります。${readAdr0007}`);
   }
-  for (const tag of tags.map((tag) => tag.replace(/\s+/g, " "))) {
-    if (!headTags.some((pattern) => pattern.test(tag))) {
-      problems.push(`index.html の head に ${tag} は入れられません。${readAdr0007}`);
+  for (const tag of tags) {
+    const data = wholeJsonLd.exec(tag)?.[1];
+    const flat = tag.replace(/\s+/g, " ");
+    if (data !== undefined && !isJsonObject(data)) {
+      problems.push(
+        `index.html の JSON-LD が、JSON のオブジェクトとして読めません。${readAdr0015}`,
+      );
+    }
+    if (data === undefined && !headTags.some((pattern) => pattern.test(flat))) {
+      problems.push(`index.html の head に ${flat} は入れられません。${readAdr0007}`);
     }
   }
   for (const [, name = "", attributes = ""] of body.matchAll(/<([a-zA-Z][\w-]*)([^>]*)>/g)) {

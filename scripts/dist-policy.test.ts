@@ -16,6 +16,19 @@ async function provenanceOf(input: string): Promise<string[]> {
   return provenanceProblems(root, input, await referenceBuild(root, input));
 }
 
+async function builtPageOf(input: string): Promise<{ provenance: string[]; html: string[] }> {
+  const files = await referenceBuild(root, input);
+  const decoder = new TextDecoder();
+  const pages = files.filter((file) => file.name.endsWith(".html"));
+  expect(pages).toHaveLength(1);
+  return {
+    provenance: provenanceProblems(root, input, files),
+    html: pages.flatMap((file) =>
+      htmlProblems(typeof file.content === "string" ? file.content : decoder.decode(file.content)),
+    ),
+  };
+}
+
 describe("guard-probes/build/blocked のファイルを入口にしたビルドは、出どころで止まる", async () => {
   for (const name of await readdir(`${probes}blocked/`)) {
     it(name, async () => {
@@ -28,6 +41,25 @@ describe("guard-probes/build/allowed のファイルを入口にしたビルド�
   for (const name of await readdir(`${probes}allowed/`)) {
     it(name, async () => {
       expect(await provenanceOf(`${probes}allowed/${name}`)).toEqual([]);
+    });
+  }
+});
+
+describe("guard-probes/build/head/blocked のページは、書き出した head で止まる", async () => {
+  for (const name of await readdir(`${probes}head/blocked/`)) {
+    it(name, async () => {
+      expect((await builtPageOf(`${probes}head/blocked/${name}`)).html).not.toEqual([]);
+    });
+  }
+});
+
+describe("guard-probes/build/head/allowed のページは通る", async () => {
+  for (const name of await readdir(`${probes}head/allowed/`)) {
+    it(name, async () => {
+      expect(await builtPageOf(`${probes}head/allowed/${name}`)).toEqual({
+        provenance: [],
+        html: [],
+      });
     });
   }
 });
@@ -48,6 +80,29 @@ describe("書き出した index.html", () => {
     expect(htmlProblems(page(head))).toEqual([]);
   });
 
+  it("検索とリンクのプレビューのためのタグは通る", () => {
+    const seo = [
+      '<link rel="canonical" href="https://mojisashi.app/" />',
+      '<meta property="og:title" content="文字数カウント | mojisashi" />',
+      '<meta property="og:description" content="文章の文字数を数える道具です。" />',
+      '<meta property="og:type" content="website" />',
+      '<meta property="og:url" content="https://mojisashi.app/" />',
+      '<meta property="og:site_name" content="mojisashi" />',
+      '<meta property="og:locale" content="ja_JP" />',
+      '<meta property="og:image" content="https://mojisashi.app/og.png" />',
+      '<meta property="og:image:alt" content="mojisashi" />',
+      '<meta property="og:image:width" content="1200" />',
+      '<meta property="og:image:height" content="630" />',
+      '<meta name="twitter:card" content="summary_large_image" />',
+      '<meta name="twitter:title" content="文字数カウント | mojisashi" />',
+      '<meta name="twitter:description" content="文章の文字数を数える道具です。" />',
+      '<meta name="twitter:image" content="https://mojisashi.app/og.png" />',
+      '<meta name="twitter:image:alt" content="mojisashi" />',
+      '<script type="application/ld+json">\n  {"@context":"https://schema.org","@type":"WebApplication"}\n</script>',
+    ].join("\n");
+    expect(htmlProblems(page(`${head}\n${seo}`))).toEqual([]);
+  });
+
   it("スペルチェックと autocomplete を止めた入力欄は通る", () => {
     const body =
       '<div id="root"><textarea id="t" rows="8" spellcheck="false" autocomplete="off"></textarea></div>';
@@ -61,6 +116,37 @@ describe("書き出した index.html", () => {
     ["<base>", '<base href="https://example.com/">'],
     ["先読み", '<link rel="preconnect" href="https://example.com">'],
     ["ほかのスクリプト", '<script type="module" src="https://example.com/x.js"></script>'],
+    ["別の URL の canonical", '<link rel="canonical" href="https://example.com/" />'],
+    ["dev の URL の canonical", '<link rel="canonical" href="https://dev.mojisashi.app/" />'],
+    ["別の URL の og:url", '<meta property="og:url" content="https://example.com/" />'],
+    ["別の画像の og:image", '<meta property="og:image" content="https://example.com/a.png" />'],
+    ["別の画像の twitter:image", '<meta name="twitter:image" content="/og.png" />'],
+    ["数でない画像の幅", '<meta property="og:image:width" content="100%" />'],
+    ["決めていない og:*", '<meta property="og:video" content="https://example.com/a.mp4" />'],
+    ["決めていない twitter:*", '<meta name="twitter:site" content="@mojisashi" />'],
+    ["src 付きの JSON-LD", '<script type="application/ld+json" src="/a.json">{}</script>'],
+    ["空白を足した JSON-LD", '<script  type="application/ld+json" >{}</script>'],
+    ["JSON でない JSON-LD", '<script type="application/ld+json">fetch("/log")</script>'],
+    ["オブジェクトでない JSON-LD", '<script type="application/ld+json">"mojisashi"</script>'],
+    ["配列の JSON-LD", '<script type="application/ld+json">[{}]</script>'],
+    ["< を含む JSON-LD", '<script type="application/ld+json">{"a":"<b>"}</script>'],
+    [
+      "スクリプトのタグの中の JSON-LD",
+      '<script type="module" <script type="application/ld+json">{}</script>crossorigin src="/assets/a.js"></script>',
+    ],
+    [
+      "スタイルシートの URL の中の JSON-LD",
+      '<link rel="stylesheet" crossorigin href="/assets/a<script type="application/ld+json">{}</script>.css">',
+    ],
+    [
+      "meta の content の中の JSON-LD",
+      '<meta property="og:title" content="a<script type="application/ld+json">{}</script>b" />',
+    ],
+    ["title の中の JSON-LD", '<title>a<script type="application/ld+json">{}</script>b</title>'],
+    [
+      "属性を足した JSON-LD",
+      '<script type="application/ld+json" id="ld">{"@type":"WebApplication"}</script>',
+    ],
   ])("head の %s を止める", (_, tag) => {
     expect(htmlProblems(page(`${head}\n${tag}`))).not.toEqual([]);
   });

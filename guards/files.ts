@@ -35,9 +35,9 @@ const rootFiles = new Set([
 // starts with a dot, such as .config/, is where some tools look for config, so only .github/ is
 // allowed, file by file. So are Claude Code skills, as Markdown only.
 const nestedFile = [
-  /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
-  /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
-  /^public\/_headers$/,
+  /^(?!\.|public\/)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
+  /^(?!\.|public\/)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
+  /^public\/(_headers|robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
   /^\.github\/workflows\/[\w-]+\.yml$/,
   /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];
@@ -47,6 +47,7 @@ const claimedProbe = [
   /^guard-probes\/(app|platform)\/tsconfig\.json$/,
   /^guard-probes\/(app|platform)\/(blocked|allowed)\/[\w-]+\.tsx?$/,
   /^guard-probes\/build\/(blocked|allowed|helpers)\/[\w-]+\.(ts|html)$/,
+  /^guard-probes\/build\/head\/(blocked|allowed)\/[\w-]+\.html$/,
 ];
 
 /** Problems with the tracked files: a kind or name not allowed, an unclaimed probe, src/ outside a zone. */
