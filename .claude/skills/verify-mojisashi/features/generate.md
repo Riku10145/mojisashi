@@ -35,7 +35,7 @@ Preconditions:
 export default async function ({ page, capture, step }) {
   const length = page.getByRole("textbox", { name: "作る文字数" });
   const make = page.getByRole("button", { name: "作る" });
-  const copy = page.getByRole("button", { name: "コピー" });
+  const copy = page.getByRole("button", { name: "コピー", exact: true });
   const box = page.getByRole("textbox", { name: "文章" });
   const without = page.getByRole("definition").nth(0);
   const withBlanks = page.getByRole("definition").nth(1);
@@ -93,3 +93,4 @@ export default async function ({ page, capture, step }) {
 - 貼るときは `ControlOrMeta+V` を押します。`fill` で入れると、貼った文字数を確かめたことになりません。
 - 100,000文字を貼ったあとの数え直しは数秒かかります。待つ時間を短くしすぎないでください。
 - 文字数の `dd` は、`count.md` と同じく並び順で探しています。
+- ページには「文章をコピー」のボタンもあります。「コピー」のボタンは `exact: true` で探します。
