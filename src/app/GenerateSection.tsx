@@ -3,12 +3,9 @@ import { Button, CopyButton, NumberField, randomBytes } from "../platform";
 import { formatNumber } from "./count";
 import { makeTestText, maxTestTextLength } from "./generate";
 
-/** A テスト用の文章 and how many times one was made, so each new one gets a fresh コピー button. */
-type Made = { text: string; round: number };
-
 export function GenerateSection(): ReactNode {
   const [length, setLength] = useState<number | undefined>(undefined);
-  const [made, setMade] = useState<Made | undefined>(undefined);
+  const [made, setMade] = useState<string | undefined>(undefined);
 
   return (
     <section className="mt-12 space-y-6">
@@ -18,22 +15,19 @@ export function GenerateSection(): ReactNode {
         disabled={length === undefined}
         onPress={() => {
           if (length !== undefined) {
-            const text = makeTestText(length, randomBytes);
-            setMade((last) => ({ text, round: (last?.round ?? 0) + 1 }));
+            setMade(makeTestText(length, randomBytes));
           }
         }}
       >
         作る
       </Button>
-      {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
-      <p aria-live="polite" className="font-bold text-slate-900">
-        {made !== undefined && `${formatNumber(made.text.length)}文字のテスト用の文章を作りました`}
-      </p>
-      {made !== undefined && (
-        <CopyButton key={made.round} text={made.text}>
-          コピー
-        </CopyButton>
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
+        <p aria-live="polite" className="font-bold text-slate-900">
+          {made !== undefined && `${formatNumber(made.length)}文字のテスト用の文章を作りました`}
+        </p>
+        {made !== undefined && <CopyButton text={made}>コピー</CopyButton>}
+      </div>
     </section>
   );
 }
