@@ -53,6 +53,8 @@ const log = { blockedRequests: [], consoleErrors: [], pageErrors: [], steps: [] 
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ locale: "ja-JP" });
+// Headless Chromium refuses navigator.clipboard and paste without these.
+await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin });
 await context.route("**/*", async (route) => {
   const url = new URL(route.request().url());
   if (url.origin !== origin) {

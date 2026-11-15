@@ -1,4 +1,5 @@
 import { CountSection } from "./CountSection";
+import { GenerateSection } from "./GenerateSection";
 
 export function App() {
   return (
@@ -8,6 +9,7 @@ export function App() {
         文章の文字数を数えたり、決めた文字数の文章を作ったりする道具です。
       </p>
       <CountSection />
+      <GenerateSection />
     </main>
   );
 }
