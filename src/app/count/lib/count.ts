@@ -2,10 +2,20 @@ import { formatNumber } from "../../lib/format-number";
 
 export type CountingRule = "withoutBlanks" | "withBlanks";
 
-export const countingRules: readonly { value: CountingRule; label: string }[] = [
-  { value: "withoutBlanks", label: "空白と改行を除いた文字数" },
-  { value: "withBlanks", label: "空白と改行を含む文字数" },
-];
+export const countingRules: readonly { value: CountingRule; label: string; explanation: string }[] =
+  [
+    {
+      value: "withoutBlanks",
+      label: "空白と改行を除いた文字数",
+      explanation:
+        "空白、タブ、改行を数えません。Web や Word から貼った文章に入る改行しない空白（NBSP）や、SNS で空行を作るのに使う「ㅤ」（U+3164）も、空白として扱います。",
+    },
+    {
+      value: "withBlanks",
+      label: "空白と改行を含む文字数",
+      explanation: "改行は、どのパソコンで書いた文章でも1文字です。",
+    },
+  ];
 
 export type Counts = Readonly<Record<CountingRule, number>>;
 
