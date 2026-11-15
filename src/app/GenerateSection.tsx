@@ -18,10 +18,8 @@ export function GenerateSection(): ReactNode {
         disabled={length === undefined}
         onPress={() => {
           if (length !== undefined) {
-            setMade((last) => ({
-              text: makeTestText(length, randomBytes),
-              round: (last?.round ?? 0) + 1,
-            }));
+            const text = makeTestText(length, randomBytes);
+            setMade((last) => ({ text, round: (last?.round ?? 0) + 1 }));
           }
         }}
       >
