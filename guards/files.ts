@@ -33,10 +33,12 @@ const rootFiles = new Set([
 // Below the root, by kind. JavaScript and .d.ts files are out of reach of the type check and of
 // ESLint's zone rules, and a .d.ts can declare a value that does not exist. A folder whose name
 // starts with a dot, such as .config/, is where some tools look for config, so only .github/ is
-// allowed, file by file. So are Claude Code skills, as Markdown only.
+// allowed, file by file. So are Claude Code skills, as Markdown only. Everything in public/ is
+// copied into dist/ and published, and only dist/index.html is checked as a page, so public/ takes
+// only the files named below, not any file of an allowed kind (ADR 0015).
 const nestedFile = [
-  /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
-  /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
+  /^(?!\.)(?!public\/)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
+  /^(?!\.)(?!public\/)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
   /^public\/_headers$/,
   // For search engines, AI crawlers and link previews; none is read by the page (ADR 0015).
   /^public\/(robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
