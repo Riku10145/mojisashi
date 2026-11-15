@@ -38,6 +38,8 @@ const nestedFile = [
   /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
   /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
   /^public\/_headers$/,
+  // For search engines, AI crawlers and link previews; none is read by the page (ADR 0015).
+  /^public\/(robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
   /^\.github\/workflows\/[\w-]+\.yml$/,
   /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];

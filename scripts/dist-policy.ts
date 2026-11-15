@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { build, type Rolldown } from "vite";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
+const readAdr0015 = "docs/adr/0015-allow-tags-and-files-for-search.md を読んでください。";
 
 /** One file that a build writes into dist/, with the files it was made from. */
 export type BuiltFile = { name: string; content: string | Uint8Array; sources: string[] };
@@ -103,6 +104,8 @@ export function reproductionProblems(
 }
 
 // What the head of the shipped page may hold, tag by tag, with runs of whitespace made one space.
+// The tags for search engines and link previews request nothing in the browser (ADR 0015). Their
+// URLs point at production only, and dev stays out of search through X-Robots-Tag.
 const headTags = [
   /^<meta charset="UTF-8" \/>$/,
   /^<meta name="viewport" content="[^"<>]*" \/>$/,
@@ -110,7 +113,25 @@ const headTags = [
   /^<title>[^<>]*<\/title>$/,
   /^<script type="module" crossorigin src="\/assets\/[\w-]+\.js"><\/script>$/,
   /^<link rel="stylesheet" crossorigin href="\/assets\/[\w-]+\.css">$/,
+  /^<link rel="canonical" href="https:\/\/mojisashi\.app\/" \/>$/,
+  /^<meta property="og:url" content="https:\/\/mojisashi\.app\/" \/>$/,
+  /^<meta (property="og|name="twitter):image" content="https:\/\/mojisashi\.app\/og\.png" \/>$/,
+  /^<meta property="og:image:(width|height)" content="\d+" \/>$/,
+  /^<meta property="og:(title|description|type|site_name|locale|image:alt)" content="[^"<>]*" \/>$/,
+  /^<meta name="twitter:(card|title|description|image:alt)" content="[^"<>]*" \/>$/,
 ];
+// Structured data is a script the browser does not run. Only the type attribute, and no < inside,
+// so the block cannot end early or hide a comment.
+const jsonLd = /<script\s+type="application\/ld\+json"\s*>([^<]*)<\/script>/g;
+
+function isJsonObject(text: string): boolean {
+  try {
+    const value: unknown = JSON.parse(text);
+    return typeof value === "object" && value !== null;
+  } catch {
+    return false;
+  }
+}
 const bodyTags = new Set(
   "div main section header footer h1 h2 h3 p span strong em small ul ol li dl dt dd br output a label textarea input fieldset legend button".split(
     " ",
@@ -133,8 +154,16 @@ export function htmlProblems(html: string): string[] {
   if (head === undefined || body === undefined) {
     return ["index.html に head と body がありません"];
   }
-  const tags = head.match(/<title>[^<]*<\/title>|<script\b[^>]*><\/script>|<[^>]*>/g) ?? [];
-  if (tags.join("").replace(/\s/g, "") !== head.replace(/\s/g, "")) {
+  for (const [, data = ""] of head.matchAll(jsonLd)) {
+    if (!isJsonObject(data)) {
+      problems.push(
+        `index.html の JSON-LD が、JSON のオブジェクトとして読めません。${readAdr0015}`,
+      );
+    }
+  }
+  const rest = head.replace(jsonLd, "");
+  const tags = rest.match(/<title>[^<]*<\/title>|<script\b[^>]*><\/script>|<[^>]*>/g) ?? [];
+  if (tags.join("").replace(/\s/g, "") !== rest.replace(/\s/g, "")) {
     problems.push(`index.html の head に、タグのほかの文字があります。${readAdr0007}`);
   }
   for (const tag of tags.map((tag) => tag.replace(/\s+/g, " "))) {
