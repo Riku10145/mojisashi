@@ -23,6 +23,7 @@
 ## 守ること
 
 - 機能のコードは `src/app/` に書きます。ここでは DOM の型がないので、`document`、`fetch`、`localStorage` のようなブラウザの仕組みは型のエラーになります（ADR 0007）。文章の入出力、コピー、乱数は `src/platform/` の部品を使います。
+- `src/app/` の中は、機能ごとのフォルダに分けます（ADR 0014）。コンポーネントは `src/app/<機能>/components/` に、純粋な関数は `src/app/<機能>/lib/` に置きます。テストは、確かめるファイルの隣に置きます。2つ以上の機能が使う純粋な関数は `src/app/lib/` に置きます。
 - ブラウザに触れるのは `src/platform/` と `src/shell/` だけです。使ってよい要素、属性、パッケージ、ブラウザの仕組みは `guards/zones.ts` に並べてあり、並べていないものは ESLint が止めます。
 - `globalThis`、`eval`、`Function`、`Reflect`、`import()` と、型をごまかす書き方（`x is T`、オーバーロード、`declare global`、`namespace`）は、`src/` で使えません。
 - `any`、`!` による決めつけ、`as` による型の書き換えを使いません。型の絞り込みで合わせます。`text!: string` や `let target!: number` の `!`、`declare`、`// @ts-expect-error`、`// @ts-ignore`、`// @ts-nocheck`、`/// <reference>` も止まります。
