@@ -1,12 +1,12 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
-import { Choice, CopyButton, NumberField, TextBox } from "../platform";
+import { Choice, CopyButton, NumberField, TextBox } from "../../../platform";
 import {
   countCharacters,
   countingRules,
   formatNumber,
   gapMessage,
   type CountingRule,
-} from "./count";
+} from "../lib/count";
 
 export function CountSection(): ReactNode {
   const [text, setText] = useState("");
