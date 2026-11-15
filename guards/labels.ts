@@ -92,6 +92,7 @@ export const controlLabelRule = ESLintUtils.RuleCreator.withoutDocs<[], "unlabel
     };
 
     const named = new Set<Target>();
+    const claimed = new Set<TSESTree.JSXOpeningElement>();
     const needsId: { element: TSESTree.JSXOpeningElement; name: string }[] = [];
     return {
       JSXOpeningElement(element) {
@@ -113,13 +114,20 @@ export const controlLabelRule = ESLintUtils.RuleCreator.withoutDocs<[], "unlabel
         if (naming !== "label") {
           return;
         }
-        // A <label htmlFor> labels the element it names, not the control inside it.
+        // A <label htmlFor> labels the element it names, not the control inside it. A <label>
+        // without htmlFor labels only the first control inside it.
         const label = context.sourceCode
           .getAncestors(element)
           .flatMap((ancestor) => (ancestor.type === T.JSXElement ? [ancestor.openingElement] : []))
           .findLast((opening) => tagOf(opening) === "label");
-        if (label === undefined || attributeOf(label, "htmlFor") !== undefined) {
+        if (
+          label === undefined ||
+          attributeOf(label, "htmlFor") !== undefined ||
+          claimed.has(label)
+        ) {
           needsId.push({ element, name });
+        } else {
+          claimed.add(label);
         }
       },
       "Program:exit"() {
