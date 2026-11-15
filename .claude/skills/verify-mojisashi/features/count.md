@@ -11,6 +11,7 @@
 - `count-rule` は、目標と比べる数え方を切り替える。
 - `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
 - `count-copy` は、「文章をコピー」で文章の欄の中身をそのままコピーする。文章が空のときは押せない。文章を書き換えると「コピーしました」が消える。
+- `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄の位置が変わらない。
 
 ## How to get to it (user POV)
 
@@ -39,6 +40,7 @@ Preconditions:
 - **そのままコピーする。** `👨‍👩‍👧`、か（U+304B）に結合用の濁点（U+3099）を続けた「が」、空行、全角スペース、行末の半角スペース、最後の改行を含む文章を入れて、「文章をコピー」を押す。クリップボードの中身が欄の中身と同じ。
 - **書き換えると表示が消える。** 文章の最後に1文字足すと、「コピーしました」が消える。
 - **貼っても変わらない。** 欄を空にして貼ると、欄の中身がコピーした文章と同じになる。
+- **欄が動かない。** 幅320pxと375pxで、コピーできたときと、できなかったときの両方を試す。「コピーしました」や「コピーできませんでした」が出る前とあとで、文章の欄の上端の位置が同じ。できなかったときは、`navigator.clipboard.writeText` を失敗するものに置き換えて試す。
 
 ```js scenario
 export default async function ({ page, capture, step }) {
@@ -104,6 +106,25 @@ export default async function ({ page, capture, step }) {
   await page.keyboard.press("ControlOrMeta+V");
   step("count-copy: pasting gives back the same 文章", (await box.inputValue()) === original, JSON.stringify(await box.inputValue()));
   await capture("count-copied");
+
+  for (const width of [320, 375]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const fails of [false, true]) {
+      await box.fill(`幅${width}の文章${fails ? "（失敗）" : ""}`);
+      const before = (await box.boundingBox()).y;
+      if (fails) {
+        await page.evaluate(() => {
+          navigator.clipboard.writeText = () => Promise.reject(new Error("denied"));
+        });
+      }
+      await copy.click();
+      await page.getByText(fails ? "コピーできませんでした" : "コピーしました", { exact: true }).waitFor({ timeout: 5000 });
+      const after = (await box.boundingBox()).y;
+      step(`count-copy-layout: at ${width}px the 文章 field stays put when copying ${fails ? "fails" : "works"}`, before === after, `${before} -> ${after}`);
+    }
+    await capture(`count-copy-${width}`);
+    await page.reload({ waitUntil: "load" });
+  }
 }
 ```
 
@@ -114,5 +135,6 @@ export default async function ({ page, capture, step }) {
 - 文字数の `dd` には役割の名前がありません。`getByRole("definition")` の並び順（除いた文字数が先、含む文字数が後）に頼っています。数え方の並びを変えたら、ここも直します。
 - 目標の文字数が範囲の外のときは、差の行が空になります。エラーの文言はありません。
 - 「文章をコピー」の手順は、道具がクリップボードの読み書きを許していることに頼っています。許していないと「コピーできませんでした」が出ます。
+- `count-copy-layout` は、`writeText` を置き換えたページを再読み込みで元に戻します。この手順のあとに、コピーの手順を足すときは、再読み込みのあとに置きます。
 - コピーする文章には `\r` を入れません。`fill` で入れると `\n` にそろうので、コピーした中身と比べられません。
 - 合成済みの「が」（U+304C）は、どの数え方でも1文字です。結合文字を確かめるには、手順のように `\u304b\u3099` と書きます。エディターで「が」と打つと、合成済みになることがあります。
