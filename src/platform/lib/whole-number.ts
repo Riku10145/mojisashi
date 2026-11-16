@@ -10,3 +10,13 @@ export function wholeNumberIn(raw: string, min: number, max: number): number | u
   const value = Number(written.replaceAll(",", ""));
   return value >= min && value <= max ? value : undefined;
 }
+
+const numbers = new Intl.NumberFormat("ja-JP");
+
+/** What to tell someone whose field holds something other than a number from min to max. Nothing while the field is blank. */
+export function wholeNumberHint(raw: string, min: number, max: number): string | undefined {
+  if (raw.trim() === "" || wholeNumberIn(raw, min, max) !== undefined) {
+    return undefined;
+  }
+  return `${numbers.format(min)}から${numbers.format(max)}までの整数を入れてください`;
+}

@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
-import { wholeNumberIn } from "../lib/whole-number";
+import { wholeNumberHint, wholeNumberIn } from "../lib/whole-number";
 
 export type NumberFieldProps = {
   label: string;
@@ -8,7 +8,10 @@ export type NumberFieldProps = {
   onNumber: (value: number | undefined) => void;
 };
 
-/** A labelled field for 目標の文字数 and the like. It reports undefined until the field holds a whole number in range. */
+/**
+ * A labelled field for 目標の文字数 and the like. It reports undefined until the field holds a
+ * whole number in range, and says which numbers it takes while it holds anything else.
+ */
 export function NumberField({ label, min, max, onNumber }: NumberFieldProps): ReactNode {
   const id = useId();
   const [raw, setRaw] = useState("");
@@ -29,6 +32,10 @@ export function NumberField({ label, min, max, onNumber }: NumberFieldProps): Re
           onNumber(wholeNumberIn(next, min, max));
         }}
       />
+      {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
+      <p role="status" className="mt-1 text-sm text-red-700">
+        {wholeNumberHint(raw, min, max)}
+      </p>
     </div>
   );
 }
