@@ -9,7 +9,7 @@
 - `count-blank-kinds` は、NBSP とハングルの埋め字を空白として扱い、ゼロ幅スペースのような見えない文字をどちらの数え方でも数えない（ADR 0008）。
 - `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。
 - `count-rule` は、目標と比べる数え方を切り替える。
-- `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
+- `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さず、欄の下に「1から1,000,000までの整数を入れてください」と出す。欄が空のときは出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
 - `count-copy` は、「文章をコピー」で文章の欄の中身をそのままコピーする。文章が空のときは押せない。文章を書き換えると「コピーしました」が消える。
 - `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄の位置が変わらない。
 
@@ -36,7 +36,7 @@ Preconditions:
 - **空白に見える文字と、見えない文字。** `a`、NBSP（U+00A0）、`b`、ゼロ幅スペース（U+200B）、`c`、ハングルの埋め字（U+3164）、`d` を入れる。除いた文字数は4文字、含む文字数は6文字。
 - **目標との差。** 混ざった文章に戻し、目標の文字数に全角の `１８` を入れる。`あと2文字` が出る。
 - **数え方の切り替え。** 「空白と改行を含む文字数」を選ぶ。`2文字オーバー` に変わる。
-- **範囲の外。** 目標の文字数に `0` を入れる。差の行が空になる。
+- **範囲の外。** 目標の文字数に `0` を入れる。差の行が空になり、「1から1,000,000までの整数を入れてください」が出る。`abc`、`-5`、`1.5`、`2,000,000` でも同じ文言が出る。`400` に戻すと文言が消えて差が出る。欄を空にすると、差も文言も出ない。
 - **そのままコピーする。** `👨‍👩‍👧`、か（U+304B）に結合用の濁点（U+3099）を続けた「が」、空行、全角スペース、行末の半角スペース、最後の改行を含む文章を入れて、「文章をコピー」を押す。クリップボードの中身が欄の中身と同じ。
 - **書き換えると表示が消える。** 文章の最後に1文字足すと、「コピーしました」が消える。
 - **貼っても変わらない。** 欄を空にして貼ると、欄の中身がコピーした文章と同じになる。
@@ -80,9 +80,22 @@ export default async function ({ page, capture, step }) {
   step("count-rule: switching gives 2文字オーバー", true);
   await capture("count-over");
 
+  const hint = page.getByText("1から1,000,000までの整数を入れてください", { exact: true });
   await target.fill("0");
   await gap.waitFor({ state: "detached", timeout: 5000 });
   step("count-target-range: 0 hides the gap line", (await gap.count()) === 0);
+  for (const raw of ["0", "abc", "-5", "1.5", "2,000,000"]) {
+    await target.fill(raw);
+    await hint.waitFor({ timeout: 5000 }).catch(() => undefined);
+    step(`count-target-range: ${raw} says what to type`, (await hint.count()) === 1 && (await gap.count()) === 0);
+  }
+  await capture("count-target-hint");
+  await target.fill("400");
+  await page.getByText(/^(あと[\d,]+文字|[\d,]+文字オーバー)$/).waitFor({ timeout: 5000 });
+  step("count-target-range: 400 clears the hint and shows the gap", (await hint.count()) === 0);
+  await target.fill("");
+  await gap.waitFor({ state: "detached", timeout: 5000 });
+  step("count-target-range: an empty field shows neither gap nor hint", (await hint.count()) === 0);
 
   const copy = page.getByRole("button", { name: "文章をコピー" });
   const copied = page.getByText("コピーしました", { exact: true });
@@ -133,7 +146,7 @@ export default async function ({ page, capture, step }) {
 - 文字数の表示は `useDeferredValue` で少し遅れて変わります。`fill` の直後に読まず、期待する値が出るまで `waitFor` で待ちます。
 - `fill` で `\r\n` を入れても、ブラウザは入力欄の改行を `\n` にそろえます。Windows の改行が1文字になることは、`src/app/count/lib/count.test.ts` のテストで確かめます。
 - 文字数の `dd` には役割の名前がありません。`getByRole("definition")` の並び順（除いた文字数が先、含む文字数が後）に頼っています。数え方の並びを変えたら、ここも直します。
-- 目標の文字数が範囲の外のときは、差の行が空になります。エラーの文言はありません。
+- 目標の文字数が範囲の外のときは、差の行が空になり、欄の下に入れられる範囲が出ます。欄が空のときは、どちらも出ません。
 - 「文章をコピー」の手順は、道具がクリップボードの読み書きを許していることに頼っています。許していないと「コピーできませんでした」が出ます。
 - `count-copy-layout` は、`writeText` を置き換えたページを再読み込みで元に戻します。この手順のあとに、コピーの手順を足すときは、再読み込みのあとに置きます。
 - コピーする文章には `\r` を入れません。`fill` で入れると `\n` にそろうので、コピーした中身と比べられません。
