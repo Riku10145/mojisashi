@@ -3,6 +3,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y-x";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint, { type CompatiblePlugin } from "typescript-eslint";
+import { controlLabelRule } from "./guards/labels";
 import { browserRule, importsRule, jsxRule } from "./guards/rules";
 import { browserSinks, zones } from "./guards/zones";
 
@@ -11,7 +12,12 @@ const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでくだ�
 
 const localPlugin = {
   meta: { name: "local" },
-  rules: { browser: browserRule, jsx: jsxRule, imports: importsRule },
+  rules: {
+    browser: browserRule,
+    jsx: jsxRule,
+    imports: importsRule,
+    "control-label": controlLabelRule,
+  },
 };
 // typescript-eslint's plugin type accepts the rules that @typescript-eslint/utils creates.
 const local: CompatiblePlugin = localPlugin;
@@ -65,7 +71,18 @@ export default defineConfig([
       ],
     },
   },
-  { files: ["**/*.tsx"], extends: [jsxA11y.configs.strict] },
+  {
+    files: ["**/*.tsx"],
+    extends: [jsxA11y.configs.strict],
+    rules: {
+      // strict leaves this rule off. The ignored elements are the plugin's recommended ones:
+      // the rule cannot see a <label htmlFor> beside an input, so local/control-label checks those.
+      "jsx-a11y-x/control-has-associated-label": error({
+        ignoreElements: ["audio", "canvas", "embed", "input", "textarea", "tr", "video"],
+      }),
+      "local/control-label": "error",
+    },
+  },
   ...Object.values(zones).map((zone) => ({
     files: [zone.dir, ...("probes" in zone ? [zone.probes] : [])].map(
       (dir) => `${dir}**/*.{ts,tsx}`,
