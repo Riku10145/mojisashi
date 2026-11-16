@@ -8,10 +8,16 @@ export type NumberFieldProps = {
   onNumber: (value: number | undefined) => void;
 };
 
-/** A labelled field for 目標の文字数 and the like. It reports undefined until the field holds a whole number in range. */
+const numbers = new Intl.NumberFormat("ja-JP");
+
+/**
+ * A labelled field for 目標の文字数 and the like. It reports undefined until the field holds a
+ * whole number in range, and says which numbers it takes while it holds anything else.
+ */
 export function NumberField({ label, min, max, onNumber }: NumberFieldProps): ReactNode {
   const id = useId();
   const [raw, setRaw] = useState("");
+  const unread = raw.trim() !== "" && wholeNumberIn(raw, min, max) === undefined;
   return (
     <div>
       <label htmlFor={id} className="block font-bold text-slate-900">
@@ -29,6 +35,10 @@ export function NumberField({ label, min, max, onNumber }: NumberFieldProps): Re
           onNumber(wholeNumberIn(next, min, max));
         }}
       />
+      {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
+      <p role="status" className="mt-1 text-sm text-red-700">
+        {unread && `${numbers.format(min)}から${numbers.format(max)}までの整数を入れてください`}
+      </p>
     </div>
   );
 }
