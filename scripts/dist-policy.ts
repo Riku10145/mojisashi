@@ -207,6 +207,107 @@ export function canonicalProblems(html: string): string[] {
     : [`index.html の canonical は1つだけにします。いまは ${String(count)} 個です。${readAdr0015}`];
 }
 
+// Each link preview tag repeats what the page already says in <title> or the meta description.
+// og:image:alt describes the image instead, so it is not checked.
+const previewOf: Readonly<Record<string, "title" | "description">> = {
+  'property="og:title"': "title",
+  'name="twitter:title"': "title",
+  'property="og:description"': "description",
+  'name="twitter:description"': "description",
+};
+
+// JSON-LD keys whose values name a type, an identifier, a URL or a code rather than saying
+// something to the reader. Every other string in the JSON-LD has to be text in the body.
+const jsonLdKeysNotShown = new Set([
+  "@context",
+  "@type",
+  "@id",
+  "@language",
+  "url",
+  "inLanguage",
+  "applicationCategory",
+  "operatingSystem",
+]);
+
+function decoded(text: string): string {
+  return text
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+/**
+ * The body's text as one string per run of text between tags, so a JSON-LD string cannot match
+ * words from two elements. React's <!-- --> only splits text inside one element, so it joins.
+ * Text in a hidden element still counts: telling it apart needs an HTML parser.
+ */
+function textRuns(html: string): string[] {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .split(/<[^>]*>/)
+    .map(decoded);
+}
+
+function metaContents(head: string, attribute: string): string[] {
+  return [...head.matchAll(new RegExp(`<meta\\s+${attribute}\\s+content="([^"]*)"`, "g"))].map(
+    ([, content = ""]) => decoded(content),
+  );
+}
+
+/** Every string the JSON-LD says to a reader. A featureList string is a comma-separated list. */
+function shownStrings(value: unknown, key = ""): string[] {
+  if (jsonLdKeysNotShown.has(key)) {
+    return [];
+  }
+  if (typeof value === "string") {
+    return key === "featureList" ? value.split(/\s*,\s*/) : [value];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item: unknown) => shownStrings(item, key));
+  }
+  if (typeof value === "object" && value !== null) {
+    return Object.entries(value).flatMap(([name, item]) => shownStrings(item, name));
+  }
+  return [];
+}
+
+/**
+ * Link previews and structured data say what the page says (#33, #34): each og:* and twitter:*
+ * title or description equals the <title> or the meta description, and each string the JSON-LD
+ * says to a reader is text in the body. Run on the shipped page, whose body holds the rendered app.
+ */
+export function previewProblems(html: string): string[] {
+  const head = /<head>([\s\S]*)<\/head>/.exec(html)?.[1] ?? "";
+  const body = textRuns(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
+  const page = {
+    title: decoded(/<title>([^<]*)<\/title>/.exec(head)?.[1] ?? ""),
+    description: metaContents(head, 'name="description"')[0] ?? "",
+  };
+  const problems: string[] = [];
+  for (const [attribute, said] of Object.entries(previewOf)) {
+    for (const content of metaContents(head, attribute)) {
+      if (content !== page[said]) {
+        problems.push(
+          `index.html の ${attribute} が、ページの ${said === "title" ? "title" : "meta description"} と違います。${readAdr0015}`,
+        );
+      }
+    }
+  }
+  for (const [, data = ""] of head.matchAll(new RegExp(jsonLd.source, "g"))) {
+    const value: unknown = isJsonObject(data) ? JSON.parse(data) : undefined;
+    for (const text of shownStrings(value)) {
+      if (!body.some((run) => run.includes(text))) {
+        problems.push(
+          `index.html の JSON-LD の「${text}」が、ページの本文にありません。${readAdr0015}`,
+        );
+      }
+    }
+  }
+  return problems;
+}
+
 export function cssProblems(name: string, css: string): string[] {
   const problems: string[] = [];
   if (/@import/i.test(css)) {

@@ -1,3 +1,4 @@
+import { Card } from "./components/Card";
 import { CountingRulesSection } from "./count/components/CountingRulesSection";
 import { CountSection } from "./count/components/CountSection";
 import { countingRules, type CountingRule } from "./count/lib/count";
@@ -36,23 +37,27 @@ const faq: readonly { question: string; answer: string }[] = [
 
 export function App() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900">文字数カウント</h1>
-      <p className="mt-4 text-slate-600">
-        mojisashi（もじさし）は、文章の文字数を「空白と改行を除く」と「空白と改行を含む」の2つの数え方で同時に数える文字数カウントです。決めた文字数のテスト用の文章も作れます。文章はサーバーに送らず、あなたのブラウザの中だけで数えます。登録はいりません。
-      </p>
+    <main className="mx-auto max-w-5xl py-10 sm:px-4">
+      <header className="px-4 sm:px-0">
+        <p className="text-sm font-bold tracking-wide text-blue-700">mojisashi</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">文字数カウント</h1>
+        <p className="mt-4 max-w-3xl text-slate-600">
+          mojisashi（もじさし）は、文章の文字数を「空白と改行を除く」と「空白と改行を含む」の2つの数え方で同時に数える文字数カウントです。決めた文字数のテスト用の文章も作れます。文章はサーバーに送らず、あなたのブラウザの中だけで数えます。登録はいりません。
+        </p>
+      </header>
       <CountSection />
       <GenerateSection />
-      <CountingRulesSection />
-      <section className="mt-12 space-y-4">
-        <h2 className="text-xl font-bold text-slate-900">よくある質問</h2>
-        {faq.map(({ question, answer }) => (
-          <div key={question} className="space-y-1">
-            <h3 className="font-bold text-slate-900">{question}</h3>
-            <p className="text-slate-700">{answer}</p>
-          </div>
-        ))}
-      </section>
+      <div className="grid gap-x-6 lg:grid-cols-2 lg:items-start">
+        <CountingRulesSection />
+        <Card title="よくある質問">
+          {faq.map(({ question, answer }) => (
+            <div key={question} className="space-y-1">
+              <h3 className="font-bold text-slate-900">{question}</h3>
+              <p className="text-slate-700">{answer}</p>
+            </div>
+          ))}
+        </Card>
+      </div>
     </main>
   );
 }

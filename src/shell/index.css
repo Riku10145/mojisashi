@@ -1,1 +1,8 @@
 @import "tailwindcss" source("..");
+
+/* The cards sit on this, and it fills the window past the end of <main>. */
+@layer base {
+  html {
+    background-color: var(--color-slate-100);
+  }
+}
