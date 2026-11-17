@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Card } from "../../components/Card";
 import { countingRules } from "../lib/count";
 
 const characterNote =
@@ -6,8 +7,7 @@ const characterNote =
 
 export function CountingRulesSection(): ReactNode {
   return (
-    <section className="mt-6 space-y-4 border-y border-slate-200 bg-white p-4 shadow-sm sm:rounded-xl sm:border-x sm:p-6">
-      <h2 className="text-xl font-bold text-slate-900">数え方</h2>
+    <Card title="数え方">
       <ul className="list-disc space-y-2 pl-6 text-slate-700">
         {countingRules.map(({ value, label, explanation }) => (
           <li key={value}>
@@ -17,6 +17,6 @@ export function CountingRulesSection(): ReactNode {
         ))}
         <li>{characterNote}</li>
       </ul>
-    </section>
+    </Card>
   );
 }

@@ -1,3 +1,4 @@
+import { Card } from "./components/Card";
 import { CountingRulesSection } from "./count/components/CountingRulesSection";
 import { CountSection } from "./count/components/CountSection";
 import { countingRules, type CountingRule } from "./count/lib/count";
@@ -48,15 +49,14 @@ export function App() {
       <GenerateSection />
       <div className="grid gap-x-6 lg:grid-cols-2 lg:items-start">
         <CountingRulesSection />
-        <section className="mt-6 space-y-4 border-y border-slate-200 bg-white p-4 shadow-sm sm:rounded-xl sm:border-x sm:p-6">
-          <h2 className="text-xl font-bold text-slate-900">よくある質問</h2>
+        <Card title="よくある質問">
           {faq.map(({ question, answer }) => (
             <div key={question} className="space-y-1">
               <h3 className="font-bold text-slate-900">{question}</h3>
               <p className="text-slate-700">{answer}</p>
             </div>
           ))}
-        </section>
+        </Card>
       </div>
     </main>
   );

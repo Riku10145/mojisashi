@@ -1,5 +1,6 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import { Choice, CopyButton, NumberField, TextBox } from "../../../platform";
+import { Card } from "../../components/Card";
 import { formatNumber } from "../../lib/format-number";
 import { countCharacters, countingRules, gapMessage, type CountingRule } from "../lib/count";
 
@@ -12,8 +13,7 @@ export function CountSection(): ReactNode {
   const counts = useMemo(() => countCharacters(deferredText), [deferredText]);
 
   return (
-    <section className="mt-8 space-y-6 border-y border-slate-200 bg-white p-4 shadow-sm sm:rounded-xl sm:border-x sm:p-6">
-      <h2 className="text-xl font-bold text-slate-900">文字数を数える</h2>
+    <Card title="文字数を数える">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <TextBox
           label="文章"
@@ -26,8 +26,10 @@ export function CountSection(): ReactNode {
             {countingRules.map(({ value, label }) => (
               <div key={value} className="rounded-lg bg-slate-100 p-4">
                 <dt className="text-sm text-slate-600">{label}</dt>
-                <dd className="mt-1 font-bold text-slate-900">
-                  <span className="text-3xl tabular-nums">{formatNumber(counts[value])}</span>
+                <dd className="mt-1 font-bold wrap-anywhere text-slate-900">
+                  <span className="text-2xl tabular-nums sm:text-3xl">
+                    {formatNumber(counts[value])}
+                  </span>
                   <span className="ml-1 text-sm">文字</span>
                 </dd>
               </div>
@@ -48,6 +50,6 @@ export function CountSection(): ReactNode {
           </p>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
