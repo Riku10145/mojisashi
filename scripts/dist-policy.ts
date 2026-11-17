@@ -4,6 +4,7 @@ import { build, type Rolldown } from "vite";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 const readAdr0015 = "docs/adr/0015-allow-tags-and-files-for-search.md を読んでください。";
+const readAdr0019 = "docs/adr/0019-cache-hashed-assets-for-a-year.md を読んでください。";
 
 /** One file that a build writes into dist/, with the files it was made from. */
 export type BuiltFile = { name: string; content: string | Uint8Array; sources: string[] };
@@ -320,4 +321,14 @@ export function cssProblems(name: string, css: string): string[] {
     problems.push(`dist/${name} の ${call} はリクエストになります。${readAdr0007}`);
   }
   return problems;
+}
+
+/**
+ * _headers lets browsers keep everything under /assets/ for a year without asking again, which is
+ * safe only while each name there carries a hash of its content (ADR 0019).
+ */
+export function assetNameProblems(names: Iterable<string>): string[] {
+  return [...names]
+    .filter((name) => name.startsWith("assets/") && !/^assets\/[\w-]+-[\w-]{8}\.\w+$/.test(name))
+    .map((name) => `dist/${name} の名前に、中身のハッシュがありません。${readAdr0019}`);
 }

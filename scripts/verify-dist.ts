@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import {
+  assetNameProblems,
   canonicalProblems,
   cssProblems,
   htmlProblems,
@@ -41,6 +42,7 @@ const decoder = new TextDecoder();
 const problems = [
   ...provenanceProblems(root, `${root}index.html`, built),
   ...reproductionProblems(expected, actual),
+  ...assetNameProblems(actual.keys()),
   ...htmlProblems(decoder.decode(actual.get("index.html"))),
   ...canonicalProblems(decoder.decode(actual.get("index.html"))),
   ...previewProblems(decoder.decode(actual.get("index.html"))),

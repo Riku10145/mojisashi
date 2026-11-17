@@ -2,6 +2,7 @@ import { readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  assetNameProblems,
   canonicalProblems,
   cssProblems,
   htmlProblems,
@@ -318,4 +319,19 @@ describe("dist/ と決めた設定のビルド", () => {
   ])("%s と止める", (_, actual) => {
     expect(reproductionProblems(expected, actual)).not.toEqual([]);
   });
+});
+
+describe("dist/assets/ のファイルの名前", () => {
+  it("ビルドが付けた、中身のハッシュの入った名前は通る", () => {
+    expect(
+      assetNameProblems(["index.html", "assets/index-DVA07QTa.js", "assets/index-DQgovtDq.css"]),
+    ).toEqual([]);
+  });
+
+  it.each(["assets/index.js", "assets/app.css", "assets/index-1.js"])(
+    "ハッシュのない %s を止める",
+    (name) => {
+      expect(assetNameProblems([name])).not.toEqual([]);
+    },
+  );
 });
