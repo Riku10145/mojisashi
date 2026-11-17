@@ -46,9 +46,9 @@ ADR 0003 のとおり、機械的に守ります。
 
 ## cf の Build Output を書く2つのパッケージ
 
-cf 1.0.0-beta.28 では、`scripts/cloudflare-output.ts` が `@cloudflare/build-output-utils` と `@cloudflare/config` で Build Output を書きます。この2つは、cf が依存する版と同じにしておきます。違う版にすると、`guards/cloudflare-config.test.ts` が止めます。
+cf 1.0.0-beta.28 では、`scripts/cloudflare-output.ts` が `@cloudflare/build-output-utils` と `@cloudflare/config` で Build Output を書いていました。この2つは cf が依存する版と同じにしておく必要があり、cf より数時間早く公開されるので、Dependabot が2つだけを上げるとテストが失敗しました。
 
-cf を 1.0.0-beta.29 以降に上げるときは、ADR 0009 のとおり `scripts/cloudflare-output.ts` を消し、2つのパッケージも消します。そのあとは、Dependabot が cf だけを別の PR で上げます。
+そこで、Dependabot を入れる前に cf を 1.0.0-beta.29 に上げ、スクリプトと2つのパッケージを消しました（ADR 0019）。Dependabot は cf だけを別の PR で上げます。
 
 ## Considered Options
 
