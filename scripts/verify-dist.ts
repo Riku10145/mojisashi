@@ -4,6 +4,7 @@ import {
   canonicalProblems,
   cssProblems,
   htmlProblems,
+  previewProblems,
   provenanceProblems,
   referenceBuild,
   reproductionProblems,
@@ -42,6 +43,7 @@ const problems = [
   ...reproductionProblems(expected, actual),
   ...htmlProblems(decoder.decode(actual.get("index.html"))),
   ...canonicalProblems(decoder.decode(actual.get("index.html"))),
+  ...previewProblems(decoder.decode(actual.get("index.html"))),
   ...[...actual]
     .filter(([name]) => name.endsWith(".css"))
     .flatMap(([name, content]) => cssProblems(name, decoder.decode(content))),

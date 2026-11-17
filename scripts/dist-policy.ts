@@ -207,6 +207,72 @@ export function canonicalProblems(html: string): string[] {
     : [`index.html の canonical は1つだけにします。いまは ${String(count)} 個です。${readAdr0015}`];
 }
 
+function contentOf(head: string, attribute: string): string | undefined {
+  return new RegExp(`<meta\\s+${attribute}\\s+content="([^"]*)"`).exec(head)?.[1];
+}
+
+function textOf(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+function stringsIn(value: unknown): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
+  const items: unknown[] = Array.isArray(value) ? value : [];
+  return items.flatMap((item) => (typeof item === "string" ? [item] : []));
+}
+
+/** Every string, or string in an array, under the key at any depth of the JSON value. */
+function stringsAt(value: unknown, key: string): string[] {
+  if (typeof value !== "object" || value === null) {
+    return [];
+  }
+  const entries: [string, unknown][] = Array.isArray(value)
+    ? value.map((item: unknown): [string, unknown] => ["", item])
+    : Object.entries(value);
+  return entries.flatMap(([name, item]) => (name === key ? stringsIn(item) : stringsAt(item, key)));
+}
+
+/**
+ * Link previews and structured data say what the page says (#33, #34): og:title is the <title>,
+ * og:description is the meta description, and each description and featureList item in the
+ * JSON-LD is text in the body. Run on the shipped page, whose body holds the rendered app.
+ */
+export function previewProblems(html: string): string[] {
+  const head = /<head>([\s\S]*)<\/head>/.exec(html)?.[1] ?? "";
+  const body = textOf(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
+  const problems: string[] = [];
+  const pairs: [string, string | undefined, string | undefined][] = [
+    ["og:title", /<title>([^<]*)<\/title>/.exec(head)?.[1], contentOf(head, 'property="og:title"')],
+    [
+      "og:description",
+      contentOf(head, 'name="description"'),
+      contentOf(head, 'property="og:description"'),
+    ],
+  ];
+  for (const [name, page, preview] of pairs) {
+    if (preview !== undefined && preview !== page) {
+      problems.push(`index.html の ${name} が、ページの title か description と違います。`);
+    }
+  }
+  for (const [, data = ""] of head.matchAll(new RegExp(jsonLd.source, "g"))) {
+    const value: unknown = isJsonObject(data) ? JSON.parse(data) : undefined;
+    for (const text of [...stringsAt(value, "description"), ...stringsAt(value, "featureList")]) {
+      if (!body.includes(text)) {
+        problems.push(`index.html の JSON-LD の「${text}」が、ページの本文にありません。`);
+      }
+    }
+  }
+  return problems;
+}
+
 export function cssProblems(name: string, css: string): string[] {
   const problems: string[] = [];
   if (/@import/i.test(css)) {

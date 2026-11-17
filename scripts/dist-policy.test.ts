@@ -5,6 +5,7 @@ import {
   canonicalProblems,
   cssProblems,
   htmlProblems,
+  previewProblems,
   provenanceProblems,
   referenceBuild,
   reproductionProblems,
@@ -173,6 +174,40 @@ describe("書き出した index.html", () => {
   it("autocomplete を止めていない入力欄を止める", () => {
     const body = '<div id="root"><textarea id="t" spellcheck="false"></textarea></div>';
     expect(htmlProblems(page(head, body))).not.toEqual([]);
+  });
+});
+
+describe("リンクのプレビューと構造化データ", () => {
+  const page = (head: string) =>
+    `<!doctype html>\n<html lang="ja">\n  <head>\n<title>文字数カウント | mojisashi</title>\n<meta\n  name="description"\n  content="文字数を数えます。"\n/>\n${head}\n  </head>\n  <body>\n    <div id="root"><p>文章を「貼る」と数えます。</p><h2>テスト用の文章を作る</h2></div>\n  </body>\n</html>\n`;
+  const jsonLdOf = (value: object) =>
+    `<script type="application/ld+json">${JSON.stringify(value)}</script>`;
+
+  it("title と description に合うプレビューと、本文にある説明は通る", () => {
+    const head = [
+      '<meta property="og:title" content="文字数カウント | mojisashi" />',
+      '<meta\n  property="og:description"\n  content="文字数を数えます。"\n/>',
+      jsonLdOf({
+        "@graph": [
+          { "@type": "WebSite", name: "mojisashi" },
+          {
+            "@type": "WebApplication",
+            description: "文章を「貼る」と数えます。",
+            featureList: ["テスト用の文章を作る"],
+          },
+        ],
+      }),
+    ].join("\n");
+    expect(previewProblems(page(head))).toEqual([]);
+  });
+
+  it.each([
+    ["title と違う og:title", '<meta property="og:title" content="ほかの名前" />'],
+    ["description と違う og:description", '<meta property="og:description" content="ほか" />'],
+    ["本文にない description", jsonLdOf({ description: "無料で使えます。" })],
+    ["本文にない featureList", jsonLdOf({ "@graph": [{ featureList: ["原稿用紙の枚数"] }] })],
+  ])("%s を止める", (_, head) => {
+    expect(previewProblems(page(head))).not.toEqual([]);
   });
 });
 
