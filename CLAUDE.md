@@ -32,6 +32,7 @@
 - チェックに止められたら、コードを直します。チェックを通すために、`guards/` や `eslint.config.ts` の一覧や決まりをゆるめません。`package.json` の `check` から手順を外すこともしません。機能に要ると決めたときだけゆるめます（ADR 0013）。`src/app/` で要素やブラウザの仕組みが足りないときは、`src/platform/` の部品を使います。
 - 文章の入力欄のスペルチェックは切ったままにします。Chrome の強化スペルチェックは、入力した文字を Google に送ります（ADR 0007）。`autocomplete="off"` も外しません。外すと Chrome が、入力欄の文章をプロファイルの `Sessions/` に書き、戻ったときに入れ直します（ADR 0001）。
 - `vite.config.ts` を変えたら、`scripts/dist-policy.ts` の `referenceBuild` も同じに変えます。`bun run build` の最後に `scripts/verify-dist.ts` が、2つのビルドの `dist/` が同じか、ページに入ったものの出どころ、書き出した `index.html` と CSS を確かめます。
+- ページの見出し、`<title>`、数え方を変えたら、リンクのプレビューの画像 `public/og.png` も `docs/og-image.md` の手順で作り直します。
 - `public/_headers` の CSP をゆるめません。`guards/config-policy.ts` が止めます。きびしくするのは自由です。
 - `bunfig.toml` の `minimumReleaseAge` を下げません。新しすぎて入らない版は、古い版を選びます。`bun.lock` は npm のレジストリから入る版だけにします。`package.json` のスクリプト、lefthook、CI で動かせるコマンドは `guards/config-policy.ts` に並べたものだけで、`bunx` や `npx` は止まります。
 - 守りを試すコードは `guard-probes/` に置きます。止まるはずのものは `blocked/` に置き、1行目に `// stopped-by: TS2304` のように、止めるものを書きます。
