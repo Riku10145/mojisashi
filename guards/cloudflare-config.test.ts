@@ -1,27 +1,23 @@
 import { readFile } from "node:fs/promises";
-import { resolveAndParseConfig } from "@cloudflare/config";
 import { describe, expect, it } from "vitest";
 import config, { environments } from "../cloudflare.config";
-import { isRecord } from "./config-policy";
 
 const production = "mojisashi.app";
 const headers = await readFile(new URL("../public/_headers", import.meta.url), "utf8");
 
 describe.each([...environments])("cloudflare.config.ts の %s", (mode, environment) => {
-  it("静的なファイルだけを、決めたドメインだけで返す", async () => {
-    const parsed = await resolveAndParseConfig(config, { isPreview: false, mode });
-    if (!parsed.success) {
-      throw parsed.error;
-    }
+  it("静的なファイルだけを、決めたドメインだけで返す", () => {
+    const { worker, ...rest } = config({ isPreview: false, mode });
     // _headers, and so the CSP, does not apply to what a Worker script returns (ADR 0009). The
-    // compatibility date only changes how a script runs.
-    expect({ ...parsed.data.worker, compatibilityDate: undefined }).toEqual({
+    // compatibility date only changes how a script runs. Any other key, such as containers or
+    // bindings, fails here.
+    expect(rest).toEqual({});
+    expect({ ...worker, compatibilityDate: undefined }).toEqual({
       name: environment.worker,
       domains: [environment.domain],
       workersDev: false,
       previewUrls: false,
     });
-    expect(parsed.data.containers).toEqual([]);
   });
 });
 
@@ -61,26 +57,6 @@ it("HTML だけは、Cloudflare に書き換えさせない", () => {
   ]);
 });
 
-const buildOutputPackages = ["@cloudflare/build-output-utils", "@cloudflare/config"];
-
-async function versionsIn(path: string, field: string): Promise<unknown[]> {
-  const pkg: unknown = JSON.parse(await readFile(new URL(path, import.meta.url), "utf8"));
-  const dependencies = isRecord(pkg) ? pkg[field] : undefined;
-  return buildOutputPackages.map((name) =>
-    isRecord(dependencies) ? dependencies[name] : undefined,
-  );
-}
-
-it("Build Output を書く @cloudflare/* は、cf と同じ版にする", async () => {
-  // scripts/cloudflare-output.ts writes the Build Output that cf deploy --prebuilt reads, so both
-  // must use one format. When cf moves past 1.0.0-beta.28, the script goes instead (ADR 0009).
-  expect(await versionsIn("../package.json", "devDependencies")).toEqual(
-    await versionsIn("../node_modules/cf/package.json", "dependencies"),
-  );
-});
-
-it("決めていない --mode は止める", async () => {
-  await expect(
-    resolveAndParseConfig(config, { isPreview: false, mode: "preview" }),
-  ).rejects.toThrow("--mode");
+it("決めていない --mode は止める", () => {
+  expect(() => config({ isPreview: false, mode: "preview" })).toThrow("--mode");
 });

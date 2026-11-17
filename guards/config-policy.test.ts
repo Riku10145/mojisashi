@@ -172,8 +172,7 @@ describe("package.json", () => {
       "deploy:dev でビルドし直してから公開する",
       "deploy:dev",
       {
-        "deploy:dev":
-          "vite build && bun scripts/cloudflare-output.ts dev && cf deploy --prebuilt --mode dev",
+        "deploy:dev": "vite build && cf deploy dist --mode dev",
       },
     ],
   ])("%s のを止める", (_, where, change) => {

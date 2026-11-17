@@ -142,8 +142,7 @@ const programs: readonly RegExp[] = [
   /^(NODE_ENV=production )?bun scripts\/[a-z-]+\.ts$/,
   /^bun install --frozen-lockfile$/,
   // Deploys an environment of cloudflare.config.ts from dist/ without building (ADR 0009).
-  /^bun scripts\/cloudflare-output\.ts [a-z]+$/,
-  /^cf deploy --prebuilt --mode [a-z]+$/,
+  /^cf deploy dist --mode [a-z]+$/,
 ];
 
 const partsOf = (command: string) => command.split("&&").map((part) => part.trim());
