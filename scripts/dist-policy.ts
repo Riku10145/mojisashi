@@ -332,3 +332,39 @@ export function assetNameProblems(names: Iterable<string>): string[] {
     .filter((name) => name.startsWith("assets/") && !/^assets\/[\w-]+-[\w-]{8}\.\w+$/.test(name))
     .map((name) => `dist/${name} の名前に、中身のハッシュがありません。${readAdr0019}`);
 }
+
+// The line shapes llms.txt may use, a link bullet before a plain one. "text" and "note" are what
+// a line says to a reader; "url" is where a link points.
+const llmsLines = [
+  /^# (?<text>.+)$/,
+  /^> (?<text>.+)$/,
+  /^## (?<text>.+)$/,
+  /^- \[(?<text>[^\]]+)\]\((?<url>[^)]*)\)(?:: (?<note>.+))?$/,
+  /^- (?<text>.+)$/,
+];
+
+/**
+ * llms.txt says what the page says (#36): each heading, quote, bullet and link note is text in
+ * one run of the body, and each link points to the page's one URL, as canonical and og:url do.
+ */
+export function llmsProblems(llms: string, html: string): string[] {
+  const body = textRuns(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
+  const problems: string[] = [];
+  for (const line of llms.split(/\r?\n/).filter((line) => line.trim() !== "")) {
+    const parts = llmsLines.map((shape) => shape.exec(line)?.groups).find(Boolean);
+    if (parts === undefined) {
+      problems.push(`llms.txt の「${line}」は、決めた形の行ではありません。${readAdr0015}`);
+      continue;
+    }
+    const { text, note, url } = parts;
+    for (const said of [text, note]) {
+      if (said !== undefined && !body.some((run) => run.includes(said))) {
+        problems.push(`llms.txt の「${said}」が、ページの本文にありません。${readAdr0015}`);
+      }
+    }
+    if (url !== undefined && url !== "https://mojisashi.app/") {
+      problems.push(`llms.txt のリンク ${url} は、https://mojisashi.app/ にします。${readAdr0015}`);
+    }
+  }
+  return problems;
+}

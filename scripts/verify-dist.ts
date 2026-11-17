@@ -5,6 +5,7 @@ import {
   canonicalProblems,
   cssProblems,
   htmlProblems,
+  llmsProblems,
   previewProblems,
   provenanceProblems,
   referenceBuild,
@@ -46,6 +47,9 @@ const problems = [
   ...htmlProblems(decoder.decode(actual.get("index.html"))),
   ...canonicalProblems(decoder.decode(actual.get("index.html"))),
   ...previewProblems(decoder.decode(actual.get("index.html"))),
+  ...(actual.has("llms.txt")
+    ? llmsProblems(decoder.decode(actual.get("llms.txt")), decoder.decode(actual.get("index.html")))
+    : ["dist/llms.txt がありません"]),
   ...[...actual]
     .filter(([name]) => name.endsWith(".css"))
     .flatMap(([name, content]) => cssProblems(name, decoder.decode(content))),
