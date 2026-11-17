@@ -1,6 +1,7 @@
 // Checks over the files that configure the guards. Each returns the problems it found; an empty list
 // means the file is allowed. They are allowlists or floors, so tightening never needs an edit here.
 
+const readAdr0003 = "docs/adr/0003-prefer-mechanical-guards.md を読んでください。";
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -137,15 +138,15 @@ const programs: readonly RegExp[] = [
   /^cf deploy --prebuilt --mode [a-z]+$/,
 ];
 
+const partsOf = (command: string) => command.split("&&").map((part) => part.trim());
+
 /** Each &&-separated part must be a listed program, or bun run with a script in package.json. */
 export function commandProblems(
   where: string,
   command: string,
   scripts: readonly string[],
 ): string[] {
-  return command
-    .split("&&")
-    .map((part) => part.trim())
+  return partsOf(command)
     .filter((part) => {
       const script = /^bun run ([\w:-]+)$/.exec(part)?.[1];
       return script === undefined
@@ -153,6 +154,87 @@ export function commandProblems(
         : !scripts.includes(script);
     })
     .map((part) => `${where} の「${part}」は、決めたコマンドではありません。${readAdr0007}`);
+}
+
+// The steps check runs, in order, and the parts each step's own script holds, in order. lefthook
+// and CI run only `bun run check`, so dropping or rewriting a step turns it off with every command
+// still allowed.
+const checkSteps: ReadonlyMap<string, readonly string[]> = new Map([
+  ["check:files", ["bun scripts/check-files.ts"]],
+  ["typecheck", ["tsc -b"]],
+  ["lint", ["eslint --config eslint.config.ts --max-warnings 0 ."]],
+  ["format:check", ["oxfmt --check"]],
+  ["test", ["vitest run --config vite.config.ts"]],
+  [
+    "build",
+    [
+      "vite build",
+      "NODE_ENV=production bun scripts/prerender.ts",
+      "NODE_ENV=production bun scripts/verify-dist.ts",
+    ],
+  ],
+]);
+
+/** The parts of wanted that parts does not hold in that order. Other parts may come between. */
+function missingInOrder(parts: readonly string[], wanted: readonly string[]): string[] {
+  const missing: string[] = [];
+  let from = 0;
+  for (const part of wanted) {
+    const at = parts.indexOf(part, from);
+    if (at === -1) {
+      missing.push(part);
+    } else {
+      from = at + 1;
+    }
+  }
+  return missing;
+}
+
+function checkStepProblems(scripts: Record<string, unknown>): string[] {
+  const required = new Map([
+    ["check", [...checkSteps.keys()].map((name) => `bun run ${name}`)],
+    ...checkSteps,
+  ]);
+  return [...required].flatMap(([name, parts]) => {
+    const command = scripts[name];
+    return missingInOrder(typeof command === "string" ? partsOf(command) : [], parts).map(
+      (part) => `package.json の ${name} に「${part}」が、決めた順で入っていません。${readAdr0003}`,
+    );
+  });
+}
+
+// The parts that may sit in one script only, once: the formatter would rewrite files before
+// format:check reads them, and a second vite build replaces the dist/ that verify-dist checked.
+// `bun run format` reaches the formatter from any script, so no script may hold it.
+const soleParts: ReadonlyMap<string, string | undefined> = new Map([
+  ["oxfmt", "format"],
+  ["vite build", "build"],
+  ["bun run format", undefined],
+]);
+
+function scriptProblems(name: string, command: string, scripts: readonly string[]): string[] {
+  const problems = commandProblems(`package.json の ${name}`, command, scripts);
+  // bun run runs pre<name> and post<name> around <name>, out of sight of check. prepare is the
+  // hook bun install runs, and preview is one only while a view script exists.
+  const lifecycle = /^(?:pre|post)(.*)$/.exec(name);
+  if (
+    lifecycle !== null &&
+    (scripts.includes(lifecycle[1] ?? "") || !["prepare", "preview"].includes(name))
+  ) {
+    problems.push(
+      `package.json の ${name} は、ほかの script の前かあとに、check に並ばずに動きます。${readAdr0003}`,
+    );
+  }
+  const parts = partsOf(command);
+  for (const [part, home] of soleParts) {
+    if (parts.filter((each) => each === part).length > (name === home ? 1 : 0)) {
+      const where = home === undefined ? "どの script にも書けません" : `${home} にだけ1度書けます`;
+      problems.push(
+        `package.json の ${name} の「${part}」は使えません。「${part}」は、${where}。${readAdr0003}`,
+      );
+    }
+  }
+  return problems;
 }
 
 const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
@@ -186,10 +268,11 @@ export function packageProblems(pkg: unknown): string[] {
   for (const [name, command] of Object.entries(scripts)) {
     problems.push(
       ...(typeof command === "string"
-        ? commandProblems(`package.json の ${name}`, command, Object.keys(scripts))
+        ? scriptProblems(name, command, Object.keys(scripts))
         : [`package.json の ${name} が読めません`]),
     );
   }
+  problems.push(...checkStepProblems(scripts));
   return problems;
 }
 
