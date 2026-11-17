@@ -53,11 +53,14 @@ it("noindex は、本番ではない環境のホスト名だけに付ける", ()
   expect(rulesFor("x-robots-tag")).toEqual(hidden);
 });
 
-it("HTML だけは、Cloudflare に書き換えさせない", () => {
+it("HTML だけは Cloudflare に書き換えさせず、ハッシュの入った JS と CSS は1年残す", () => {
   // Cloudflare injects its RUM script into HTML unless the response has no-transform, which also
   // stops compression. So only the page at / gets it, and JS and CSS stay compressed (ADR 0010).
+  // Every name under /assets/ carries a content hash, which verify-dist.ts checks, so a browser
+  // may keep those files without asking again (ADR 0019).
   expect(rulesFor("cache-control")).toEqual([
     ["/", "public, max-age=0, must-revalidate, no-transform"],
+    ["/assets/*", "public, max-age=31536000, immutable"],
   ]);
 });
 
