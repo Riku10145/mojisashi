@@ -16,7 +16,7 @@ export function GenerateSection(): ReactNode {
   const text = made?.kind === kind && made.length === length ? made.text : undefined;
 
   return (
-    <section className="mt-12 space-y-6">
+    <section className="mt-6 space-y-6 border-y border-slate-200 bg-white p-4 shadow-sm sm:rounded-xl sm:border-x sm:p-6">
       <h2 className="text-xl font-bold text-slate-900">テスト用の文章を作る</h2>
       <NumberField label="作る文字数" min={1} max={maxTestTextLength} onNumber={setLength} />
       <Choice legend="文字の種類" options={testTextKinds} value={kind} onChoose={setKind} />
