@@ -3,6 +3,8 @@
 
 const readAdr0003 = "docs/adr/0003-prefer-mechanical-guards.md を読んでください。";
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
+const readAdr0012 =
+  "docs/adr/0012-pin-dependencies-and-update-with-dependabot.md を読んでください。";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -90,15 +92,16 @@ export function headersProblems(file: string): string[] {
   return problems;
 }
 
-// ---- bunfig.toml: the wait never shrinks, and nothing else changes how packages are installed. -----
+// ---- bunfig.toml: the wait never shrinks, bun add writes one version, and nothing else changes. ---
 
 export const minimumReleaseAgeFloor = 604_800;
 
-/** Reads the small TOML subset bunfig.toml uses: [table] lines and key = number lines. */
+/** Reads the small TOML subset bunfig.toml uses: [table] lines, key = number lines and exact = true. */
 export function bunfigProblems(file: string): string[] {
   const problems: string[] = [];
   let table = "";
   let age: number | undefined;
+  let exact = false;
   for (const line of file.split("\n").map((raw) => raw.replace(/#.*$/, "").trim())) {
     const tableName = /^\[([\w.]+)\]$/.exec(line)?.[1];
     const entry = /^(\w+)\s*=\s*(\d+)$/.exec(line);
@@ -108,6 +111,8 @@ export function bunfigProblems(file: string): string[] {
       table = tableName;
     } else if (table === "install" && entry?.[1] === "minimumReleaseAge") {
       age = Number(entry[2]);
+    } else if (table === "install" && line === "exact = true") {
+      exact = true;
     } else {
       problems.push(`bunfig.toml の「${line}」は使えません。${readAdr0007}`);
     }
@@ -116,6 +121,9 @@ export function bunfigProblems(file: string): string[] {
     problems.push(
       `bunfig.toml の minimumReleaseAge は ${String(minimumReleaseAgeFloor)} 以上にします。${readAdr0007}`,
     );
+  }
+  if (!exact) {
+    problems.push(`bunfig.toml の [install] には exact = true がいります。${readAdr0012}`);
   }
   return problems;
 }
@@ -134,8 +142,7 @@ const programs: readonly RegExp[] = [
   /^(NODE_ENV=production )?bun scripts\/[a-z-]+\.ts$/,
   /^bun install --frozen-lockfile$/,
   // Deploys an environment of cloudflare.config.ts from dist/ without building (ADR 0009).
-  /^bun scripts\/cloudflare-output\.ts [a-z]+$/,
-  /^cf deploy --prebuilt --mode [a-z]+$/,
+  /^cf deploy dist --mode [a-z]+$/,
 ];
 
 const partsOf = (command: string) => command.split("&&").map((part) => part.trim());
@@ -237,14 +244,14 @@ function scriptProblems(name: string, command: string, scripts: readonly string[
   return problems;
 }
 
-const dependencyRange = /^[~^]?\d+\.\d+\.\d+$/;
+const exactVersion = /^\d+\.\d+\.\d+$/;
 // cf is in beta, so its prerelease is pinned exactly (ADR 0006). Every other package stays on a
 // release.
 const prereleaseDependencies = ["cf"];
 const pinnedPrerelease = /^\d+\.\d+\.\d+-[0-9A-Za-z.-]+$/;
 const packageKeys = ["name", "private", "type", "scripts", "dependencies", "devDependencies"];
 
-/** package.json: known fields, plain semver ranges from the registry, and allowed commands. */
+/** package.json: known fields, one exact version from the registry each, and allowed commands. */
 export function packageProblems(pkg: unknown): string[] {
   if (!isRecord(pkg)) {
     return ["package.json が読めません"];
@@ -254,13 +261,15 @@ export function packageProblems(pkg: unknown): string[] {
     .map((key) => `package.json の ${key} は使えません。${readAdr0007}`);
   for (const field of ["dependencies", "devDependencies"]) {
     const dependencies = pkg[field];
-    for (const [name, range] of Object.entries(isRecord(dependencies) ? dependencies : {})) {
+    for (const [name, version] of Object.entries(isRecord(dependencies) ? dependencies : {})) {
       const allowed =
-        typeof range === "string" &&
-        (dependencyRange.test(range) ||
-          (prereleaseDependencies.includes(name) && pinnedPrerelease.test(range)));
+        typeof version === "string" &&
+        (exactVersion.test(version) ||
+          (prereleaseDependencies.includes(name) && pinnedPrerelease.test(version)));
       if (!allowed) {
-        problems.push(`package.json の ${name} は npm の版の範囲で書きます。${readAdr0007}`);
+        problems.push(
+          `package.json の ${name} は ^ や ~ を付けず、1つの版に決めて書きます。${readAdr0012}`,
+        );
       }
     }
   }
@@ -276,12 +285,14 @@ export function packageProblems(pkg: unknown): string[] {
   return problems;
 }
 
-// Actions pinned to a commit. Another action runs code that release age and bun.lock never see.
-const actions = [
-  "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-  "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
-  "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
-];
+// Another action runs code that release age and bun.lock never see. Each is pinned to a full commit
+// SHA, not to a tag its owner can move; Dependabot moves the SHA (ADR 0012).
+const actions = ["actions/checkout", "oven-sh/setup-bun", "actions/setup-node"];
+
+function isAllowedAction(uses: string): boolean {
+  const name = /^([\w.-]+\/[\w.-]+)@[0-9a-f]{40}$/.exec(uses)?.[1];
+  return name !== undefined && actions.includes(name);
+}
 
 // Keys that change what interprets run:, where it runs, or whether a failure counts.
 const workflowControlKeys = [
@@ -339,8 +350,8 @@ function splitEnvBlocks(where: string, yaml: string): { problems: string[]; outs
 }
 
 /**
- * A workflow: every run: line is an allowed command, every uses: a pinned action, and every line of
- * an env: block one of workflowEnv.
+ * A workflow: every run: line is an allowed command, every uses: an allowed action at a full SHA, and
+ * every line of an env: block one of workflowEnv.
  */
 export function workflowProblems(
   where: string,
@@ -354,8 +365,10 @@ export function workflowProblems(
       if (key === "run") {
         return runProblems(where, value, scripts);
       }
-      if (key === "uses" && !actions.includes(value)) {
-        return [`${where} の ${value} は、決めたアクションではありません。${readAdr0007}`];
+      if (key === "uses" && !isAllowedAction(value)) {
+        return [
+          `${where} の ${value} は、決めたアクションを 40 桁のコミットで指したものではありません。${readAdr0012}`,
+        ];
       }
       return workflowControlKeys.includes(key)
         ? [`${where} の ${key}: は使えません。${readAdr0007}`]
