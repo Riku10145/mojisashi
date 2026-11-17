@@ -178,36 +178,97 @@ describe("書き出した index.html", () => {
 });
 
 describe("リンクのプレビューと構造化データ", () => {
+  // As React writes it: quotes become &quot;, and <!-- --> splits text inside one element.
+  const body =
+    '<div id="root"><p>mojisashi</p><p>1 &lt; 2</p><p>文章を「貼る」と&quot;数えます&quot;。</p><p>あと<!-- -->2<!-- -->文字</p><h2>テスト用の文章を作る</h2></div>';
   const page = (head: string) =>
-    `<!doctype html>\n<html lang="ja">\n  <head>\n<title>文字数カウント | mojisashi</title>\n<meta\n  name="description"\n  content="文字数を数えます。"\n/>\n${head}\n  </head>\n  <body>\n    <div id="root"><p>文章を「貼る」と数えます。</p><h2>テスト用の文章を作る</h2></div>\n  </body>\n</html>\n`;
+    `<!doctype html>\n<html lang="ja">\n  <head>\n<title>数える &amp; 作る</title>\n<meta\n  name="description"\n  content="文字数を数えます。"\n/>\n${head}\n  </head>\n  <body>\n    ${body}\n  </body>\n</html>\n`;
   const jsonLdOf = (value: object) =>
     `<script type="application/ld+json">${JSON.stringify(value)}</script>`;
 
-  it("title と description に合うプレビューと、本文にある説明は通る", () => {
+  it("title と description に合うプレビューと、本文にある JSON-LD は通る", () => {
     const head = [
-      '<meta property="og:title" content="文字数カウント | mojisashi" />',
+      '<meta property="og:title" content="数える & 作る" />',
+      '<meta name="twitter:title" content="数える &amp; 作る" />',
       '<meta\n  property="og:description"\n  content="文字数を数えます。"\n/>',
+      '<meta name="twitter:description" content="文字数を数えます。" />',
       jsonLdOf({
+        "@context": "https://schema.org",
         "@graph": [
-          { "@type": "WebSite", name: "mojisashi" },
+          { "@type": "WebSite", "@id": "https://mojisashi.app/#website", name: "mojisashi" },
           {
             "@type": "WebApplication",
-            description: "文章を「貼る」と数えます。",
-            featureList: ["テスト用の文章を作る"],
+            url: "https://mojisashi.app/",
+            inLanguage: "ja",
+            applicationCategory: "UtilitiesApplication",
+            operatingSystem: "Web ブラウザ",
+            description: '文章を「貼る」と"数えます"。',
+            featureList: ["テスト用の文章を作る", "あと2文字"],
           },
         ],
       }),
+      jsonLdOf({ featureList: "テスト用の文章を作る, あと2文字" }),
+      // "<" may not appear in JSON-LD, so the test writes it escaped.
+      '<script type="application/ld+json">{"featureList":["1 \\u003c 2"]}</script>',
     ].join("\n");
     expect(previewProblems(page(head))).toEqual([]);
   });
 
+  it("プレビューのタグも JSON-LD もないページは通る", () => {
+    expect(previewProblems(page(""))).toEqual([]);
+  });
+
   it.each([
-    ["title と違う og:title", '<meta property="og:title" content="ほかの名前" />'],
-    ["description と違う og:description", '<meta property="og:description" content="ほか" />'],
-    ["本文にない description", jsonLdOf({ description: "無料で使えます。" })],
-    ["本文にない featureList", jsonLdOf({ "@graph": [{ featureList: ["原稿用紙の枚数"] }] })],
-  ])("%s を止める", (_, head) => {
-    expect(previewProblems(page(head))).not.toEqual([]);
+    ["title と違う og:title", '<meta property="og:title" content="ほかの名前" />', "og:title"],
+    [
+      "2つ目が title と違う og:title",
+      '<meta property="og:title" content="数える &amp; 作る" />\n<meta property="og:title" content="無料の神ツール" />',
+      "og:title",
+    ],
+    ["title と違う twitter:title", '<meta name="twitter:title" content="ほか" />', "twitter:title"],
+    [
+      "description と違う og:description",
+      '<meta property="og:description" content="ほか" />',
+      "og:description",
+    ],
+    [
+      "description と違う twitter:description",
+      '<meta name="twitter:description" content="無料で使えます。" />',
+      "twitter:description",
+    ],
+    [
+      "本文にない description",
+      jsonLdOf({ description: "無料で使えます。" }),
+      "「無料で使えます。」",
+    ],
+    [
+      "本文にない featureList",
+      jsonLdOf({ "@graph": [{ featureList: ["原稿用紙の枚数"] }] }),
+      "「原稿用紙の枚数」",
+    ],
+    [
+      "@value で書いた、本文にない description",
+      jsonLdOf({ description: { "@value": "無料で使えます。", "@language": "ja" } }),
+      "「無料で使えます。」",
+    ],
+    ["本文にない name", jsonLdOf({ name: "無料ツール" }), "「無料ツール」"],
+    [
+      "本文にないよくある質問の答え",
+      jsonLdOf({
+        "@type": "FAQPage",
+        mainEntity: [{ acceptedAnswer: { "@type": "Answer", text: "永久に無料です。" } }],
+      }),
+      "「永久に無料です。」",
+    ],
+    [
+      "要素をまたいでつながる文",
+      jsonLdOf({ description: '"数えます"。あと2文字' }),
+      '「"数えます"。あと2文字」',
+    ],
+  ])("%s を止める", (_, head, named) => {
+    const problems = previewProblems(page(head));
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(named);
   });
 });
 
