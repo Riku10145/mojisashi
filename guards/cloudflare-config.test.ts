@@ -1,5 +1,5 @@
-import { resolveAndParseConfig } from "@cloudflare/config";
 import { readFile } from "node:fs/promises";
+import { resolveAndParseConfig } from "@cloudflare/config";
 import { describe, expect, it } from "vitest";
 import config, { environments } from "../cloudflare.config";
 import { isRecord } from "./config-policy";

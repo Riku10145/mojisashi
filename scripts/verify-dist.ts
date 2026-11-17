@@ -1,8 +1,10 @@
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import {
+  canonicalProblems,
   cssProblems,
   htmlProblems,
+  previewProblems,
   provenanceProblems,
   referenceBuild,
   reproductionProblems,
@@ -40,6 +42,8 @@ const problems = [
   ...provenanceProblems(root, `${root}index.html`, built),
   ...reproductionProblems(expected, actual),
   ...htmlProblems(decoder.decode(actual.get("index.html"))),
+  ...canonicalProblems(decoder.decode(actual.get("index.html"))),
+  ...previewProblems(decoder.decode(actual.get("index.html"))),
   ...[...actual]
     .filter(([name]) => name.endsWith(".css"))
     .flatMap(([name, content]) => cssProblems(name, decoder.decode(content))),

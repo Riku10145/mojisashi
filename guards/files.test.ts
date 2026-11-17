@@ -18,8 +18,22 @@ describe("fileProblems", () => {
     expect(fileProblems([".claude/skills/verify-mojisashi/features/count.md"])).toEqual([]);
   });
 
+  it.each(["robots.txt", "sitemap.xml", "llms.txt", "og.png"])(
+    "検索とリンクのプレビューのための public/%s は通る",
+    (name) => {
+      expect(fileProblems([...tracked, `public/${name}`])).toEqual([]);
+    },
+  );
+
   it.each([
     ["JavaScript", "src/app/leak.js"],
+    ["決めていない public/ のファイル", "public/ads.txt"],
+    ["Cloudflare の転送の設定", "public/_redirects"],
+    ["ほかの名前の画像", "public/og.jpg"],
+    ["フォルダの中の robots.txt", "public/a/robots.txt"],
+    ["public/ の HTML", "public/evil.html"],
+    ["public/ の JSON", "public/manifest.json"],
+    ["public/ の TypeScript", "public/a.ts"],
     [".d.ts", "src/app/globals.d.ts"],
     ["ESLint の設定", "eslint.config.js"],
     ["Vitest の設定", "vitest.config.ts"],

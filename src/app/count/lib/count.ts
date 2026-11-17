@@ -1,9 +1,21 @@
+import { formatNumber } from "../../lib/format-number";
+
 export type CountingRule = "withoutBlanks" | "withBlanks";
 
-export const countingRules: readonly { value: CountingRule; label: string }[] = [
-  { value: "withoutBlanks", label: "空白と改行を除いた文字数" },
-  { value: "withBlanks", label: "空白と改行を含む文字数" },
-];
+export const countingRules: readonly { value: CountingRule; label: string; explanation: string }[] =
+  [
+    {
+      value: "withoutBlanks",
+      label: "空白と改行を除いた文字数",
+      explanation:
+        "空白、タブ、改行を数えません。Web や Word から貼った文章に入る改行しない空白（NBSP）や、SNS で空行を作るのに使う「ㅤ」（U+3164）も、空白として扱います。",
+    },
+    {
+      value: "withBlanks",
+      label: "空白と改行を含む文字数",
+      explanation: "改行は、どのパソコンで書いた文章でも1文字です。",
+    },
+  ];
 
 export type Counts = Readonly<Record<CountingRule, number>>;
 
@@ -19,7 +31,6 @@ const graphemes = new Intl.Segmenter("ja", { granularity: "grapheme" });
 // U+115F U+1160 is one grapheme, so a run of fillers is one blank.
 const blank = /^(\p{Zs}|\p{Zl}|\p{Zp}|\t|\r\n|\r|\n|[\u115F\u1160\u2800\u3164\uFFA0]+)$/u;
 const invisiblePart = /[\p{Cf}\p{Variation_Selector}\u034F]/gu;
-const numbers = new Intl.NumberFormat("ja-JP");
 
 /** A grapheme is a blank when it looks like one, and invisible when it shows nothing (ADR 0008). */
 function kindOf(grapheme: string): Kind {
@@ -42,10 +53,6 @@ export function countCharacters(text: string): Counts {
     }
   }
   return counts;
-}
-
-export function formatNumber(n: number): string {
-  return numbers.format(n);
 }
 
 export function gapMessage(target: number, count: number): string {

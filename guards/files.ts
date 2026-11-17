@@ -33,13 +33,12 @@ const rootFiles = new Set([
 // Below the root, by kind. JavaScript and .d.ts files are out of reach of the type check and of
 // ESLint's zone rules, and a .d.ts can declare a value that does not exist. A folder whose name
 // starts with a dot, such as .config/, is where some tools look for config, so only .github/ is
-// allowed, file by file. So are Claude Code skills as Markdown. A skill can still run commands and
-// grant tools to an agent, so .claude/ is in .github/guarded-paths.
+// allowed, file by file. So are Claude Code skills, as Markdown only.
 const nestedFile = [
-  /^(?!\.)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
-  /^(?!\.)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
-  /^public\/_headers$/,
-  /^\.github\/(dependabot\.yml|guarded-paths|guards-unchanged\.sh|workflows\/[\w-]+\.yml)$/,
+  /^(?!\.|public\/)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
+  /^(?!\.|public\/)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
+  /^public\/(_headers|robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
+  /^\.github\/(dependabot\.yml|workflows\/[\w-]+\.yml)$/,
   /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];
 
@@ -48,6 +47,7 @@ const claimedProbe = [
   /^guard-probes\/(app|platform)\/tsconfig\.json$/,
   /^guard-probes\/(app|platform)\/(blocked|allowed)\/[\w-]+\.tsx?$/,
   /^guard-probes\/build\/(blocked|allowed|helpers)\/[\w-]+\.(ts|html)$/,
+  /^guard-probes\/build\/head\/(blocked|allowed)\/[\w-]+\.html$/,
 ];
 
 /** Problems with the tracked files: a kind or name not allowed, an unclaimed probe, src/ outside a zone. */

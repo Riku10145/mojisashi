@@ -2,6 +2,8 @@
 // `cf deploy --prebuilt` uploads it without building. cf 1.0.0-beta.29 does the same itself with
 // `cf deploy dist`; this file goes when cf is updated to it. Until then @cloudflare/config and
 // @cloudflare/build-output-utils stay at the versions cf depends on, so both read one format.
+
+import { fileURLToPath } from "node:url";
 import {
   cleanBuildOutputDir,
   writeAssets,
@@ -9,7 +11,6 @@ import {
   writeWorkerConfig,
 } from "@cloudflare/build-output-utils";
 import { InputSettingsSchema, resolveAndParseConfig } from "@cloudflare/config";
-import { fileURLToPath } from "node:url";
 import config from "../cloudflare.config";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
