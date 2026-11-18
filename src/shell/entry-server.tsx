@@ -1,11 +1,6 @@
-import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
-import { App } from "../app/App";
+import { pageAt } from "./pages";
 
-export function render(): string {
-  return renderToString(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
+export function render(path: string): string {
+  return renderToString(pageAt(path));
 }

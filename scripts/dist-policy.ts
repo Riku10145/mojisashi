@@ -1,10 +1,12 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { build, type Rolldown } from "vite";
+import { pageUrl, pages } from "./pages";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 const readAdr0015 = "docs/adr/0015-allow-tags-and-files-for-search.md を読んでください。";
 const readAdr0019 = "docs/adr/0019-cache-hashed-assets-for-a-year.md を読んでください。";
+const readAdr0020 = "docs/adr/0020-split-dummy-text-into-its-own-page.md を読んでください。";
 
 /** One file that a build writes into dist/, with the files it was made from. */
 export type BuiltFile = { name: string; content: string | Uint8Array; sources: string[] };
@@ -18,7 +20,10 @@ function isOutput(value: unknown): value is Rolldown.RolldownOutput {
  * added there changes dist/ without changing this build, and verify-dist.ts sees the difference.
  * The options must match vite.config.ts; when they drift, verify-dist.ts fails the build.
  */
-export async function referenceBuild(root: string, input?: string): Promise<BuiltFile[]> {
+export async function referenceBuild(
+  root: string,
+  input: string | string[] = pages.map(({ html }) => `${root}${html}`),
+): Promise<BuiltFile[]> {
   const result = await build({
     configFile: false,
     envDir: false,
@@ -33,7 +38,7 @@ export async function referenceBuild(root: string, input?: string): Promise<Buil
       // Every asset becomes its own file, so provenanceProblems sees where it came from.
       assetsInlineLimit: 0,
       modulePreload: { polyfill: false },
-      ...(input === undefined ? {} : { rolldownOptions: { input } }),
+      rolldownOptions: { input },
     },
   });
   const files: BuiltFile[] = [];
@@ -57,14 +62,18 @@ const bundlerModules = /^\0?(vite\/(preload-helper|modulepreload-polyfill)|rolld
 const shippedPackages = /\/node_modules\/(react|react-dom|scheduler)\//;
 
 /**
- * Bundled code may come only from src/ (not tests), the entry, react, react-dom and scheduler.
+ * Bundled code may come only from src/ (not tests), the entries, react, react-dom and scheduler.
  * ESLint and the type check do not see a file pulled in by ?url, ?raw or new URL(…, import.meta.url).
  */
-export function provenanceProblems(root: string, entry: string, files: BuiltFile[]): string[] {
+export function provenanceProblems(
+  root: string,
+  entries: readonly string[],
+  files: BuiltFile[],
+): string[] {
   const allowed = (source: string) => {
     const id = source.startsWith("/") || source.startsWith("\0") ? source : `${root}${source}`;
     return (
-      id === entry ||
+      entries.includes(id) ||
       bundlerModules.test(id) ||
       shippedPackages.test(id) ||
       (id.startsWith(`${root}src/`) && !id.includes("?") && !/\.test\.tsx?$/.test(id))
@@ -104,6 +113,9 @@ export function reproductionProblems(
   return problems;
 }
 
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+const pageUrls = `(${pages.map(({ path }) => escaped(pageUrl(path))).join("|")})`;
+
 // What the head of the shipped page may hold, tag by tag, with runs of whitespace made one space.
 const headTags = [
   /^<meta charset="UTF-8" \/>$/,
@@ -112,8 +124,8 @@ const headTags = [
   /^<title>[^<>]*<\/title>$/,
   /^<script type="module" crossorigin src="\/assets\/[\w-]+\.js"><\/script>$/,
   /^<link rel="stylesheet" crossorigin href="\/assets\/[\w-]+\.css">$/,
-  /^<link rel="canonical" href="https:\/\/mojisashi\.app\/" \/>$/,
-  /^<meta property="og:url" content="https:\/\/mojisashi\.app\/" \/>$/,
+  new RegExp(`^<link rel="canonical" href="${pageUrls}" \\/>$`),
+  new RegExp(`^<meta property="og:url" content="${pageUrls}" \\/>$`),
   /^<meta (property="og|name="twitter):image" content="https:\/\/mojisashi\.app\/og\.png" \/>$/,
   /^<meta property="og:image:(width|height)" content="\d+" \/>$/,
   /^<meta property="og:(title|description|type|site_name|locale|image:alt)" content="[^"<>]*" \/>$/,
@@ -146,49 +158,44 @@ const bodyAttributes = new Set(
 );
 
 /**
- * The shipped index.html, not the template: a script or style that Vite or prerender adds shows
+ * A shipped page, not its template: a script or style that Vite or prerender adds shows
  * up here. Head tags are an exact list; body tags and attributes are allowlists.
  */
-export function htmlProblems(html: string): string[] {
+export function htmlProblems(html: string, name = "index.html"): string[] {
   const problems: string[] = [];
   const head = /<head>([\s\S]*)<\/head>/.exec(html)?.[1];
   const body = /<body>([\s\S]*)<\/body>/.exec(html)?.[1];
   if (head === undefined || body === undefined) {
-    return ["index.html に head と body がありません"];
+    return [`${name} に head と body がありません`];
   }
   const tags = head.match(headToken) ?? [];
   if (tags.join("").replace(/\s/g, "") !== head.replace(/\s/g, "")) {
-    problems.push(`index.html の head に、タグのほかの文字があります。${readAdr0007}`);
+    problems.push(`${name} の head に、タグのほかの文字があります。${readAdr0007}`);
   }
   for (const tag of tags) {
     const data = wholeJsonLd.exec(tag)?.[1];
     const flat = tag.replace(/\s+/g, " ");
     if (data !== undefined && !isJsonObject(data)) {
-      problems.push(
-        `index.html の JSON-LD が、JSON のオブジェクトとして読めません。${readAdr0015}`,
-      );
+      problems.push(`${name} の JSON-LD が、JSON のオブジェクトとして読めません。${readAdr0015}`);
     }
     if (data === undefined && !headTags.some((pattern) => pattern.test(flat))) {
-      problems.push(`index.html の head に ${flat} は入れられません。${readAdr0007}`);
+      problems.push(`${name} の head に ${flat} は入れられません。${readAdr0007}`);
     }
   }
-  for (const [, name = "", attributes = ""] of body.matchAll(/<([a-zA-Z][\w-]*)([^>]*)>/g)) {
-    if (!bodyTags.has(name.toLowerCase())) {
-      problems.push(`index.html の body に <${name}> は入れられません。${readAdr0007}`);
+  for (const [, tag = "", attributes = ""] of body.matchAll(/<([a-zA-Z][\w-]*)([^>]*)>/g)) {
+    if (!bodyTags.has(tag.toLowerCase())) {
+      problems.push(`${name} の body に <${tag}> は入れられません。${readAdr0007}`);
     }
     // Chrome's enhanced spell check sends what is typed in a textarea to Google, and without
     // autocomplete="off" Chrome writes it into the profile's Sessions files.
     for (const required of ['spellcheck="false"', 'autocomplete="off"']) {
-      if (
-        name.toLowerCase() === "textarea" &&
-        !new RegExp(`\\s${required}`, "i").test(attributes)
-      ) {
-        problems.push(`index.html の <textarea> に ${required} がありません。${readAdr0007}`);
+      if (tag.toLowerCase() === "textarea" && !new RegExp(`\\s${required}`, "i").test(attributes)) {
+        problems.push(`${name} の <textarea> に ${required} がありません。${readAdr0007}`);
       }
     }
     for (const [, attribute = ""] of attributes.matchAll(/([^\s=/]+)(?:="[^"]*")?/g)) {
       if (!bodyAttributes.has(attribute.toLowerCase()) && !attribute.startsWith("aria-")) {
-        problems.push(`index.html の <${name}> に ${attribute} は書けません。${readAdr0007}`);
+        problems.push(`${name} の <${tag}> に ${attribute} は書けません。${readAdr0007}`);
       }
     }
   }
@@ -200,12 +207,28 @@ export function htmlProblems(html: string): string[] {
 const urlFunctions = /(?<![\w-])(?:-webkit-)?(?:image-set|image|cross-fade|element|src)\(/gi;
 
 /** Built CSS requests nothing: no @import, no url() other than data: URLs, no other URL function. */
-/** The page names its one right URL, so a copy with a query string or at /index.html is not a page of its own (#30). */
-export function canonicalProblems(html: string): string[] {
+/**
+ * The page names its one right URL, so a copy with a query string or at /index.html is not a page
+ * of its own (#30), and the URL is its own, not another page's.
+ */
+export function canonicalProblems(html: string, url: string, name = "index.html"): string[] {
+  const named = [
+    ...html.matchAll(
+      /<(?:link\s+rel="canonical"\s+href|meta\s+property="og:url"\s+content)="([^"]*)"/g,
+    ),
+  ].map(([, said = ""]) => said);
   const count = html.match(/<link rel="canonical"/g)?.length ?? 0;
-  return count === 1
-    ? []
-    : [`index.html の canonical は1つだけにします。いまは ${String(count)} 個です。${readAdr0015}`];
+  return [
+    ...(count === 1
+      ? []
+      : [`${name} の canonical は1つだけにします。いまは ${String(count)} 個です。${readAdr0015}`]),
+    ...named
+      .filter((said) => said !== url)
+      .map(
+        (said) =>
+          `${name} の canonical と og:url は ${url} にします。${said} ではありません。${readAdr0020}`,
+      ),
+  ];
 }
 
 // Each link preview tag repeats what the page already says in <title> or the meta description.
@@ -279,7 +302,7 @@ function shownStrings(value: unknown, key = ""): string[] {
  * title or description equals the <title> or the meta description, and each string the JSON-LD
  * says to a reader is text in the body. Run on the shipped page, whose body holds the rendered app.
  */
-export function previewProblems(html: string): string[] {
+export function previewProblems(html: string, name = "index.html"): string[] {
   const head = /<head>([\s\S]*)<\/head>/.exec(html)?.[1] ?? "";
   const body = textRuns(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
   const page = {
@@ -291,7 +314,7 @@ export function previewProblems(html: string): string[] {
     for (const content of metaContents(head, attribute)) {
       if (content !== page[said]) {
         problems.push(
-          `index.html の ${attribute} が、ページの ${said === "title" ? "title" : "meta description"} と違います。${readAdr0015}`,
+          `${name} の ${attribute} が、ページの ${said === "title" ? "title" : "meta description"} と違います。${readAdr0015}`,
         );
       }
     }
@@ -301,7 +324,7 @@ export function previewProblems(html: string): string[] {
     for (const text of shownStrings(value)) {
       if (!body.some((run) => run.includes(text))) {
         problems.push(
-          `index.html の JSON-LD の「${text}」が、ページの本文にありません。${readAdr0015}`,
+          `${name} の JSON-LD の「${text}」が、ページの本文にありません。${readAdr0015}`,
         );
       }
     }
@@ -344,11 +367,14 @@ const llmsLines = [
 ];
 
 /**
- * llms.txt says what the page says (#36): each heading, quote, bullet and link note is text in
- * one run of the body, and each link points to the page's one URL, as canonical and og:url do.
+ * llms.txt says what the pages say (#36): each heading, quote and bullet is text in one run of the
+ * body of some page, and each link points to one of the pages, as its canonical and og:url do,
+ * with its text and note in that page's body. bodies maps each page's URL to its shipped HTML.
  */
-export function llmsProblems(llms: string, html: string): string[] {
-  const body = textRuns(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
+export function llmsProblems(llms: string, bodies: ReadonlyMap<string, string>): string[] {
+  const runsOf = (html: string) => textRuns(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
+  const runs = new Map([...bodies].map(([url, html]) => [url, runsOf(html)]));
+  const everyRun = [...runs.values()].flat();
   const problems: string[] = [];
   for (const line of llms.split(/\r?\n/).filter((line) => line.trim() !== "")) {
     const parts = llmsLines.map((shape) => shape.exec(line)?.groups).find(Boolean);
@@ -357,13 +383,19 @@ export function llmsProblems(llms: string, html: string): string[] {
       continue;
     }
     const { text, note, url } = parts;
-    for (const said of [text, note]) {
-      if (said !== undefined && !body.some((run) => run.includes(said))) {
-        problems.push(`llms.txt の「${said}」が、ページの本文にありません。${readAdr0015}`);
-      }
+    const linked = url === undefined ? everyRun : runs.get(url);
+    if (linked === undefined) {
+      problems.push(
+        `llms.txt のリンク ${url ?? ""} は、${[...runs.keys()].join("、")} のどれかにします。${readAdr0020}`,
+      );
+      continue;
     }
-    if (url !== undefined && url !== "https://mojisashi.app/") {
-      problems.push(`llms.txt のリンク ${url} は、https://mojisashi.app/ にします。${readAdr0015}`);
+    for (const said of [text, note]) {
+      if (said !== undefined && !linked.some((run) => run.includes(said))) {
+        problems.push(
+          `llms.txt の「${said}」が、${url === undefined ? "どのページの本文にもありません" : `${url} の本文にありません`}。${readAdr0015}`,
+        );
+      }
     }
   }
   return problems;

@@ -17,7 +17,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const probes = `${root}guard-probes/build/`;
 
 async function provenanceOf(input: string): Promise<string[]> {
-  return provenanceProblems(root, input, await referenceBuild(root, input));
+  return provenanceProblems(root, [input], await referenceBuild(root, input));
 }
 
 async function builtPageOf(input: string): Promise<{ provenance: string[]; html: string[] }> {
@@ -26,7 +26,7 @@ async function builtPageOf(input: string): Promise<{ provenance: string[]; html:
   const pages = files.filter((file) => file.name.endsWith(".html"));
   expect(pages).toHaveLength(1);
   return {
-    provenance: provenanceProblems(root, input, files),
+    provenance: provenanceProblems(root, [input], files),
     html: pages.flatMap((file) =>
       htmlProblems(typeof file.content === "string" ? file.content : decoder.decode(file.content)),
     ),
@@ -81,15 +81,17 @@ describe("書き出した index.html", () => {
     '<link rel="stylesheet" crossorigin href="/assets/index-Yy-386kU.css">',
   ].join("\n");
 
+  const top = "https://mojisashi.app/";
+
   it("ビルドが書き出す形は通る", () => {
     expect(htmlProblems(page(head))).toEqual([]);
-    expect(canonicalProblems(page(head))).toEqual([]);
+    expect(canonicalProblems(page(head), top)).toEqual([]);
   });
 
   it("canonical がないページと、2つあるページは止まる", () => {
     const canonical = '<link rel="canonical" href="https://mojisashi.app/" />';
-    expect(canonicalProblems(page(head.replace(canonical, "")))).not.toEqual([]);
-    expect(canonicalProblems(page(`${head}\n${canonical}`))).not.toEqual([]);
+    expect(canonicalProblems(page(head.replace(canonical, "")), top)).not.toEqual([]);
+    expect(canonicalProblems(page(`${head}\n${canonical}`), top)).not.toEqual([]);
   });
 
   it("検索とリンクのプレビューのためのタグは通る", () => {
@@ -130,6 +132,11 @@ describe("書き出した index.html", () => {
     ["ほかのスクリプト", '<script type="module" src="https://example.com/x.js"></script>'],
     ["別の URL の canonical", '<link rel="canonical" href="https://example.com/" />'],
     ["dev の URL の canonical", '<link rel="canonical" href="https://dev.mojisashi.app/" />'],
+    ["決めていないページの canonical", '<link rel="canonical" href="https://mojisashi.app/a/" />'],
+    [
+      "末尾の / がない canonical",
+      '<link rel="canonical" href="https://mojisashi.app/dummy-text" />',
+    ],
     ["別の URL の og:url", '<meta property="og:url" content="https://example.com/" />'],
     ["別の画像の og:image", '<meta property="og:image" content="https://example.com/a.png" />'],
     ["別の画像の twitter:image", '<meta name="twitter:image" content="/og.png" />'],
@@ -278,6 +285,12 @@ describe("llms.txt", () => {
   // As React writes it: quotes become &quot;, and <!-- --> splits text inside one element.
   const html =
     '<!doctype html>\n<html lang="ja">\n  <head>\n<title>文字数カウント</title>\n  </head>\n  <body>\n    <div id="root"><p>mojisashi（もじさし）は、文字数を数えます。</p><h2>数え方</h2><ul><li><strong>空白を除く。</strong>空白を数えません。</li></ul><p>文章を&quot;貼る&quot;と、あと<!-- -->2<!-- -->文字です。</p></div>\n  </body>\n</html>\n';
+  const make =
+    '<!doctype html>\n<html lang="ja">\n  <head>\n<title>作る</title>\n  </head>\n  <body>\n    <div id="root"><h1>テスト用の文章を作る</h1><p>決めた文字数の文章を作ります。</p></div>\n  </body>\n</html>\n';
+  const bodies = new Map([
+    ["https://mojisashi.app/", html],
+    ["https://mojisashi.app/dummy-text/", make],
+  ]);
   const llmsOf = (...lines: string[]) => `${lines.join("\n")}\n`;
 
   it("本文にある文と、本番の URL へのリンクだけの llms.txt は通る", () => {
@@ -295,8 +308,12 @@ describe("llms.txt", () => {
       "",
       "- [数え方](https://mojisashi.app/)",
       "- [mojisashi](https://mojisashi.app/): 空白を数えません。",
+      "",
+      "## テスト用の文章を作る",
+      "",
+      "- [テスト用の文章を作る](https://mojisashi.app/dummy-text/): 決めた文字数の文章を作ります。",
     );
-    expect(llmsProblems(llms, html)).toEqual([]);
+    expect(llmsProblems(llms, bodies)).toEqual([]);
   });
 
   it.each([
@@ -321,8 +338,18 @@ describe("llms.txt", () => {
     ["コードブロック", llmsOf("# mojisashi", "```"), "```"],
     ["本文にある文でも、- のない行", llmsOf("空白を数えません。"), "空白を数えません。"],
     ["本文にある文でも、番号の付いた行", llmsOf("1. 空白を数えません。"), "1. 空白を数えません。"],
+    [
+      "決めていないページへのリンク",
+      llmsOf("- [作る](https://mojisashi.app/make/)"),
+      "https://mojisashi.app/make/",
+    ],
+    [
+      "リンク先のページにない説明",
+      llmsOf("- [テスト用の文章を作る](https://mojisashi.app/dummy-text/): 空白を数えません。"),
+      "空白を数えません。",
+    ],
   ])("%s を止める", (_, llms, named) => {
-    const problems = llmsProblems(llms, html);
+    const problems = llmsProblems(llms, bodies);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain(named);
   });
