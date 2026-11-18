@@ -2,9 +2,11 @@ import { readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  assetNameProblems,
   canonicalProblems,
   cssProblems,
   htmlProblems,
+  llmsProblems,
   previewProblems,
   provenanceProblems,
   referenceBuild,
@@ -272,6 +274,60 @@ describe("リンクのプレビューと構造化データ", () => {
   });
 });
 
+describe("llms.txt", () => {
+  // As React writes it: quotes become &quot;, and <!-- --> splits text inside one element.
+  const html =
+    '<!doctype html>\n<html lang="ja">\n  <head>\n<title>文字数カウント</title>\n  </head>\n  <body>\n    <div id="root"><p>mojisashi（もじさし）は、文字数を数えます。</p><h2>数え方</h2><ul><li><strong>空白を除く。</strong>空白を数えません。</li></ul><p>文章を&quot;貼る&quot;と、あと<!-- -->2<!-- -->文字です。</p></div>\n  </body>\n</html>\n';
+  const llmsOf = (...lines: string[]) => `${lines.join("\n")}\n`;
+
+  it("本文にある文と、本番の URL へのリンクだけの llms.txt は通る", () => {
+    const llms = llmsOf(
+      "# mojisashi（もじさし）",
+      "",
+      "> mojisashi（もじさし）は、文字数を数えます。",
+      "",
+      "## 数え方",
+      "",
+      "- 空白を数えません。",
+      '- 文章を"貼る"と、あと2文字です。',
+      "",
+      "## 空白を除く",
+      "",
+      "- [数え方](https://mojisashi.app/)",
+      "- [mojisashi](https://mojisashi.app/): 空白を数えません。",
+    );
+    expect(llmsProblems(llms, html)).toEqual([]);
+  });
+
+  it.each([
+    ["本文にない文", llmsOf("# mojisashi", "> 無料で使えます。"), "無料で使えます。"],
+    [
+      "要素をまたいでつながる文",
+      llmsOf("- 空白を除く。空白を数えません。"),
+      "空白を除く。空白を数えません。",
+    ],
+    [
+      "本文にないリンクの説明",
+      llmsOf("- [数え方](https://mojisashi.app/): 無料です。"),
+      "無料です。",
+    ],
+    ["ほかのサイトへのリンク", llmsOf("- [数え方](https://example.com/)"), "https://example.com/"],
+    [
+      "dev環境へのリンク",
+      llmsOf("- [数え方](https://dev.mojisashi.app/): 空白を数えません。"),
+      "https://dev.mojisashi.app/",
+    ],
+    ["### の見出し", llmsOf("# mojisashi", "### 数え方"), "### 数え方"],
+    ["コードブロック", llmsOf("# mojisashi", "```"), "```"],
+    ["本文にある文でも、- のない行", llmsOf("空白を数えません。"), "空白を数えません。"],
+    ["本文にある文でも、番号の付いた行", llmsOf("1. 空白を数えません。"), "1. 空白を数えません。"],
+  ])("%s を止める", (_, llms, named) => {
+    const problems = llmsProblems(llms, html);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(named);
+  });
+});
+
 describe("書き出した CSS", () => {
   it("data: の url() は通る", () => {
     expect(cssProblems("a.css", "p{background:url(data:image/png;base64,AA)}")).toEqual([]);
@@ -318,4 +374,19 @@ describe("dist/ と決めた設定のビルド", () => {
   ])("%s と止める", (_, actual) => {
     expect(reproductionProblems(expected, actual)).not.toEqual([]);
   });
+});
+
+describe("dist/assets/ のファイルの名前", () => {
+  it("ビルドが付けた、中身のハッシュの入った名前は通る", () => {
+    expect(
+      assetNameProblems(["index.html", "assets/index-DVA07QTa.js", "assets/index-DQgovtDq.css"]),
+    ).toEqual([]);
+  });
+
+  it.each(["assets/index.js", "assets/app.css", "assets/index-1.js"])(
+    "ハッシュのない %s を止める",
+    (name) => {
+      expect(assetNameProblems([name])).not.toEqual([]);
+    },
+  );
 });

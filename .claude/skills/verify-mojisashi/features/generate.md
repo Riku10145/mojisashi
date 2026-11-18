@@ -12,6 +12,7 @@
 - `generate-shown` は、作った文章の先頭500文字をページの枠に出す。500文字より長いときは、そう書き添える。
 - `generate-stale` は、作ったあとで文字数か文字の種類を変えると、作った文章と「コピー」のボタンを消す。
 - `generate-copy` は、作った文章をコピーする。貼ると、入れた文字数ちょうどになる。
+- `generate-forced-colors` は、Windows のハイコントラストのような強制カラーでも、「作る」と「コピー」のボタンの縁を見せる。
 
 ## How to get to it (user POV)
 
@@ -38,6 +39,7 @@ Preconditions:
 - **作り直す。** 英語でもう1回作ると、前と違う文章になる。「コピーしました」は消える。
 - **文字数を変える。** 英語で作ったあとに `201` を入れると、作った文章と「コピー」のボタンが消える。
 - **100,000文字。** 英語のまま、全角の `１００，０００` で作ってコピーする。クリップボードの中身は、aからzだけの100,000文字で、26文字すべてが出てくる。ページには先頭の500文字だけが出て、「先頭の500文字だけを表示しています。」と書き添えてある。「文章」の欄に貼ると、どちらの数え方でも `100,000文字`。
+- **強制カラー。** 強制カラーにすると、「作る」と「コピー」のボタンに、背景と違う色の縁がある。
 
 ```js scenario
 export default async function ({ page, capture, step }) {
@@ -122,6 +124,21 @@ export default async function ({ page, capture, step }) {
   step("generate-letters: 英語 100,000 is only a to z", /^[a-z]+$/.test(long));
   step("generate-letters: 100,000 uses all 26 letters", new Set(long).size === 26, String(new Set(long).size));
   await capture("generate-100000");
+
+  await page.emulateMedia({ forcedColors: "active" });
+  for (const [name, button] of [["作る", make], ["コピー", copy]]) {
+    const edge = await button.evaluate((b) => {
+      const s = getComputedStyle(b);
+      return { width: parseFloat(s.borderTopWidth), style: s.borderTopStyle, color: s.borderTopColor, background: s.backgroundColor };
+    });
+    step(
+      `generate-forced-colors: ${name} keeps an edge in forced colors`,
+      edge.width > 0 && edge.style !== "none" && edge.color !== edge.background,
+      JSON.stringify(edge),
+    );
+  }
+  await capture("generate-forced-colors");
+  await page.emulateMedia({ forcedColors: "none" });
 }
 ```
 
@@ -133,3 +150,4 @@ export default async function ({ page, capture, step }) {
 - 文字数の `dd` は、`count.md` と同じく並び順で探しています。
 - 作った文章が消えたことを、その文章の `getByText` で確かめません。前の手順で「文章」の欄に貼った同じ文章が、そちらで見つかります。メッセージと「コピー」のボタンで確かめます。
 - ページには「文章をコピー」のボタンもあります。「コピー」のボタンは `exact: true` で探します。
+- 強制カラーでは、ブラウザがボタンの背景を塗りつぶすので、縁がないとボタンが文字だけに見えます。「作る」は `Button`、「コピー」は `CopyButton` なので、この手順で両方の部品を確かめます。「文章をコピー」も `CopyButton` です。

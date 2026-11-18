@@ -4,6 +4,7 @@ import { build, type Rolldown } from "vite";
 
 const readAdr0007 = "docs/adr/0007-confine-browser-access.md を読んでください。";
 const readAdr0015 = "docs/adr/0015-allow-tags-and-files-for-search.md を読んでください。";
+const readAdr0019 = "docs/adr/0019-cache-hashed-assets-for-a-year.md を読んでください。";
 
 /** One file that a build writes into dist/, with the files it was made from. */
 export type BuiltFile = { name: string; content: string | Uint8Array; sources: string[] };
@@ -318,6 +319,52 @@ export function cssProblems(name: string, css: string): string[] {
   }
   for (const [call] of css.matchAll(urlFunctions)) {
     problems.push(`dist/${name} の ${call} はリクエストになります。${readAdr0007}`);
+  }
+  return problems;
+}
+
+/**
+ * _headers lets browsers keep everything under /assets/ for a year without asking again, which is
+ * safe only while each name there carries a hash of its content (ADR 0019).
+ */
+export function assetNameProblems(names: Iterable<string>): string[] {
+  return [...names]
+    .filter((name) => name.startsWith("assets/") && !/^assets\/[\w-]+-[\w-]{8}\.\w+$/.test(name))
+    .map((name) => `dist/${name} の名前に、中身のハッシュがありません。${readAdr0019}`);
+}
+
+// The line shapes llms.txt may use, a link bullet before a plain one. "text" and "note" are what
+// a line says to a reader; "url" is where a link points.
+const llmsLines = [
+  /^# (?<text>.+)$/,
+  /^> (?<text>.+)$/,
+  /^## (?<text>.+)$/,
+  /^- \[(?<text>[^\]]+)\]\((?<url>[^)]*)\)(?:: (?<note>.+))?$/,
+  /^- (?<text>.+)$/,
+];
+
+/**
+ * llms.txt says what the page says (#36): each heading, quote, bullet and link note is text in
+ * one run of the body, and each link points to the page's one URL, as canonical and og:url do.
+ */
+export function llmsProblems(llms: string, html: string): string[] {
+  const body = textRuns(/<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? "");
+  const problems: string[] = [];
+  for (const line of llms.split(/\r?\n/).filter((line) => line.trim() !== "")) {
+    const parts = llmsLines.map((shape) => shape.exec(line)?.groups).find(Boolean);
+    if (parts === undefined) {
+      problems.push(`llms.txt の「${line}」は、決めた形の行ではありません。${readAdr0015}`);
+      continue;
+    }
+    const { text, note, url } = parts;
+    for (const said of [text, note]) {
+      if (said !== undefined && !body.some((run) => run.includes(said))) {
+        problems.push(`llms.txt の「${said}」が、ページの本文にありません。${readAdr0015}`);
+      }
+    }
+    if (url !== undefined && url !== "https://mojisashi.app/") {
+      problems.push(`llms.txt のリンク ${url} は、https://mojisashi.app/ にします。${readAdr0015}`);
+    }
   }
   return problems;
 }

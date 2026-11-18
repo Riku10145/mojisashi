@@ -21,7 +21,7 @@ export function CopyButton({ text, children }: CopyButtonProps): ReactNode {
             : ""}
       </p>
       <button
-        className="shrink-0 whitespace-nowrap rounded-md bg-slate-900 px-4 py-2 font-bold text-white disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="shrink-0 whitespace-nowrap rounded-md bg-slate-900 px-4 py-2 font-bold text-white disabled:opacity-50 forced-colors:border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         type="button"
         disabled={text === ""}
         onClick={() => {
