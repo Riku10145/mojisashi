@@ -5,7 +5,7 @@ description: mojisashi のページを、書き出した dist/ と本番と同�
 
 # mojisashi をブラウザで確かめる
 
-mojisashi は、サーバーで何もしない1ページのサイトです。使う人が触るのはブラウザのページだけです。このスキルは、`bun run build` で書き出した `dist/` を Playwright の Chromium で開き、使う人と同じ操作で機能を動かします。
+mojisashi は、サーバーで何もしないサイトです。ページは、文字数を数える `/` と、テスト用の文章を作る `/dummy-text/` の2つです（ADR 0020）。使う人が触るのはブラウザのページだけです。このスキルは、`bun run build` で書き出した `dist/` を Playwright の Chromium で開き、使う人と同じ操作で機能を動かします。
 
 ページは本物のサーバーから配りません。Playwright が `https://mojisashi.test/` への要求を受け取り、`dist/` のファイルを返します。そのとき `public/_headers` の CSP をそのまま付けます。CSP が本番と同じなので、CSP に止められるコードはここでも止まります。`https://mojisashi.test/` 以外への要求は、すべて止めて記録します。
 
@@ -62,8 +62,8 @@ NODE_PATH=/opt/node-tools/node_modules node -e "require('playwright'); console.l
 
 手順のファイルは、`export default async function ({ page, open, storage, capture, step })` を書いた ES モジュールです。
 
-- `page` は Playwright の `Page` です。ページはもう開いています。
-- `open()` は、ページを開き直します。
+- `page` は Playwright の `Page` です。`/` のページはもう開いています。
+- `open(path)` は、`path` のページを開きます。`path` を省くと `/` を開き直します。
 - `storage()` は、cookie、`localStorage`、`sessionStorage`、IndexedDB に残っているものの数を返します。
 - `capture(name)` は、スクリーンショットと ARIA のスナップショットを証拠のフォルダに書きます。
 - `step(name, ok, detail)` は、確かめた結果を1つ記録します。

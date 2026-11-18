@@ -94,6 +94,15 @@ describe("書き出した index.html", () => {
     expect(canonicalProblems(page(`${head}\n${canonical}`), top)).not.toEqual([]);
   });
 
+  it("ほかのページの URL を canonical や og:url に書いたページは止まる", () => {
+    const other = "https://mojisashi.app/dummy-text/";
+    const ogUrl = `<meta property="og:url" content="${other}" />`;
+    expect(htmlProblems(page(head.replace(top, other)))).toEqual([]);
+    expect(canonicalProblems(page(head.replace(top, other)), top)).toHaveLength(1);
+    expect(canonicalProblems(page(`${head}\n${ogUrl}`), top)).toHaveLength(1);
+    expect(canonicalProblems(page(`${head.replace(top, other)}\n${ogUrl}`), other)).toEqual([]);
+  });
+
   it("検索とリンクのプレビューのためのタグは通る", () => {
     const seo = [
       '<link rel="canonical" href="https://mojisashi.app/" />',
