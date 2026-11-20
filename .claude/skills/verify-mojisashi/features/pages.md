@@ -8,6 +8,7 @@ mojisashi のページは、文字数を数える `/` と、テスト用の文�
 - `pages-dummy-text` は、`/dummy-text/` にテスト用の文章を作る機能だけを置く。`<title>` は「ダミーテキスト生成（文字数指定・日本語と英語） | mojisashi」、見出しは「テスト用の文章を作る」で、「文章」の欄はない。
 - `pages-links` は、`/` の「テスト用の文章を作る」のリンクで `/dummy-text/` へ、`/dummy-text/` の「文字数カウント」のリンクで `/` へ移る。
 - `pages-no-js` は、JavaScript を切っても、どちらのページも見出しと入力欄とよくある質問を見せる。
+- `pages-faq` は、よくある質問の答えをはじめは閉じておき、質問を押すと開き、もう一度押すと閉じる（ADR 0021）。キーボードの Enter でも開く。JavaScript を切っても開け閉めできる。
 
 ## How to get to it (user POV)
 
@@ -28,7 +29,8 @@ Preconditions:
 - **トップ。** `/` の `<title>` と見出しが決めたとおりで、「文章」の欄があり、「作る文字数」の欄がない。
 - **作るページへ。** 「テスト用の文章を作る」のリンクを押すと、URL が `/dummy-text/` になる。`<title>` と見出しが決めたとおりで、「作る文字数」の欄があり、「文章」の欄がない。
 - **トップへ。** 「文字数カウント」のリンクを押すと、URL が `/` に戻る。
-- **JavaScript なし。** スクリプトを止めて2つのページを開き直す。どちらも見出し、入力欄、「よくある質問」が見える。
+- **よくある質問。** `/` の「貼った文章は、どこかに送られますか？」の答えは、はじめは見えない。質問を押すと見え、もう一度押すと見えなくなる。質問に Tab で移って Enter を押しても開く。
+- **JavaScript なし。** スクリプトを止めて2つのページを開き直す。どちらも見出し、入力欄、「よくある質問」が見える。質問を押すと答えが見える。
 
 ```js scenario
 export default async function ({ page, open, capture, step }) {
@@ -41,6 +43,19 @@ export default async function ({ page, open, capture, step }) {
   step("pages-top: / has the 文字数カウント heading", (await heading("文字数カウント").count()) === 1);
   step("pages-top: / has the 文章 field and no 作る文字数 field", (await countBox.count()) === 1 && (await lengthBox.count()) === 0);
   await capture("pages-top");
+
+  const question = page.getByText("貼った文章は、どこかに送られますか？", { exact: true });
+  const answer = page.getByText(/^送りません。数えるのは/);
+  step("pages-faq: the answer is closed at first", !(await answer.isVisible()));
+  await question.click();
+  step("pages-faq: clicking the question opens the answer", await answer.isVisible());
+  await capture("pages-faq-open");
+  await question.click();
+  step("pages-faq: clicking it again closes the answer", !(await answer.isVisible()));
+  await question.focus();
+  await page.keyboard.press("Enter");
+  step("pages-faq: Enter on the question opens the answer", await answer.isVisible());
+  await open("/");
 
   await page.getByRole("link", { name: "テスト用の文章を作る" }).click();
   await page.waitForURL("**/dummy-text/");
@@ -66,6 +81,9 @@ export default async function ({ page, open, capture, step }) {
       `pages-no-js: ${path} shows its heading, its field and よくある質問 without JavaScript`,
       (await heading(name).isVisible()) && (await field.isVisible()) && (await faq.isVisible()),
     );
+    const first = page.locator("summary").first();
+    await first.click();
+    step(`pages-faq: ${path} opens an answer without JavaScript`, await page.locator("details[open] p").first().isVisible());
     await capture(`pages-no-js${path.replaceAll("/", "-")}`);
   }
   await cdp.send("Emulation.setScriptExecutionDisabled", { value: false });
