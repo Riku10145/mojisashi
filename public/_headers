@@ -12,3 +12,12 @@ https://dev.mojisashi.app/*
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+
+/licenses.txt
+  Content-Type: text/plain; charset=utf-8
+
+/robots.txt
+  Content-Type: text/plain; charset=utf-8

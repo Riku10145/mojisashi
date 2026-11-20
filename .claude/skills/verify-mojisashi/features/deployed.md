@@ -10,6 +10,7 @@
 - `deployed-untouched` は、HTML に Cloudflare の計測のスクリプト（`cloudflareinsights`）が入っていない。
 - `deployed-canonical` は、どのページも canonical に自分の本番の URL を書いている。
 - `deployed-assets` は、ページが読み込む `/assets/` の JS に、1年残してよい `Cache-Control` を付ける（ADR 0019）。
+- `deployed-text` は、`public/` の `.txt`（`llms.txt` など）を、`Content-Type: text/plain; charset=utf-8` で返す。`charset` がないと、ブラウザは日本語を windows-1252 として読み、文字化けする。
 
 ## How to get to it (user POV)
 
@@ -79,6 +80,10 @@ for path in $paths; do
     r=$(fetch "$from")
     check "deployed-redirects: $from moves to $path with 307" '[ "$(status "$r")" = 307 ] && [ "$(header "$r" location)" = "$path" ]' "$(status "$r") $(header "$r" location)"
   done
+done
+for txt in $(cd "$repo/public" && ls -- *.txt); do
+  t=$(fetch "/$txt")
+  check "deployed-text: /$txt is text/plain in UTF-8" '[ "$(header "$t" content-type)" = "text/plain; charset=utf-8" ]' "$(header "$t" content-type)"
 done
 echo "$([ $failed = 0 ] && echo "ALL PASS" || echo "$failed FAILED"); evidence in $evidence"
 [ $failed = 0 ]
