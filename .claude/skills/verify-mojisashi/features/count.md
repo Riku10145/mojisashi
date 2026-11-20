@@ -1,15 +1,15 @@
 # 文字数を数える
 
-貼った文章の文字数を、「空白と改行を除いた文字数」と「空白と改行を含む文字数」の2つの数え方で同時に出します。目標の文字数を入れると、選んだ数え方で、あと何文字か、何文字オーバーかを出します。
+貼った文章の文字数を、「空白と改行を除いた文字数」と「空白と改行を含む文字数」の2つの数え方で同時に出します。目標の文字数を入れると、選んだ数え方で、あと何文字か、何文字オーバーか、ちょうどかを出します。
 
 ## Sub-features
 
 - `count-both` は、2つの数え方の文字数を同時に出す。
 - `count-grapheme` は、組み合わせの絵文字や、濁点を組み合わせた「が」を1文字と数える。
 - `count-blank-kinds` は、NBSP とハングルの埋め字を空白として扱い、ゼロ幅スペースのような見えない文字をどちらの数え方でも数えない（ADR 0008）。
-- `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。
+- `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。目標ちょうどのときは「ちょうどN文字」と出す。
 - `count-rule` は、目標と比べる数え方を切り替える。
-- `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さず、欄の下に「1から1,000,000までの整数を入れてください」と出す。欄が空のときは出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
+- `count-target-range` は、目標の文字数の欄の上に、はじめから「1から1,000,000までの整数」と出す。この範囲は2つめのラベルなので、欄の名前にも入る。目標の文字数が1から1,000,000の整数でないとき、差を出さず、欄の下に「1から1,000,000までの整数を入れてください」と出す。欄が空のときは出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
 - `count-copy` は、「文章をコピー」で文章の欄の中身をそのままコピーする。文章が空のときは押せない。文章を書き換えると「コピーしました」が消える。
 - `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄と「文章をコピー」のボタンの位置が変わらない。文言はボタンの左に出る。
 
@@ -30,12 +30,13 @@ Preconditions:
 
 確かめること:
 
-- **最初の状態。** 2つの数え方とも `0文字` で、差の行はない。「文章をコピー」は押せない。
+- **最初の状態。** 2つの数え方とも `0文字` で、差の行はない。「文章をコピー」は押せない。目標の文字数の欄の上に「1から1,000,000までの整数」と出ている。欄の名前は「目標の文字数 1から1,000,000までの整数」。
 - **混ざった文章。** `今日は　晴れ。\nHello, 世界！ 👍🏽` を入れる。空白と改行を除くと16文字、含むと20文字。空白は、全角スペース、改行、半角スペース2つの4つ。
 - **見た目の1文字。** `👨‍👩‍👧` と、か（U+304B）に結合用の濁点（U+3099）を続けた「が」を入れる。どちらの数え方でも `2文字`。
 - **空白に見える文字と、見えない文字。** `a`、NBSP（U+00A0）、`b`、ゼロ幅スペース（U+200B）、`c`、ハングルの埋め字（U+3164）、`d` を入れる。除いた文字数は4文字、含む文字数は6文字。
 - **目標との差。** 混ざった文章に戻し、目標の文字数に全角の `１８` を入れる。`あと2文字` が出る。
 - **数え方の切り替え。** 「空白と改行を含む文字数」を選ぶ。`2文字オーバー` に変わる。
+- **ちょうど。** 目標の文字数に `20` を入れる。`ちょうど20文字` に変わる。
 - **範囲の外。** 目標の文字数に `0` を入れる。差の行が空になり、「1から1,000,000までの整数を入れてください」が出る。`abc`、`-5`、`1.5`、`2,000,000` でも同じ文言が出る。`400` に戻すと文言が消えて差が出る。欄を空にすると、差も文言も出ない。
 - **そのままコピーする。** `👨‍👩‍👧`、か（U+304B）に結合用の濁点（U+3099）を続けた「が」、空行、全角スペース、行末の半角スペース、最後の改行を含む文章を入れて、「文章をコピー」を押す。クリップボードの中身が欄の中身と同じ。
 - **書き換えると表示が消える。** 文章の最後に1文字足すと、「コピーしました」が消える。
@@ -48,13 +49,21 @@ export default async function ({ page, capture, step }) {
   const without = page.getByRole("definition").nth(0);
   const withBlanks = page.getByRole("definition").nth(1);
   const target = page.getByRole("textbox", { name: "目標の文字数" });
-  const gap = page.getByText(/^(あと[\d,]+文字|[\d,]+文字オーバー)$/);
+  const gap = page.getByText(/^(あと[\d,]+文字|[\d,]+文字オーバー|ちょうど[\d,]+文字)$/);
 
   step(
     "count-both: starts at 0 / 0 with no gap line",
     (await without.textContent()) === "0文字" &&
       (await withBlanks.textContent()) === "0文字" &&
       (await gap.count()) === 0,
+  );
+  step(
+    "count-target-range: the range is shown before anything is typed",
+    (await page.getByText("1から1,000,000までの整数", { exact: true }).count()) === 1,
+  );
+  step(
+    "count-target-range: a screen reader hears the range on reaching the field",
+    (await page.getByRole("textbox", { name: "目標の文字数 1から1,000,000までの整数", exact: true }).count()) === 1,
   );
 
   await box.fill("今日は　晴れ。\nHello, 世界！ 👍🏽");
@@ -80,6 +89,11 @@ export default async function ({ page, capture, step }) {
   step("count-rule: switching gives 2文字オーバー", true);
   await capture("count-over");
 
+  await target.fill("20");
+  await page.getByText("ちょうど20文字", { exact: true }).waitFor({ timeout: 5000 });
+  step("count-gap: 20 with blanks gives ちょうど20文字", (await gap.textContent()) === "ちょうど20文字", await gap.textContent());
+  await capture("count-exact");
+
   const hint = page.getByText("1から1,000,000までの整数を入れてください", { exact: true });
   await target.fill("0");
   await gap.waitFor({ state: "detached", timeout: 5000 });
@@ -91,7 +105,7 @@ export default async function ({ page, capture, step }) {
   }
   await capture("count-target-hint");
   await target.fill("400");
-  await page.getByText(/^(あと[\d,]+文字|[\d,]+文字オーバー)$/).waitFor({ timeout: 5000 });
+  await gap.waitFor({ timeout: 5000 });
   step("count-target-range: 400 clears the hint and shows the gap", (await hint.count()) === 0);
   await target.fill("");
   await gap.waitFor({ state: "detached", timeout: 5000 });
