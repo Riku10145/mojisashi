@@ -35,6 +35,37 @@ body {
   padding-inline: var(--mantine-spacing-md);
 }
 
+/* A card that is a link to the other page. */
+.page-link {
+  max-width: 28rem;
+  margin: var(--mantine-spacing-lg) var(--mantine-spacing-md) 0;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+}
+
+.page-link:hover {
+  border-color: var(--mantine-primary-color-filled);
+}
+
+.page-link-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-link-title {
+  font-weight: 700;
+  color: var(--mantine-primary-color-filled);
+}
+
+.page-link-description {
+  color: var(--mantine-color-dimmed);
+}
+
+.page-link-arrow {
+  font-size: var(--mantine-font-size-xl);
+  color: var(--mantine-primary-color-filled);
+}
+
 .brand {
   font-weight: 700;
   letter-spacing: 0.025em;
@@ -45,10 +76,6 @@ body {
   max-width: 48rem;
   margin-top: var(--mantine-spacing-xs);
   color: var(--mantine-color-dimmed);
-}
-
-.page-link {
-  font-weight: 700;
 }
 
 /* Below the sm width a card runs edge to edge, so the 文章 field is as wide as the window. */
@@ -197,6 +224,10 @@ body {
 
   .page-header {
     padding-inline: 0;
+  }
+
+  .page-link {
+    margin-inline: 0;
   }
 
   .card {

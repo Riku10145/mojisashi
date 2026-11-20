@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Box, PageLink, Text } from "../../../platform";
+import { Box, Card, PageLink, Text } from "../../../platform";
 import { Faq } from "../../components/Faq";
 import { PageLayout } from "../../components/PageLayout";
 import { countingRules, type CountingRule } from "../lib/count";
@@ -36,24 +36,25 @@ export function CountPage(): ReactNode {
   return (
     <PageLayout
       title="文字数カウント"
-      lead={
-        <>
-          <Text>
-            mojisashi（もじさし）は、文章の文字数を「空白と改行を除く」と「空白と改行を含む」の2つの数え方で同時に数える文字数カウントです。文章はサーバーに送らず、あなたのブラウザの中だけで数えます。登録はいりません。
-          </Text>
-          <Text>
-            決めた文字数ちょうどのテスト用の文章は、
-            <PageLink href="/dummy-text/">テスト用の文章を作る</PageLink>
-            のページで作れます。
-          </Text>
-        </>
-      }
+      lead={<Text>文章はサーバーに送らず、あなたのブラウザの中だけで数えます。</Text>}
     >
       <CountSection />
+      <PageLink
+        href="/dummy-text/"
+        title="テスト用の文章を作る"
+        description="決めた文字数ちょうどの文章を、別のページで作れます。"
+      />
       <Box className="two-columns">
         <CountingRulesSection />
         <Faq items={faq} />
       </Box>
+      {/* The whole introduction, below the tool so a phone shows the 文章 field sooner. llms.txt and
+          the JSON-LD quote it, so it stays in the page as one paragraph. */}
+      <Card title="mojisashi について">
+        <Text>
+          mojisashi（もじさし）は、文章の文字数を「空白と改行を除く」と「空白と改行を含む」の2つの数え方で同時に数える文字数カウントです。文章はサーバーに送らず、あなたのブラウザの中だけで数えます。登録はいりません。
+        </Text>
+      </Card>
     </PageLayout>
   );
 }
