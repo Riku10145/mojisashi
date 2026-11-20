@@ -19,7 +19,11 @@ export function CountSection(): ReactNode {
           label="文章"
           text={text}
           onText={setText}
-          action={<CopyButton text={text}>文章をコピー</CopyButton>}
+          action={
+            <CopyButton text={text} messageSide="left">
+              文章をコピー
+            </CopyButton>
+          }
         />
         <div className="space-y-6">
           <dl className="grid grid-cols-2 gap-3 lg:grid-cols-1">

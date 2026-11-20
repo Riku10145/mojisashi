@@ -42,7 +42,11 @@ export function Count(): ReactNode {
       >
         作る
       </Button>
-      {made !== "" && <CopyButton text={made}>コピー</CopyButton>}
+      {made !== "" && (
+        <CopyButton text={made} messageSide="right">
+          コピー
+        </CopyButton>
+      )}
       <a href="https://mojisashi.app">mojisashi</a>
     </section>
   );

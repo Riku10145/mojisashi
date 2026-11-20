@@ -12,6 +12,7 @@
 - `generate-shown` は、作った文章の先頭500文字をページの枠に出す。500文字より長いときは、そう書き添える。
 - `generate-stale` は、作ったあとで文字数か文字の種類を変えると、作った文章と「コピー」のボタンを消す。
 - `generate-copy` は、作った文章をコピーする。貼ると、入れた文字数ちょうどになる。
+- `generate-copy-layout` は、幅320px、375px、1280pxで、「コピーしました」や「コピーできませんでした」が出ても、「コピー」のボタンが動かない。文言はボタンの右に出る。
 - `generate-forced-colors` は、Windows のハイコントラストのような強制カラーでも、「作る」と「コピー」のボタンの縁を見せる。
 
 ## How to get to it (user POV)
@@ -40,6 +41,7 @@ Preconditions:
 - **文字数を変える。** 英語で作ったあとに `201` を入れると、作った文章と「コピー」のボタンが消える。
 - **100,000文字。** 英語のまま、全角の `１００，０００` で作ってコピーする。クリップボードの中身は、aからzだけの100,000文字で、26文字すべてが出てくる。ページには先頭の500文字だけが出て、「先頭の500文字だけを表示しています。」と書き添えてある。`/` の「文章」の欄に貼ると、どちらの数え方でも `100,000文字`。
 - **強制カラー。** 強制カラーにすると、「作る」と「コピー」のボタンに、背景と違う色の縁がある。
+- **ボタンが動かない。** 幅320px、375px、1280pxで、コピーできたときと、できなかったときの両方を試す。文言が出る前とあとで、「コピー」のボタンの位置が同じ。文言の左端は、ボタンの右端より右にある。できなかったときは、`navigator.clipboard.writeText` を失敗するものに置き換えて試す。
 
 ```js scenario
 export default async function ({ page, open, capture, step }) {
@@ -150,6 +152,34 @@ export default async function ({ page, open, capture, step }) {
   await capture("generate-forced-colors");
   await page.emulateMedia({ forcedColors: "none" });
   await pasteOnCountPage("英語 100,000", "100,000");
+
+  for (const width of [320, 375, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const fails of [false, true]) {
+      // A new length makes a new text, so the message from the copy before goes away.
+      await length.fill(fails ? "30" : "20");
+      await make.click();
+      await copy.waitFor({ timeout: 5000 });
+      const before = await copy.boundingBox();
+      if (fails) {
+        await page.evaluate(() => {
+          navigator.clipboard.writeText = () => Promise.reject(new Error("denied"));
+        });
+      }
+      await copy.click();
+      const message = page.getByText(fails ? "コピーできませんでした" : "コピーしました", { exact: true });
+      await message.waitFor({ timeout: 5000 });
+      const after = await copy.boundingBox();
+      const shown = await message.boundingBox();
+      step(
+        `generate-copy-layout: at ${width}px コピー stays put and the message is on its right when copying ${fails ? "fails" : "works"}`,
+        before.x === after.x && before.y === after.y && shown.x >= after.x + after.width,
+        JSON.stringify({ before, after, shown }),
+      );
+    }
+    await capture(`generate-copy-${width}`);
+    await page.reload({ waitUntil: "load" });
+  }
 }
 ```
 
@@ -158,6 +188,7 @@ export default async function ({ page, open, capture, step }) {
 - 道具は `context.grantPermissions(["clipboard-read", "clipboard-write"])` でクリップボードを許しています。これがないと、ヘッドレスの Chromium は「コピーできませんでした」を出し、貼り付けも空になります。
 - 貼るときは `ControlOrMeta+V` を押します。`fill` で入れると、貼った文字数を確かめたことになりません。
 - 100,000文字を貼ったあとの数え直しは数秒かかります。待つ時間を短くしすぎないでください。
+- `generate-copy-layout` は、`writeText` を置き換えたページを再読み込みで元に戻します。この手順のあとに、コピーの手順を足すときは、再読み込みのあとに置きます。
 - 文字数の `dd` は、`count.md` と同じく並び順で探しています。
 - 「文章」の欄は `/` にあります。貼って数えるたびに `/` を開き、`/dummy-text/` を開き直します。開き直したページは、作った文章も、選んだ文字の種類も、はじめの状態に戻ります。英語で作る前に、もう一度英語を選びます。
 - 作った文章が消えたことは、メッセージと「コピー」のボタンで確かめます。文章の `getByText` で確かめると、同じ文字が並んだほかの場所を見つけることがあります。
