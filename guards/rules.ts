@@ -298,8 +298,12 @@ export const importsRule = createRule<
   },
   create(context, [{ imports, testImports }]) {
     const isTest = /\.test\.tsx?$/.test(context.filename);
-    const namesFrom = (source: string): readonly string[] | undefined =>
-      imports[source] ?? (isTest ? testImports[source] : undefined);
+    // A test may import a package's names from both lists, as testImports adds to imports.
+    const namesFrom = (source: string): readonly string[] | undefined => {
+      const extra = isTest ? testImports[source] : undefined;
+      const names = imports[source];
+      return names === undefined ? extra : [...names, ...(extra ?? [])];
+    };
     const check = (
       node:
         | TSESTree.ImportDeclaration
