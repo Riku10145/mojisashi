@@ -11,7 +11,7 @@
 - `count-rule` は、目標と比べる数え方を切り替える。
 - `count-target-range` は、目標の文字数が1から1,000,000の整数でないとき、差を出さず、欄の下に「1から1,000,000までの整数を入れてください」と出す。欄が空のときは出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
 - `count-copy` は、「文章をコピー」で文章の欄の中身をそのままコピーする。文章が空のときは押せない。文章を書き換えると「コピーしました」が消える。
-- `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄の位置が変わらない。
+- `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄と「文章をコピー」のボタンの位置が変わらない。文言はボタンの左に出る。
 
 ## How to get to it (user POV)
 
@@ -40,7 +40,7 @@ Preconditions:
 - **そのままコピーする。** `👨‍👩‍👧`、か（U+304B）に結合用の濁点（U+3099）を続けた「が」、空行、全角スペース、行末の半角スペース、最後の改行を含む文章を入れて、「文章をコピー」を押す。クリップボードの中身が欄の中身と同じ。
 - **書き換えると表示が消える。** 文章の最後に1文字足すと、「コピーしました」が消える。
 - **貼っても変わらない。** 欄を空にして貼ると、欄の中身がコピーした文章と同じになる。
-- **欄が動かない。** 幅320pxと375pxで、コピーできたときと、できなかったときの両方を試す。「コピーしました」や「コピーできませんでした」が出る前とあとで、文章の欄の上端の位置が同じ。できなかったときは、`navigator.clipboard.writeText` を失敗するものに置き換えて試す。
+- **欄が動かない。** 幅320pxと375pxで、コピーできたときと、できなかったときの両方を試す。「コピーしました」や「コピーできませんでした」が出る前とあとで、文章の欄の上端の位置と、「文章をコピー」のボタンの位置が同じ。できなかったときは、`navigator.clipboard.writeText` を失敗するものに置き換えて試す。
 
 ```js scenario
 export default async function ({ page, capture, step }) {
@@ -125,15 +125,24 @@ export default async function ({ page, capture, step }) {
     for (const fails of [false, true]) {
       await box.fill(`幅${width}の文章${fails ? "（失敗）" : ""}`);
       const before = (await box.boundingBox()).y;
+      const buttonBefore = await copy.boundingBox();
       if (fails) {
         await page.evaluate(() => {
           navigator.clipboard.writeText = () => Promise.reject(new Error("denied"));
         });
       }
       await copy.click();
-      await page.getByText(fails ? "コピーできませんでした" : "コピーしました", { exact: true }).waitFor({ timeout: 5000 });
+      const message = page.getByText(fails ? "コピーできませんでした" : "コピーしました", { exact: true });
+      await message.waitFor({ timeout: 5000 });
       const after = (await box.boundingBox()).y;
       step(`count-copy-layout: at ${width}px the 文章 field stays put when copying ${fails ? "fails" : "works"}`, before === after, `${before} -> ${after}`);
+      const buttonAfter = await copy.boundingBox();
+      const shown = await message.boundingBox();
+      step(
+        `count-copy-layout: at ${width}px 文章をコピー stays put and the message is on its left when copying ${fails ? "fails" : "works"}`,
+        buttonBefore.x === buttonAfter.x && buttonBefore.y === buttonAfter.y && shown.x + shown.width <= buttonAfter.x,
+        JSON.stringify({ buttonBefore, buttonAfter, shown }),
+      );
     }
     await capture(`count-copy-${width}`);
     await page.reload({ waitUntil: "load" });

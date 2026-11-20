@@ -30,12 +30,16 @@ export function GenerateSection(): ReactNode {
       >
         作る
       </Button>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="space-y-2">
         {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
         <p aria-live="polite" className="font-bold text-slate-900">
           {text !== undefined && `${formatNumber(text.length)}文字のテスト用の文章を作りました`}
         </p>
-        {text !== undefined && <CopyButton text={text}>コピー</CopyButton>}
+        {text !== undefined && (
+          <CopyButton text={text} messageSide="right">
+            コピー
+          </CopyButton>
+        )}
       </div>
       {text !== undefined && (
         <div className="space-y-2">
