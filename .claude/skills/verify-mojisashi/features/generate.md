@@ -7,7 +7,7 @@
 - `generate-length` は、入れた文字数ちょうどの文章を作る。
 - `generate-kind` は、文字の種類を選べる。はじめは日本語で、「あいうえお」をくり返して文字数で切る。
 - `generate-letters` は、英語を選ぶと、aからzの小文字だけを使う。
-- `generate-limit` は、100,000文字まで作れる。欄の上に、はじめから「1から100,000までの整数」と出す。この範囲は2つめのラベルなので、欄の名前にも入る。1から100,000の整数でないときは、「作る」を押せず、欄の下に「1から100,000までの整数を入れてください」と出す。
+- `generate-limit` は、100,000文字まで作れる。欄の上に、はじめから「1から100,000までの整数」と出す。この範囲は2つめのラベルなので、欄の名前にも入る。1から100,000の整数でないときは、「作る」を押せず、欄の下に「1から100,000までの整数を入れてください」と出す。欄に「間違い」の印（`aria-invalid`）が付くのは、この文言が出ている間だけで、空の欄と範囲の中の数には付かない。
 - `generate-random` は、英語では、作るたびに違う文章を作る。
 - `generate-shown` は、作った文章の先頭500文字をページの枠に出す。500文字より長いときは、そう書き添える。
 - `generate-stale` は、作ったあとで文字数か文字の種類を変えると、作った文章と「コピー」のボタンを消す。
@@ -68,11 +68,17 @@ export default async function ({ page, open, capture, step }) {
 
   const hint = page.getByText("1から100,000までの整数を入れてください", { exact: true });
   step("generate-limit: no hint while the field is empty", (await hint.count()) === 0);
+  const invalid = async () => (await length.getAttribute("aria-invalid")) === "true";
+  step("generate-limit: an empty field is not marked invalid", !(await invalid()));
   for (const raw of ["0", "100001", "abc"]) {
     await length.fill(raw);
     await hint.waitFor({ timeout: 5000 }).catch(() => undefined);
     step(`generate-limit: 作る is disabled for ${raw} and the field says what to type`, (await make.isDisabled()) && (await hint.count()) === 1);
+    step(`generate-limit: ${raw} marks the field invalid`, await invalid());
   }
+  await length.fill("200");
+  await hint.waitFor({ state: "detached", timeout: 5000 }).catch(() => undefined);
+  step("generate-limit: 200 is not marked invalid", !(await invalid()));
 
   async function makeAndCopy(raw, expected, shown) {
     await length.fill(raw);
@@ -200,5 +206,6 @@ export default async function ({ page, open, capture, step }) {
 - 文字数の `dd` は、`count.md` と同じく並び順で探しています。
 - 「文章」の欄は `/` にあります。貼って数えるたびに `/` を開き、`/dummy-text/` を開き直します。開き直したページは、作った文章も、選んだ文字の種類も、はじめの状態に戻ります。英語で作る前に、もう一度英語を選びます。
 - 作った文章が消えたことは、メッセージと「コピー」のボタンで確かめます。文章の `getByText` で確かめると、同じ文字が並んだほかの場所を見つけることがあります。
+- 「間違い」の印は、欄の `aria-invalid` で確かめます（`count.md` の Gotchas と同じ理由です）。
 - 「コピー」のボタンは `exact: true` で探します。`/` には「文章をコピー」のボタンもあります。
 - 強制カラーでは、ブラウザがボタンの背景を塗りつぶすので、縁がないとボタンが文字だけに見えます。「作る」は `Button`、「コピー」は `CopyButton` なので、この手順で両方の部品を確かめます。`/` の「文章をコピー」も `CopyButton` です。
