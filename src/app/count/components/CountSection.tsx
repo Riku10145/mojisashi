@@ -1,5 +1,15 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
-import { Card, Choice, CopyButton, NumberCard, NumberField, TextBox } from "../../../platform";
+import {
+  Box,
+  Card,
+  Choice,
+  CopyButton,
+  NumberCard,
+  NumberField,
+  Stack,
+  Text,
+  TextBox,
+} from "../../../platform";
 import { formatNumber } from "../../lib/format-number";
 import { countCharacters, countingRules, gapMessage, type CountingRule } from "../lib/count";
 
@@ -13,7 +23,7 @@ export function CountSection(): ReactNode {
 
   return (
     <Card title="文字数を数える">
-      <div className="count-layout">
+      <Box className="count-layout">
         <TextBox
           label="文章"
           text={text}
@@ -24,8 +34,8 @@ export function CountSection(): ReactNode {
             </CopyButton>
           }
         />
-        <div className="stack">
-          <dl className="counts">
+        <Stack gap="lg">
+          <Box component="dl" className="counts">
             {countingRules.map(({ value, label }) => (
               <NumberCard
                 key={value}
@@ -34,8 +44,8 @@ export function CountSection(): ReactNode {
                 unit="文字"
               />
             ))}
-          </dl>
-          <div className="target">
+          </Box>
+          <Box className="target">
             <NumberField label="目標の文字数" min={1} max={1_000_000} onNumber={setTarget} />
             <Choice
               legend="目標と比べる数え方"
@@ -43,13 +53,13 @@ export function CountSection(): ReactNode {
               value={rule}
               onChoose={setRule}
             />
-          </div>
+          </Box>
           {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
-          <p aria-live="polite" className="gap-message">
+          <Text live="polite" size="lg" className="gap-message">
             {target !== undefined && gapMessage(target, counts[rule])}
-          </p>
-        </div>
-      </div>
+          </Text>
+        </Stack>
+      </Box>
     </Card>
   );
 }

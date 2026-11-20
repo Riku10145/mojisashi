@@ -36,8 +36,6 @@ body {
 }
 
 .brand {
-  margin: 0 0 var(--mantine-spacing-xs);
-  font-size: var(--mantine-font-size-sm);
   font-weight: 700;
   letter-spacing: 0.025em;
   color: var(--mantine-primary-color-filled);
@@ -45,10 +43,7 @@ body {
 
 .lead {
   max-width: 48rem;
-  margin-top: var(--mantine-spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--mantine-spacing-xs);
+  margin-top: var(--mantine-spacing-xs);
   color: var(--mantine-color-dimmed);
 }
 
@@ -66,7 +61,6 @@ body {
 
 .two-columns,
 .count-layout,
-.stack,
 .target {
   display: grid;
   gap: var(--mantine-spacing-lg);
@@ -76,12 +70,6 @@ body {
   column-gap: var(--mantine-spacing-lg);
   row-gap: 0;
   align-items: start;
-}
-
-.stack-tight {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mantine-spacing-xs);
 }
 
 .text-box-label {
@@ -159,19 +147,13 @@ body {
   margin-left: 0.25rem;
 }
 
-.gap-message {
-  margin: 0;
-  font-size: var(--mantine-font-size-lg);
-  font-weight: 700;
-}
-
+.bold,
+.gap-message,
 .made-message {
-  margin: 0;
   font-weight: 700;
 }
 
 .preview {
-  margin: 0;
   padding: var(--mantine-spacing-sm);
   border: 1px solid var(--mantine-color-gray-3);
   border-radius: var(--mantine-radius-sm);
@@ -179,18 +161,13 @@ body {
   word-break: break-all;
 }
 
-.note {
+/* Mantine's List keeps the browser's margin around a <ul>; the card's stack spaces it instead. */
+.mantine-List-root {
   margin: 0;
-  font-size: var(--mantine-font-size-sm);
-  color: var(--mantine-color-dimmed);
 }
 
-.notes {
-  margin: 0;
-  padding-left: var(--mantine-spacing-xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--mantine-spacing-xs);
+.note {
+  color: var(--mantine-color-dimmed);
 }
 
 .faq details {
@@ -207,8 +184,8 @@ body {
   font-weight: 700;
 }
 
-.faq p {
-  margin: var(--mantine-spacing-xs) 0 0;
+.faq details p {
+  margin-top: var(--mantine-spacing-xs);
   color: var(--mantine-color-gray-7);
 }
 

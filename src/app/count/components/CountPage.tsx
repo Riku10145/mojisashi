@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { PageLink, Text } from "../../../platform";
+import { Box, PageLink, Text } from "../../../platform";
 import { Faq } from "../../components/Faq";
 import { PageLayout } from "../../components/PageLayout";
 import { countingRules, type CountingRule } from "../lib/count";
@@ -50,10 +50,10 @@ export function CountPage(): ReactNode {
       }
     >
       <CountSection />
-      <div className="two-columns">
+      <Box className="two-columns">
         <CountingRulesSection />
         <Faq items={faq} />
-      </div>
+      </Box>
     </PageLayout>
   );
 }

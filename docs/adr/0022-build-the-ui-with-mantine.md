@@ -10,6 +10,13 @@ Mantine の部品を読み込むのは `src/platform/` だけにします。`src
 
 Mantine の部品は `component` で描く要素を変えられ、`style` やイベントの関数も受け取ります。`src/app/` が直に使うと、`guards/zones.ts` の要素と属性の一覧を通らずに、どの要素でも描けます。`src/platform/` の部品は、文字列、数、決めた値だけを受け取るので、ADR 0007 の決まりは変わりません。リンクの行き先も、`"/"` と `"/dummy-text/"` だけを受け取る型にします。
 
+ページの部品は、レイアウトも文字も Mantine で描きます。`src/platform/` は、`Box`、`Stack`、`List`、`Text` などを、受け取れる props を絞って `src/app/` に渡します。`component` で選べる要素は、`main`、`header`、`dl`、`details` のように決めたものだけです。
+
+Mantine の部品でも、次のものは使いません。
+
+- **`SimpleGrid` と `Grid`。** 列の数を CSS の変数で渡すために、いつも `<style>` を書きます。画面の幅で並べ方を変える所は、`Box` に `src/shell/index.css` のクラスを付けて組みます。
+- **`Accordion`。** よくある質問は、JavaScript なしで開け閉めできるように、`Box` で `<details>` と `<summary>` を描きます（ADR 0021）。
+
 ## CSP をゆるめずに使う
 
 Mantine は何もしないと3つのものを書きます。どれも `style-src 'self'` と Trusted Types に止められます。
@@ -23,7 +30,7 @@ Mantine は何もしないと3つのものを書きます。どれも `style-src
 スクリプトは次のときに止まります。
 
 - `mt` や `c` のような Mantine の style の props を使ったとき。CSS の変数でない値は、`src/shell/index.css` のクラスで書きます。
-- 同じルールで選ぶ2つの要素が、違う値を持つとき。props をそろえるか、クラスを足して分けます。
+- 同じルールで選ぶ2つの要素が、違う値を持つとき。props をそろえるか、クラスを足して分けます。`src/platform/` の `Stack` と `List` は、`stack-lg` のように、間の広さをクラスにも書いて分けます。
 - ほかの要素のためのルールが当たって、その要素にない変数を足すとき。
 
 ルールは `data-disabled` や `mantine-active` のような、押したり入れたりすると変わる属性とクラスでは選びません。
@@ -49,7 +56,6 @@ ADR 0013 のとおり、機能に要るので、次の一覧に足します。
 
 - ページの JavaScript は、gzip で 73.1 KB から 96.9 KB に、CSS は 3.5 KB から 9.6 KB になります。
 - 数の欄の範囲（「1から100,000までの整数」）は、これまでどおり2つめのラベルにして、欄の名前に入れます。Mantine の `description` は `aria-describedby` で読ませるので使いません。
-- よくある質問は、これまでどおり `<details>` で畳みます（ADR 0021）。Mantine の `Accordion` は JavaScript で開け閉めするので使いません。
 
 ## Considered Options
 

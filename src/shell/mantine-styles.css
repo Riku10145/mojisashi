@@ -1,4 +1,12 @@
 /* Written by scripts/mantine-styles.ts from the style attributes Mantine renders, which the CSP refuses (ADR 0022). */
+.bold.mantine-Text-root[data-size="md"] {
+  --text-fz: var(--mantine-font-size-md);
+  --text-lh: var(--mantine-line-height-md);
+}
+.brand.mantine-Text-root[data-size="sm"] {
+  --text-fz: var(--mantine-font-size-sm);
+  --text-lh: var(--mantine-line-height-sm);
+}
 .card.mantine-Card-root.mantine-Paper-root[data-with-border="true"] {
   --paper-radius: var(--mantine-radius-md);
   --paper-shadow: var(--mantine-shadow-xs);
@@ -25,11 +33,27 @@
   --text-fz: var(--mantine-font-size-sm);
   --text-lh: var(--mantine-line-height-sm);
 }
+.gap-message.mantine-Text-root[data-size="lg"] {
+  --text-fz: var(--mantine-font-size-lg);
+  --text-lh: var(--mantine-line-height-lg);
+}
 .label-row.mantine-Group-root {
   --group-gap: var(--mantine-spacing-md);
   --group-align: center;
   --group-justify: space-between;
   --group-wrap: nowrap;
+}
+.lead.mantine-Stack-root.stack-xs {
+  --stack-gap: var(--mantine-spacing-xs);
+  --stack-align: stretch;
+  --stack-justify: flex-start;
+}
+.list-xs.mantine-List-root {
+  --list-spacing: var(--mantine-spacing-xs);
+}
+.made-message.mantine-Text-root[data-size="md"] {
+  --text-fz: var(--mantine-font-size-md);
+  --text-lh: var(--mantine-line-height-md);
 }
 .mantine-Button-root.mantine-UnstyledButton-root[data-size="md"] {
   --button-height: var(--button-height-md);
@@ -39,6 +63,9 @@
 }
 .mantine-Card-root.mantine-Paper-root.number-card {
   --paper-radius: var(--mantine-radius-md);
+}
+.mantine-Container-root.page[data-size="lg"] {
+  --container-size: var(--container-size-lg);
 }
 .mantine-Group-root {
   --group-gap: var(--mantine-spacing-sm);
@@ -76,6 +103,21 @@
   --stack-align: stretch;
   --stack-justify: flex-start;
 }
+.mantine-Stack-root.page-header.stack-xs {
+  --stack-gap: var(--mantine-spacing-xs);
+  --stack-align: stretch;
+  --stack-justify: flex-start;
+}
+.mantine-Stack-root.stack-lg {
+  --stack-gap: var(--mantine-spacing-lg);
+  --stack-align: stretch;
+  --stack-justify: flex-start;
+}
+.mantine-Stack-root.stack-xs {
+  --stack-gap: var(--mantine-spacing-xs);
+  --stack-align: stretch;
+  --stack-justify: flex-start;
+}
 .mantine-Text-root.number-card-label[data-size="sm"] {
   --text-fz: var(--mantine-font-size-sm);
   --text-lh: var(--mantine-line-height-sm);
@@ -83,6 +125,10 @@
 .mantine-Text-root.number-card-unit[data-size="sm"] {
   --text-fz: var(--mantine-font-size-sm);
   --text-lh: var(--mantine-line-height-sm);
+}
+.mantine-Text-root[data-size="md"] {
+  --text-fz: var(--mantine-font-size-md);
+  --text-lh: var(--mantine-line-height-md);
 }
 .mantine-Title-root[data-order="1"] {
   --title-fw: var(--mantine-h1-font-weight);

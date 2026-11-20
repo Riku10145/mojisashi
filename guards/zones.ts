@@ -75,10 +75,14 @@ export const zones = {
       // The UI library (ADR 0022). Only src/platform/ renders it, so src/app/ sees narrow props.
       "@mantine/core": [
         "Anchor",
+        "Box",
         "Button",
         "Card",
+        "Container",
         "Group",
         "InputLabel",
+        "List",
+        "ListItem",
         "Paper",
         "Radio",
         "RadioGroup",

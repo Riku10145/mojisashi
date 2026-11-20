@@ -1,5 +1,15 @@
 import { useState, type ReactNode } from "react";
-import { Button, Card, Choice, CopyButton, NumberField, randomBytes } from "../../../platform";
+import {
+  Box,
+  Button,
+  Card,
+  Choice,
+  CopyButton,
+  NumberField,
+  randomBytes,
+  Stack,
+  Text,
+} from "../../../platform";
 import { formatNumber } from "../../lib/format-number";
 import { makeTestText, maxTestTextLength, testTextKinds, type TestTextKind } from "../lib/generate";
 
@@ -19,7 +29,7 @@ export function GenerateSection(): ReactNode {
     <Card title="文字数を決めて作る">
       <NumberField label="作る文字数" min={1} max={maxTestTextLength} onNumber={setLength} />
       <Choice legend="文字の種類" options={testTextKinds} value={kind} onChoose={setKind} />
-      <div>
+      <Box>
         <Button
           disabled={length === undefined}
           onPress={() => {
@@ -30,28 +40,28 @@ export function GenerateSection(): ReactNode {
         >
           作る
         </Button>
-      </div>
-      <div className="stack-tight">
+      </Box>
+      <Stack gap="xs">
         {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
-        <p aria-live="polite" className="made-message">
+        <Text live="polite" className="made-message">
           {text !== undefined && `${formatNumber(text.length)}文字のテスト用の文章を作りました`}
-        </p>
+        </Text>
         {text !== undefined && (
           <CopyButton text={text} messageSide="right">
             コピー
           </CopyButton>
         )}
-      </div>
+      </Stack>
       {text !== undefined && (
-        <div className="stack-tight">
-          <p className="preview">{text.slice(0, previewLength)}</p>
+        <Stack gap="xs">
+          <Text className="preview">{text.slice(0, previewLength)}</Text>
           {text.length > previewLength && (
-            <p className="note">
+            <Text size="sm" className="note">
               先頭の{formatNumber(previewLength)}
               文字だけを表示しています。全部はコピーで取り出せます。
-            </p>
+            </Text>
           )}
-        </div>
+        </Stack>
       )}
     </Card>
   );

@@ -8,11 +8,33 @@ export function PageTitle({ children }: PageTitleProps): ReactNode {
   return <Title order={1}>{children}</Title>;
 }
 
-export type TextProps = { children: ReactNode };
+export type TextProps = {
+  component?: "p" | "span" | "strong";
+  size?: "sm" | "md" | "lg";
+  /** A live region that is kept in the page while empty, so its text is announced. */
+  live?: "polite";
+  className?: string;
+  children: ReactNode;
+};
 
-/** A paragraph in Mantine's type scale. */
-export function Text({ children }: TextProps): ReactNode {
-  return <MantineText>{children}</MantineText>;
+/** Text in Mantine's type scale. strong keeps its weight, which Mantine's Text would reset. */
+export function Text({
+  component = "p",
+  size = "md",
+  live,
+  className,
+  children,
+}: TextProps): ReactNode {
+  return (
+    <MantineText
+      component={component}
+      size={size}
+      aria-live={live}
+      className={component === "strong" ? `bold ${className ?? ""}`.trim() : className}
+    >
+      {children}
+    </MantineText>
+  );
 }
 
 export type PageLinkProps = {

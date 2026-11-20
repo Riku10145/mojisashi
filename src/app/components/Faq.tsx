@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Card } from "../../platform";
+import { Box, Card, Text } from "../../platform";
 
 export type FaqProps = { items: readonly { question: string; answer: string }[] };
 
@@ -7,14 +7,14 @@ export type FaqProps = { items: readonly { question: string; answer: string }[] 
 export function Faq({ items }: FaqProps): ReactNode {
   return (
     <Card title="よくある質問">
-      <div className="faq">
+      <Box className="faq">
         {items.map(({ question, answer }) => (
-          <details key={question}>
-            <summary>{question}</summary>
-            <p>{answer}</p>
-          </details>
+          <Box key={question} component="details">
+            <Box component="summary">{question}</Box>
+            <Text>{answer}</Text>
+          </Box>
         ))}
-      </div>
+      </Box>
     </Card>
   );
 }
