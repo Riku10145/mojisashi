@@ -31,7 +31,7 @@ export function NumberField({ label, min, max, onNumber }: NumberFieldProps): Re
         id={id}
         className="number-field"
         size="md"
-        error={hint !== ""}
+        error={hint !== undefined}
         type="text"
         inputMode="numeric"
         value={raw}

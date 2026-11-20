@@ -25,3 +25,11 @@ test("入れられる範囲は、何も入れないうちから欄の上に出�
   expect(range?.[1]).toBeDefined();
   expect(range?.[1]).toBe(range?.[2]);
 });
+
+test("何も入れていない欄は、間違いとして示さない", () => {
+  const html = render(
+    <NumberField label="作る文字数" min={1} max={100_000} onNumber={() => undefined} />,
+  );
+  expect(html).not.toMatch(/aria-invalid/);
+  expect(html).not.toMatch(/<input [^>]*data-error/);
+});
