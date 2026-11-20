@@ -1,4 +1,5 @@
-import { useId, type ReactNode } from "react";
+import { Radio, RadioGroup, Stack } from "@mantine/core";
+import type { ReactNode } from "react";
 
 export type ChoiceProps<T extends string> = {
   legend: string;
@@ -14,24 +15,23 @@ export function Choice<T extends string>({
   value,
   onChoose,
 }: ChoiceProps<T>): ReactNode {
-  const name = useId();
   return (
-    <fieldset>
-      <legend className="font-bold text-slate-900">{legend}</legend>
-      {options.map((option) => (
-        <label key={option.value} className="mt-2 flex items-center gap-2 text-slate-900">
-          <input
-            className="size-4 accent-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-            type="radio"
-            name={name}
-            checked={option.value === value}
-            onChange={() => {
-              onChoose(option.value);
-            }}
-          />
-          {option.label}
-        </label>
-      ))}
-    </fieldset>
+    <RadioGroup
+      label={legend}
+      size="md"
+      value={value}
+      onChange={(chosen) => {
+        const option = options.find((each) => each.value === chosen);
+        if (option !== undefined) {
+          onChoose(option.value);
+        }
+      }}
+    >
+      <Stack className="choice-options" gap="xs">
+        {options.map((option) => (
+          <Radio key={option.value} value={option.value} label={option.label} size="sm" />
+        ))}
+      </Stack>
+    </RadioGroup>
   );
 }

@@ -70,8 +70,29 @@ export const zones = {
       "Navigator.clipboard",
       "Clipboard.writeText",
     ],
-    imports: { react: ["useId", "useState"] },
-    testImports: { ...vitest, "react-dom/server": ["renderToString"] },
+    imports: {
+      react: ["useId", "useState"],
+      // The UI library (ADR 0022). Only src/platform/ renders it, so src/app/ sees narrow props.
+      "@mantine/core": [
+        "Anchor",
+        "Button",
+        "Group",
+        "InputLabel",
+        "Paper",
+        "Radio",
+        "RadioGroup",
+        "Stack",
+        "Text",
+        "TextInput",
+        "Textarea",
+        "Title",
+      ],
+    },
+    testImports: {
+      ...vitest,
+      "react-dom/server": ["renderToString"],
+      "@mantine/core": ["MantineProvider"],
+    },
     tags: ["div", "p", "label", "textarea", "input", "fieldset", "legend", "button"],
     attributes:
       "className id key htmlFor rows value type inputMode name checked disabled role spellCheck autoComplete onChange onClick children".split(
@@ -99,6 +120,7 @@ export const zones = {
     ],
     imports: {
       react: ["StrictMode"],
+      "@mantine/core": ["MantineProvider"],
       "react-dom/client": ["createRoot", "hydrateRoot"],
       "react-dom/server": ["renderToString"],
     },

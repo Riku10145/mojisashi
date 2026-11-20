@@ -1,8 +1,248 @@
-@import "tailwindcss" source("..");
+/* Mantine's styles for the components the pages use, in the order Mantine's docs give. */
+@import "@mantine/core/styles/baseline.css";
+@import "@mantine/core/styles/default-css-variables.css";
+@import "@mantine/core/styles/global.css";
+@import "@mantine/core/styles/UnstyledButton.css";
+@import "@mantine/core/styles/Button.css";
+@import "@mantine/core/styles/Paper.css";
+@import "@mantine/core/styles/Stack.css";
+@import "@mantine/core/styles/Group.css";
+@import "@mantine/core/styles/Title.css";
+@import "@mantine/core/styles/Text.css";
+@import "@mantine/core/styles/Anchor.css";
+@import "@mantine/core/styles/Input.css";
+@import "@mantine/core/styles/InlineInput.css";
+@import "@mantine/core/styles/Radio.css";
+@import "./mantine-styles.css";
 
 /* The cards sit on this, and it fills the window past the end of <main>. */
-@layer base {
-  html {
-    background-color: var(--color-slate-100);
+html {
+  background-color: var(--mantine-color-gray-0);
+}
+
+body {
+  background-color: transparent;
+}
+
+.page {
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-block: var(--mantine-spacing-xl);
+}
+
+.page-header {
+  padding-inline: var(--mantine-spacing-md);
+}
+
+.brand {
+  margin: 0 0 var(--mantine-spacing-xs);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  color: var(--mantine-primary-color-filled);
+}
+
+.lead {
+  max-width: 48rem;
+  margin-top: var(--mantine-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+  color: var(--mantine-color-dimmed);
+}
+
+.page-link {
+  font-weight: 700;
+}
+
+/* Below the sm width a card runs edge to edge, so the 文章 field is as wide as the window. */
+.card {
+  margin-top: var(--mantine-spacing-lg);
+  padding: var(--mantine-spacing-md);
+  border-inline-width: 0;
+  border-radius: 0;
+}
+
+.two-columns,
+.count-layout,
+.stack,
+.target {
+  display: grid;
+  gap: var(--mantine-spacing-lg);
+}
+
+.two-columns {
+  column-gap: var(--mantine-spacing-lg);
+  row-gap: 0;
+  align-items: start;
+}
+
+.stack-tight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+}
+
+.text-box-label {
+  flex-shrink: 0;
+}
+
+.label-row {
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.field-range {
+  display: block;
+  margin-bottom: var(--mantine-spacing-xs);
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+.number-field {
+  max-width: 10rem;
+}
+
+.field-hint {
+  margin-top: 0.25rem;
+  color: var(--mantine-color-red-8);
+}
+
+.copy-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Two lines of it stay within the button's height, so a long message does not push the field. */
+.copy-message {
+  min-width: 0;
+  line-height: 1.2;
+  color: var(--mantine-color-dimmed);
+}
+
+.choice-options {
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mantine-spacing-sm);
+  margin: 0;
+}
+
+.count {
+  padding: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-gray-1);
+}
+
+.count dt {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+.count dd {
+  margin: var(--mantine-spacing-xs) 0 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.count-number {
+  font-size: var(--mantine-h2-font-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.count-unit {
+  margin-left: 0.25rem;
+  font-size: var(--mantine-font-size-sm);
+}
+
+.gap-message {
+  margin: 0;
+  font-size: var(--mantine-font-size-lg);
+  font-weight: 700;
+}
+
+.made-message {
+  margin: 0;
+  font-weight: 700;
+}
+
+.preview {
+  margin: 0;
+  padding: var(--mantine-spacing-sm);
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: var(--mantine-radius-sm);
+  background-color: var(--mantine-color-gray-0);
+  word-break: break-all;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+.notes {
+  margin: 0;
+  padding-left: var(--mantine-spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+}
+
+.faq details {
+  padding-block: var(--mantine-spacing-sm);
+  border-top: 1px solid var(--mantine-color-gray-3);
+}
+
+.faq details:last-child {
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.faq summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.faq p {
+  margin: var(--mantine-spacing-xs) 0 0;
+  color: var(--mantine-color-gray-7);
+}
+
+/* Mantine's sm breakpoint. */
+@media (min-width: 48em) {
+  .page {
+    padding-inline: var(--mantine-spacing-md);
+  }
+
+  .page-header {
+    padding-inline: 0;
+  }
+
+  .card {
+    padding: var(--mantine-spacing-lg);
+    border-inline-width: calc(0.0625rem * var(--mantine-scale));
+    border-radius: var(--paper-radius);
+  }
+
+  .target {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mantine's lg breakpoint. */
+@media (min-width: 75em) {
+  .two-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .count-layout {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+  }
+
+  .counts,
+  .target {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

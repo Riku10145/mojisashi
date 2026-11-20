@@ -1,0 +1,85 @@
+/* Written by scripts/mantine-styles.ts from the style attributes Mantine renders, which the CSP refuses (ADR 0022). */
+.card.mantine-Paper-root[data-with-border="true"] {
+  --paper-radius: var(--mantine-radius-md);
+  --paper-shadow: var(--mantine-shadow-xs);
+}
+.choice-options.mantine-Stack-root {
+  --stack-gap: var(--mantine-spacing-xs);
+  --stack-align: stretch;
+  --stack-justify: flex-start;
+}
+.copy-button.mantine-Button-root.mantine-UnstyledButton-root[data-size="sm"][data-variant="light"] {
+  --button-height: var(--button-height-sm);
+  --button-padding-x: var(--button-padding-x-sm);
+  --button-fz: var(--mantine-font-size-sm);
+  --button-bg: var(--mantine-color-blue-light);
+  --button-hover: var(--mantine-color-blue-light-hover);
+  --button-color: var(--mantine-color-blue-light-color);
+  --button-bd: calc(0.0625rem * var(--mantine-scale)) solid transparent;
+}
+.copy-message.mantine-Text-root[data-size="sm"] {
+  --text-fz: var(--mantine-font-size-sm);
+  --text-lh: var(--mantine-line-height-sm);
+}
+.field-hint.mantine-Text-root[data-size="sm"] {
+  --text-fz: var(--mantine-font-size-sm);
+  --text-lh: var(--mantine-line-height-sm);
+}
+.label-row.mantine-Group-root {
+  --group-gap: var(--mantine-spacing-md);
+  --group-align: center;
+  --group-justify: space-between;
+  --group-wrap: nowrap;
+}
+.mantine-Button-root.mantine-UnstyledButton-root[data-size="md"] {
+  --button-height: var(--button-height-md);
+  --button-padding-x: var(--button-padding-x-md);
+  --button-fz: var(--mantine-font-size-md);
+  --button-color: var(--mantine-color-white);
+}
+.mantine-Group-root {
+  --group-gap: var(--mantine-spacing-sm);
+  --group-align: center;
+  --group-justify: flex-start;
+  --group-wrap: nowrap;
+}
+.mantine-Input-wrapper.mantine-Textarea-wrapper[data-multiline="true"][data-size="md"][data-variant="default"] {
+  --input-height: var(--input-height-md);
+  --input-fz: var(--mantine-font-size-md);
+  --input-padding-y: var(--input-padding-y-md);
+}
+.mantine-Input-wrapper.mantine-TextInput-wrapper[data-size="md"][data-variant="default"] {
+  --input-height: var(--input-height-md);
+  --input-fz: var(--mantine-font-size-md);
+}
+.mantine-InputWrapper-label.mantine-RadioGroup-label[data-size="md"] {
+  --input-label-size: var(--mantine-font-size-md);
+}
+.mantine-InputWrapper-label.text-box-label[data-size="md"] {
+  --input-label-size: var(--mantine-font-size-md);
+}
+.mantine-InputWrapper-label[data-size="md"] {
+  --input-label-size: var(--mantine-font-size-md);
+}
+.mantine-Radio-root.mantine-Radio-root[data-label-position="right"][data-size="sm"] {
+  --radio-size: var(--radio-size-sm);
+  --radio-color: var(--mantine-color-blue-filled);
+  --radio-icon-size: var(--radio-icon-size-sm);
+  --label-fz: var(--mantine-font-size-sm);
+  --label-lh: var(--label-lh-sm);
+}
+.mantine-Stack-root {
+  --stack-gap: var(--mantine-spacing-lg);
+  --stack-align: stretch;
+  --stack-justify: flex-start;
+}
+.mantine-Title-root[data-order="1"] {
+  --title-fw: var(--mantine-h1-font-weight);
+  --title-lh: var(--mantine-h1-line-height);
+  --title-fz: var(--mantine-h1-font-size);
+}
+.mantine-Title-root[data-order="2"][data-size="h3"] {
+  --title-fw: var(--mantine-h3-font-weight);
+  --title-lh: var(--mantine-h3-line-height);
+  --title-fz: var(--mantine-h3-font-size);
+}

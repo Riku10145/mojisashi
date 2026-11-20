@@ -1,3 +1,4 @@
+import { Group, InputLabel, Textarea } from "@mantine/core";
 import { useId, type ReactNode } from "react";
 
 export type TextBoxProps = {
@@ -13,15 +14,15 @@ export function TextBox({ label, text, onText, action }: TextBoxProps): ReactNod
   const id = useId();
   return (
     <div>
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={id} className="shrink-0 font-bold text-slate-900">
+      <Group className="label-row" justify="space-between" wrap="nowrap">
+        <InputLabel htmlFor={id} className="text-box-label" size="md">
           {label}
-        </label>
+        </InputLabel>
         {action}
-      </div>
-      <textarea
+      </Group>
+      <Textarea
         id={id}
-        className="mt-2 block w-full rounded-md border border-slate-500 bg-white p-3 leading-relaxed text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        size="md"
         rows={8}
         // Chrome's enhanced spell check sends the text to Google.
         spellCheck={false}

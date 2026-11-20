@@ -1,3 +1,4 @@
+import { InputLabel, Text, TextInput } from "@mantine/core";
 import { useId, useState, type ReactNode } from "react";
 import { wholeNumberHint, wholeNumberIn, wholeNumberRange } from "../lib/whole-number";
 
@@ -11,23 +12,26 @@ export type NumberFieldProps = {
 /**
  * A labelled field for 目標の文字数 and the like. It reports undefined until the field holds a
  * whole number in range. Which numbers it takes is shown from the start, and said again in red
- * while the field holds anything else. The range is a second label, so a screen reader says it on
- * reaching the field: aria-describedby is not allowed here.
+ * while the field holds anything else. The range is a second label, so it is part of the field's
+ * name and a screen reader says it on reaching the field.
  */
 export function NumberField({ label, min, max, onNumber }: NumberFieldProps): ReactNode {
   const id = useId();
   const [raw, setRaw] = useState("");
+  const hint = wholeNumberHint(raw, min, max);
   return (
     <div>
-      <label htmlFor={id} className="block font-bold text-slate-900">
+      <InputLabel htmlFor={id} size="md">
         {label}
-      </label>
-      <label htmlFor={id} className="mt-1 block text-sm text-slate-600">
+      </InputLabel>
+      <label htmlFor={id} className="field-range">
         {wholeNumberRange(min, max)}
       </label>
-      <input
+      <TextInput
         id={id}
-        className="mt-2 block w-40 rounded-md border border-slate-500 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="number-field"
+        size="md"
+        error={hint !== ""}
         type="text"
         inputMode="numeric"
         value={raw}
@@ -38,9 +42,9 @@ export function NumberField({ label, min, max, onNumber }: NumberFieldProps): Re
         }}
       />
       {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
-      <p role="status" className="mt-1 text-sm text-red-700">
-        {wholeNumberHint(raw, min, max)}
-      </p>
+      <Text role="status" className="field-hint" size="sm">
+        {hint}
+      </Text>
     </div>
   );
 }
