@@ -37,7 +37,7 @@ const rootFiles = new Set([
 const nestedFile = [
   /^(?!\.|public\/)(?!.*\.d\.ts$)[\w-]+\/[\w./-]+\.tsx?$/,
   /^(?!\.|public\/)[\w-]+\/[\w./-]+\.(json|md|css|html|yml|toml)$/,
-  /^public\/(_headers|robots\.txt|sitemap\.xml|llms\.txt|og\.png)$/,
+  /^public\/(_headers|robots\.txt|sitemap\.xml|llms\.txt|licenses\.txt|og\.png)$/,
   /^\.github\/workflows\/[\w-]+\.yml$/,
   /^\.claude\/skills\/[\w-]+\/[\w/-]+\.md$/,
 ];

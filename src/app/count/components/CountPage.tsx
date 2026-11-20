@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Box, PageLink, Text } from "../../../platform";
 import { Faq } from "../../components/Faq";
 import { PageLayout } from "../../components/PageLayout";
 import { countingRules, type CountingRule } from "../lib/count";
@@ -37,24 +38,22 @@ export function CountPage(): ReactNode {
       title="文字数カウント"
       lead={
         <>
-          <p>
+          <Text>
             mojisashi（もじさし）は、文章の文字数を「空白と改行を除く」と「空白と改行を含む」の2つの数え方で同時に数える文字数カウントです。文章はサーバーに送らず、あなたのブラウザの中だけで数えます。登録はいりません。
-          </p>
-          <p>
+          </Text>
+          <Text>
             決めた文字数ちょうどのテスト用の文章は、
-            <a href="/dummy-text/" className="font-bold text-blue-700 underline">
-              テスト用の文章を作る
-            </a>
+            <PageLink href="/dummy-text/">テスト用の文章を作る</PageLink>
             のページで作れます。
-          </p>
+          </Text>
         </>
       }
     >
       <CountSection />
-      <div className="grid gap-x-6 lg:grid-cols-2 lg:items-start">
+      <Box className="two-columns">
         <CountingRulesSection />
         <Faq items={faq} />
-      </div>
+      </Box>
     </PageLayout>
   );
 }

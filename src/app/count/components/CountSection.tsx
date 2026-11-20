@@ -1,6 +1,15 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
-import { Choice, CopyButton, NumberField, TextBox } from "../../../platform";
-import { Card } from "../../components/Card";
+import {
+  Box,
+  Card,
+  Choice,
+  CopyButton,
+  NumberCard,
+  NumberField,
+  Stack,
+  Text,
+  TextBox,
+} from "../../../platform";
 import { formatNumber } from "../../lib/format-number";
 import { countCharacters, countingRules, gapMessage, type CountingRule } from "../lib/count";
 
@@ -14,7 +23,7 @@ export function CountSection(): ReactNode {
 
   return (
     <Card title="文字数を数える">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <Box className="count-layout">
         <TextBox
           label="文章"
           text={text}
@@ -25,21 +34,18 @@ export function CountSection(): ReactNode {
             </CopyButton>
           }
         />
-        <div className="space-y-6">
-          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+        <Stack gap="lg">
+          <Box component="dl" className="counts">
             {countingRules.map(({ value, label }) => (
-              <div key={value} className="rounded-lg bg-slate-100 p-4">
-                <dt className="text-sm text-slate-600">{label}</dt>
-                <dd className="mt-1 font-bold wrap-anywhere text-slate-900">
-                  <span className="text-2xl tabular-nums sm:text-3xl">
-                    {formatNumber(counts[value])}
-                  </span>
-                  <span className="ml-1 text-sm">文字</span>
-                </dd>
-              </div>
+              <NumberCard
+                key={value}
+                label={label}
+                value={formatNumber(counts[value])}
+                unit="文字"
+              />
             ))}
-          </dl>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
+          </Box>
+          <Box className="target">
             <NumberField label="目標の文字数" min={1} max={1_000_000} onNumber={setTarget} />
             <Choice
               legend="目標と比べる数え方"
@@ -47,13 +53,13 @@ export function CountSection(): ReactNode {
               value={rule}
               onChoose={setRule}
             />
-          </div>
+          </Box>
           {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
-          <p aria-live="polite" className="text-lg font-bold text-slate-900">
+          <Text live="polite" size="lg" className="gap-message">
             {target !== undefined && gapMessage(target, counts[rule])}
-          </p>
-        </div>
-      </div>
+          </Text>
+        </Stack>
+      </Box>
     </Card>
   );
 }

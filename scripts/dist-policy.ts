@@ -1,4 +1,3 @@
-import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { build, type Rolldown } from "vite";
 import { pageUrl, pages } from "./pages";
@@ -30,7 +29,7 @@ export async function referenceBuild(
     root,
     cacheDir: `${root}node_modules/.vite-reference`,
     logLevel: "silent",
-    plugins: [react(), tailwindcss()],
+    plugins: [react()],
     // An empty config stops Vite from looking for a postcss.config file next to the page.
     css: { postcss: {} },
     build: {
@@ -59,10 +58,23 @@ export async function referenceBuild(
 
 // Bundler helpers that come from no file.
 const bundlerModules = /^\0?(vite\/(preload-helper|modulepreload-polyfill)|rolldown\/runtime)/;
-const shippedPackages = /\/node_modules\/(react|react-dom|scheduler)\//;
+// Mantine and clsx, which Mantine joins class names with, are the UI library (ADR 0022).
+// public/licenses.txt holds the license of each one (scripts/licenses.ts).
+export const shippedPackages = [
+  "react",
+  "react-dom",
+  "scheduler",
+  "@mantine/core",
+  "@mantine/hooks",
+  "clsx",
+] as const;
+const shippedPackage = new RegExp(
+  `/node_modules/(${shippedPackages.map((name) => name.replace("/", "\\/")).join("|")})/`,
+);
 
 /**
- * Bundled code may come only from src/ (not tests), the entries, react, react-dom and scheduler.
+ * Bundled code may come only from src/ (not tests), the entries, react, react-dom, scheduler and
+ * the UI library.
  * ESLint and the type check do not see a file pulled in by ?url, ?raw or new URL(…, import.meta.url).
  */
 export function provenanceProblems(
@@ -75,7 +87,7 @@ export function provenanceProblems(
     return (
       entries.includes(id) ||
       bundlerModules.test(id) ||
-      shippedPackages.test(id) ||
+      shippedPackage.test(id) ||
       (id.startsWith(`${root}src/`) && !id.includes("?") && !/\.test\.tsx?$/.test(id))
     );
   };
@@ -146,13 +158,14 @@ function isJsonObject(text: string): boolean {
     return false;
   }
 }
+// Mantine's Radio draws its dot as an inline <svg> with one <circle>, which requests nothing.
 const bodyTags = new Set(
-  "div main section header footer h1 h2 h3 p span strong em small ul ol li dl dt dd br output a details summary label textarea input fieldset legend button".split(
+  "div main section header footer h1 h2 h3 p span strong em small ul ol li dl dt dd br output a details summary label textarea input fieldset legend button svg circle".split(
     " ",
   ),
 );
 const bodyAttributes = new Set(
-  "id class for href lang role hidden title rows type min max value name checked disabled inputmode spellcheck autocomplete".split(
+  "id class for href lang role hidden title rows type min max value name checked disabled inputmode spellcheck autocomplete xmlns fill viewbox cx cy r".split(
     " ",
   ),
 );
@@ -194,7 +207,12 @@ export function htmlProblems(html: string, name = "index.html"): string[] {
       }
     }
     for (const [, attribute = ""] of attributes.matchAll(/([^\s=/]+)(?:="[^"]*")?/g)) {
-      if (!bodyAttributes.has(attribute.toLowerCase()) && !attribute.startsWith("aria-")) {
+      // Mantine's CSS selects on data-* attributes, such as data-size and data-disabled.
+      if (
+        !bodyAttributes.has(attribute.toLowerCase()) &&
+        !attribute.startsWith("aria-") &&
+        !attribute.startsWith("data-")
+      ) {
         problems.push(`${name} の <${tag}> に ${attribute} は書けません。${readAdr0007}`);
       }
     }

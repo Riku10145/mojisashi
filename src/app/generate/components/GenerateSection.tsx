@@ -1,6 +1,15 @@
 import { useState, type ReactNode } from "react";
-import { Button, Choice, CopyButton, NumberField, randomBytes } from "../../../platform";
-import { Card } from "../../components/Card";
+import {
+  Box,
+  Button,
+  Card,
+  Choice,
+  CopyButton,
+  NumberField,
+  randomBytes,
+  Stack,
+  Text,
+} from "../../../platform";
 import { formatNumber } from "../../lib/format-number";
 import { makeTestText, maxTestTextLength, testTextKinds, type TestTextKind } from "../lib/generate";
 
@@ -20,39 +29,39 @@ export function GenerateSection(): ReactNode {
     <Card title="文字数を決めて作る">
       <NumberField label="作る文字数" min={1} max={maxTestTextLength} onNumber={setLength} />
       <Choice legend="文字の種類" options={testTextKinds} value={kind} onChoose={setKind} />
-      <Button
-        disabled={length === undefined}
-        onPress={() => {
-          if (length !== undefined) {
-            setMade({ kind, length, text: makeTestText(kind, length, randomBytes) });
-          }
-        }}
-      >
-        作る
-      </Button>
-      <div className="space-y-2">
+      <Box>
+        <Button
+          disabled={length === undefined}
+          onPress={() => {
+            if (length !== undefined) {
+              setMade({ kind, length, text: makeTestText(kind, length, randomBytes) });
+            }
+          }}
+        >
+          作る
+        </Button>
+      </Box>
+      <Stack gap="xs">
         {/* Kept in the page while empty: a live region inserted with its text is not announced. */}
-        <p aria-live="polite" className="font-bold text-slate-900">
+        <Text live="polite" className="made-message">
           {text !== undefined && `${formatNumber(text.length)}文字のテスト用の文章を作りました`}
-        </p>
+        </Text>
         {text !== undefined && (
           <CopyButton text={text} messageSide="right">
             コピー
           </CopyButton>
         )}
-      </div>
+      </Stack>
       {text !== undefined && (
-        <div className="space-y-2">
-          <p className="rounded-md border border-slate-300 bg-slate-50 p-3 break-all text-slate-900">
-            {text.slice(0, previewLength)}
-          </p>
+        <Stack gap="xs">
+          <Text className="preview">{text.slice(0, previewLength)}</Text>
           {text.length > previewLength && (
-            <p className="text-sm text-slate-600">
+            <Text size="sm" className="note">
               先頭の{formatNumber(previewLength)}
               文字だけを表示しています。全部はコピーで取り出せます。
-            </p>
+            </Text>
           )}
-        </div>
+        </Stack>
       )}
     </Card>
   );

@@ -9,7 +9,7 @@
 - `count-blank-kinds` は、NBSP とハングルの埋め字を空白として扱い、ゼロ幅スペースのような見えない文字をどちらの数え方でも数えない（ADR 0008）。
 - `count-gap` は、目標の文字数との差を「あとN文字」か「N文字オーバー」で出す。目標ちょうどのときは「ちょうどN文字」と出す。
 - `count-rule` は、目標と比べる数え方を切り替える。
-- `count-target-range` は、目標の文字数の欄の上に、はじめから「1から1,000,000までの整数」と出す。この範囲は2つめのラベルなので、欄の名前にも入る。目標の文字数が1から1,000,000の整数でないとき、差を出さず、欄の下に「1から1,000,000までの整数を入れてください」と出す。欄が空のときは出さない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
+- `count-target-range` は、目標の文字数の欄の上に、はじめから「1から1,000,000までの整数」と出す。この範囲は2つめのラベルなので、欄の名前にも入る。目標の文字数が1から1,000,000の整数でないとき、差を出さず、欄の下に「1から1,000,000までの整数を入れてください」と出す。欄が空のときは出さない。欄に「間違い」の印（`aria-invalid`。画面では赤い枠と赤い文字）が付くのは、この文言が出ている間だけで、空の欄と範囲の中の数には付かない。全角の数字と、`1,000` のような桁区切りのカンマは受け付ける。
 - `count-copy` は、「文章をコピー」で文章の欄の中身をそのままコピーする。文章が空のときは押せない。文章を書き換えると「コピーしました」が消える。
 - `count-copy-layout` は、幅320pxと375pxで、コピーの結果の文言が出ても、文章の欄と「文章をコピー」のボタンの位置が変わらない。文言はボタンの左に出る。
 
@@ -95,6 +95,8 @@ export default async function ({ page, capture, step }) {
   await capture("count-exact");
 
   const hint = page.getByText("1から1,000,000までの整数を入れてください", { exact: true });
+  const invalid = async () => (await target.getAttribute("aria-invalid")) === "true";
+  step("count-target-range: an untouched field is not marked invalid", !(await invalid()));
   await target.fill("0");
   await gap.waitFor({ state: "detached", timeout: 5000 });
   step("count-target-range: 0 hides the gap line", (await gap.count()) === 0);
@@ -102,14 +104,17 @@ export default async function ({ page, capture, step }) {
     await target.fill(raw);
     await hint.waitFor({ timeout: 5000 }).catch(() => undefined);
     step(`count-target-range: ${raw} says what to type`, (await hint.count()) === 1 && (await gap.count()) === 0);
+    step(`count-target-range: ${raw} marks the field invalid`, await invalid());
   }
   await capture("count-target-hint");
   await target.fill("400");
   await gap.waitFor({ timeout: 5000 });
   step("count-target-range: 400 clears the hint and shows the gap", (await hint.count()) === 0);
+  step("count-target-range: 400 is not marked invalid", !(await invalid()));
   await target.fill("");
   await gap.waitFor({ state: "detached", timeout: 5000 });
   step("count-target-range: an empty field shows neither gap nor hint", (await hint.count()) === 0);
+  step("count-target-range: an emptied field is not marked invalid", !(await invalid()));
 
   const copy = page.getByRole("button", { name: "文章をコピー" });
   const copied = page.getByText("コピーしました", { exact: true });
@@ -170,6 +175,7 @@ export default async function ({ page, capture, step }) {
 - `fill` で `\r\n` を入れても、ブラウザは入力欄の改行を `\n` にそろえます。Windows の改行が1文字になることは、`src/app/count/lib/count.test.ts` のテストで確かめます。
 - 文字数の `dd` には役割の名前がありません。`getByRole("definition")` の並び順（除いた文字数が先、含む文字数が後）に頼っています。数え方の並びを変えたら、ここも直します。
 - 目標の文字数が範囲の外のときは、差の行が空になり、欄の下に入れられる範囲が出ます。欄が空のときは、どちらも出ません。
+- 「間違い」の印は、欄の `aria-invalid` で確かめます。Mantine は同じ値から赤い枠と赤い文字を描くので、色を読まずに済みます。文言だけを確かめる手順では、印がいつも付いたままでも通ってしまいます（PR #58 で一度そうなりました）。
 - 「文章をコピー」の手順は、道具がクリップボードの読み書きを許していることに頼っています。許していないと「コピーできませんでした」が出ます。
 - `count-copy-layout` は、`writeText` を置き換えたページを再読み込みで元に戻します。この手順のあとに、コピーの手順を足すときは、再読み込みのあとに置きます。
 - コピーする文章には `\r` を入れません。`fill` で入れると `\n` にそろうので、コピーした中身と比べられません。

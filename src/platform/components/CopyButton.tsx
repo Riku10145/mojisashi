@@ -1,3 +1,4 @@
+import { Button, Group, Text } from "@mantine/core";
 import { useState, type ReactNode } from "react";
 
 export type CopyButtonProps = {
@@ -17,18 +18,20 @@ export function CopyButton({ text, messageSide, children }: CopyButtonProps): Re
   const [last, setLast] = useState<Copy | undefined>(undefined);
   const outcome = last?.text === text ? last.outcome : undefined;
   const message = (
-    <p role="status" className="min-w-0 text-sm text-slate-600">
+    <Text role="status" className="copy-message" size="sm">
       {outcome === "copied"
         ? "コピーしました"
         : outcome === "failed"
           ? "コピーできませんでした"
           : ""}
-    </p>
+    </Text>
   );
   const button = (
-    <button
-      className="shrink-0 whitespace-nowrap rounded-md bg-slate-900 px-4 py-2 font-bold text-white disabled:opacity-50 forced-colors:border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+    <Button
+      className="copy-button"
       type="button"
+      size="sm"
+      variant="light"
       disabled={text === ""}
       onClick={() => {
         navigator.clipboard.writeText(text).then(
@@ -42,10 +45,10 @@ export function CopyButton({ text, messageSide, children }: CopyButtonProps): Re
       }}
     >
       {children}
-    </button>
+    </Button>
   );
   return (
-    <div className="flex items-center gap-3">
+    <Group gap="sm" wrap="nowrap">
       {messageSide === "left" ? (
         <>
           {message}
@@ -57,6 +60,6 @@ export function CopyButton({ text, messageSide, children }: CopyButtonProps): Re
           {message}
         </>
       )}
-    </div>
+    </Group>
   );
 }
