@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { PageLink, Text } from "../../../platform";
+import { Box, PageLink, Text } from "../../../platform";
 import { Faq } from "../../components/Faq";
 import { PageLayout } from "../../components/PageLayout";
 import { formatNumber } from "../../lib/format-number";
@@ -32,11 +32,9 @@ export function GeneratePage(): ReactNode {
           <Text>
             決めた文字数ちょうどのテスト用の文章を、ボタン1つで作れます。入力欄の文字数の上限を試すときに使います。文章はサーバーに送らず、あなたのブラウザの中だけで作ります。
           </Text>
-          <Text>
-            文章の文字数を数えるときは、
+          <Box>
             <PageLink href="/">文字数カウント</PageLink>
-            のページを使います。
-          </Text>
+          </Box>
         </>
       }
     >

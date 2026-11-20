@@ -47,10 +47,6 @@ body {
   color: var(--mantine-color-dimmed);
 }
 
-.page-link {
-  font-weight: 700;
-}
-
 /* Below the sm width a card runs edge to edge, so the 文章 field is as wide as the window. */
 .card {
   margin-top: var(--mantine-spacing-lg);

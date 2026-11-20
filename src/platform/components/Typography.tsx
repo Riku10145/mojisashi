@@ -1,4 +1,4 @@
-import { Anchor, Text as MantineText, Title } from "@mantine/core";
+import { Button, Text as MantineText, Title } from "@mantine/core";
 import type { ReactNode } from "react";
 
 export type PageTitleProps = { children: ReactNode };
@@ -43,11 +43,11 @@ export type PageLinkProps = {
   children: ReactNode;
 };
 
-/** A link to another page of the site. */
+/** A link to another page of the site, drawn as a button so it stands out from the text. */
 export function PageLink({ href, children }: PageLinkProps): ReactNode {
   return (
-    <Anchor href={href} className="page-link" underline="always">
+    <Button component="a" href={href} variant="light" size="md">
       {children}
-    </Anchor>
+    </Button>
   );
 }
