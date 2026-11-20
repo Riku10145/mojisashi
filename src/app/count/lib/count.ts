@@ -56,7 +56,10 @@ export function countCharacters(text: string): Counts {
 }
 
 export function gapMessage(target: number, count: number): string {
-  return count <= target
+  if (count === target) {
+    return `ちょうど${formatNumber(target)}文字`;
+  }
+  return count < target
     ? `あと${formatNumber(target - count)}文字`
     : `${formatNumber(count - target)}文字オーバー`;
 }

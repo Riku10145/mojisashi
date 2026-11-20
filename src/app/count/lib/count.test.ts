@@ -79,8 +79,9 @@ describe("gapMessage", () => {
     expect(gapMessage(400, 390)).toBe("あと10文字");
   });
 
-  it("says 0 are left at the target", () => {
-    expect(gapMessage(400, 400)).toBe("あと0文字");
+  it("says the count is exactly the target", () => {
+    expect(gapMessage(400, 400)).toBe("ちょうど400文字");
+    expect(gapMessage(1000, 1000)).toBe("ちょうど1,000文字");
   });
 
   it("says how many characters are over", () => {

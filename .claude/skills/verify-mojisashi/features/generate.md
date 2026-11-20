@@ -7,7 +7,7 @@
 - `generate-length` は、入れた文字数ちょうどの文章を作る。
 - `generate-kind` は、文字の種類を選べる。はじめは日本語で、「あいうえお」をくり返して文字数で切る。
 - `generate-letters` は、英語を選ぶと、aからzの小文字だけを使う。
-- `generate-limit` は、100,000文字まで作れる。1から100,000の整数でないときは、「作る」を押せず、欄の下に「1から100,000までの整数を入れてください」と出す。
+- `generate-limit` は、100,000文字まで作れる。欄の上に、はじめから「1から100,000までの整数」と出す。1から100,000の整数でないときは、「作る」を押せず、欄の下に「1から100,000までの整数を入れてください」と出す。
 - `generate-random` は、英語では、作るたびに違う文章を作る。
 - `generate-shown` は、作った文章の先頭500文字をページの枠に出す。500文字より長いときは、そう書き添える。
 - `generate-stale` は、作ったあとで文字数か文字の種類を変えると、作った文章と「コピー」のボタンを消す。
@@ -32,7 +32,7 @@ Preconditions:
 
 確かめること:
 
-- **最初の状態。** 「作る」は押せない。「コピー」のボタンはない。「文字の種類」は日本語が選ばれている。
+- **最初の状態。** 「作る」は押せない。「コピー」のボタンはない。「文字の種類」は日本語が選ばれている。「作る文字数」の欄の上に「1から100,000までの整数」と出ている。
 - **範囲の外。** `0`、`100001`、`abc` では「作る」を押せず、「1から100,000までの整数を入れてください」が出る。
 - **日本語の200文字。** そのまま `200` で作ってコピーする。クリップボードの中身は、「あいうえお」を40回くり返した200文字。同じ文章がページに出ていて、書き添えはない。`/` の「文章」の欄に貼ると、どちらの数え方でも `200文字`。
 - **設定を変える。** 日本語で作ったあとに英語を選ぶと、作った文章、メッセージ、「コピー」のボタンが消える。
@@ -57,6 +57,10 @@ export default async function ({ page, open, capture, step }) {
   step("generate-limit: 作る is disabled before a number", await make.isDisabled());
   step("generate-copy: no コピー button before making", (await copy.count()) === 0);
   step("generate-kind: 日本語 is chosen at first", await japanese.isChecked());
+  step(
+    "generate-limit: the range is shown before anything is typed",
+    (await page.getByText("1から100,000までの整数", { exact: true }).count()) === 1,
+  );
 
   const hint = page.getByText("1から100,000までの整数を入れてください", { exact: true });
   step("generate-limit: no hint while the field is empty", (await hint.count()) === 0);

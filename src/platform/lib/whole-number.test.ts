@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { wholeNumberHint, wholeNumberIn } from "./whole-number";
+import { wholeNumberHint, wholeNumberIn, wholeNumberRange } from "./whole-number";
 
 test("範囲の中の整数を読む", () => {
   expect(wholeNumberIn("400", 1, 100_000)).toBe(400);
@@ -41,6 +41,11 @@ test("読めない値には、入れられる範囲を伝える", () => {
     expect(wholeNumberHint(raw, 1, 1_000_000)).toBe("1から1,000,000までの整数を入れてください");
   }
   expect(wholeNumberHint("100001", 1, 100_000)).toBe("1から100,000までの整数を入れてください");
+});
+
+test("入れられる範囲を、桁を区切って書く", () => {
+  expect(wholeNumberRange(1, 100_000)).toBe("1から100,000までの整数");
+  expect(wholeNumberRange(1, 1_000_000)).toBe("1から1,000,000までの整数");
 });
 
 test("空の欄と、読める値には、何も伝えない", () => {

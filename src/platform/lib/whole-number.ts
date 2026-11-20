@@ -13,10 +13,15 @@ export function wholeNumberIn(raw: string, min: number, max: number): number | u
 
 const numbers = new Intl.NumberFormat("ja-JP");
 
+/** The numbers a field takes, shown before anything is typed so nobody learns it from a mistake. */
+export function wholeNumberRange(min: number, max: number): string {
+  return `${numbers.format(min)}から${numbers.format(max)}までの整数`;
+}
+
 /** What to tell someone whose field holds something other than a number from min to max. Nothing while the field is blank. */
 export function wholeNumberHint(raw: string, min: number, max: number): string | undefined {
   if (raw.trim() === "" || wholeNumberIn(raw, min, max) !== undefined) {
     return undefined;
   }
-  return `${numbers.format(min)}から${numbers.format(max)}までの整数を入れてください`;
+  return `${wholeNumberRange(min, max)}を入れてください`;
 }
