@@ -24,8 +24,9 @@ export async function licensesText(root: string): Promise<string> {
   const sections = await Promise.all(
     shippedPackages.map(async (name) => `==> ${name} <==\n\n${await licenseOf(root, name)}\n`),
   );
+  // Cloudflare serves .txt without a charset, so a browser reads anything past ASCII as windows-1252.
   return [
-    "mojisashi のページには、次のパッケージのコードが入っています。それぞれのライセンスの全文です。",
+    "The pages of mojisashi include code from the packages below. Each one's license follows in full.",
     "",
     ...sections,
   ].join("\n");
