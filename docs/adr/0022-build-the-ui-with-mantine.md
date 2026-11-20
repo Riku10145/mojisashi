@@ -41,6 +41,12 @@ Mantine は何もしないと3つのものを書きます。どれも `style-src
 
 Mantine は色のテーマ（明るい・暗い）を `localStorage` に残します。`src/shell/pages.tsx` で、何も読み書きしない入れ物を渡し、テーマは明るいほうに決めます（ADR 0001）。テーマを選ぶ属性は、JavaScript を待たずに効くように、`index.html` と `dummy-text/index.html` の `<html>` に `data-mantine-color-scheme="light"` と書きます。
 
+## ライセンスを一緒に配る
+
+ページに入るパッケージは、どれも MIT License です。MIT License は、著作権の表示と許諾の文を、写しに入れることを求めます。ページの JavaScript は、まとめて縮めるときにパッケージのコメントを落とします。Mantine は、もとのファイルにも表示のコメントがありません。
+
+そこで、ページに入るパッケージのライセンスの全文を `public/licenses.txt` に並べ、`https://mojisashi.app/licenses.txt` で配ります。ファイルは、`bun scripts/licenses.ts` が `node_modules` の LICENSE から作ります。手で直しません。並べるパッケージは、`scripts/dist-policy.ts` の `shippedPackages` です。ページに入ってよいパッケージを決める一覧と同じものなので、パッケージを足すと、ライセンスも足すことになります。`scripts/licenses.test.ts` が、ファイルの中身がいまの `node_modules` から作ったものと同じかを確かめます。
+
 ## ゆるめる守り
 
 ADR 0013 のとおり、機能に要るので、次の一覧に足します。
@@ -48,6 +54,7 @@ ADR 0013 のとおり、機能に要るので、次の一覧に足します。
 - `guards/zones.ts` の platform のゾーンで読み込める、`@mantine/core` の部品の名前。テストでは `MantineProvider` も読み込めます。
 - `guards/zones.ts` の shell のゾーンで読み込める `MantineProvider`。
 - `scripts/dist-policy.ts` の、ページに入れてよいパッケージ。`@mantine/core`、`@mantine/hooks`、`clsx` を足します。
+- `guards/files.ts` の、`public/` に置いてよいファイル。`licenses.txt` を足します。
 - `scripts/dist-policy.ts` の、書き出した body に入れてよい要素と属性。ラジオボタンの丸を描く `<svg>` と `<circle>`、その属性の `xmlns`、`fill`、`viewBox`、`cx`、`cy`、`r`、Mantine の CSS が選ぶ `data-*` の属性です。どれもリクエストを生みません。
 
 `guards/rules.ts` の読み込みのルールは、`imports` にあるパッケージを `testImports` にも書くと、`testImports` の名前を読みませんでした。テストでは、2つの一覧の名前を合わせて使うように直します。テストでないファイルで使える名前は変わりません。

@@ -59,8 +59,18 @@ export async function referenceBuild(
 // Bundler helpers that come from no file.
 const bundlerModules = /^\0?(vite\/(preload-helper|modulepreload-polyfill)|rolldown\/runtime)/;
 // Mantine and clsx, which Mantine joins class names with, are the UI library (ADR 0022).
-const shippedPackages =
-  /\/node_modules\/(react|react-dom|scheduler|@mantine\/core|@mantine\/hooks|clsx)\//;
+// public/licenses.txt holds the license of each one (scripts/licenses.ts).
+export const shippedPackages = [
+  "react",
+  "react-dom",
+  "scheduler",
+  "@mantine/core",
+  "@mantine/hooks",
+  "clsx",
+] as const;
+const shippedPackage = new RegExp(
+  `/node_modules/(${shippedPackages.map((name) => name.replace("/", "\\/")).join("|")})/`,
+);
 
 /**
  * Bundled code may come only from src/ (not tests), the entries, react, react-dom, scheduler and
@@ -77,7 +87,7 @@ export function provenanceProblems(
     return (
       entries.includes(id) ||
       bundlerModules.test(id) ||
-      shippedPackages.test(id) ||
+      shippedPackage.test(id) ||
       (id.startsWith(`${root}src/`) && !id.includes("?") && !/\.test\.tsx?$/.test(id))
     );
   };
