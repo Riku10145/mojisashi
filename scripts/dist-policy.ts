@@ -147,7 +147,7 @@ function isJsonObject(text: string): boolean {
   }
 }
 const bodyTags = new Set(
-  "div main section header footer h1 h2 h3 p span strong em small ul ol li dl dt dd br output a label textarea input fieldset legend button".split(
+  "div main section header footer h1 h2 h3 p span strong em small ul ol li dl dt dd br output a details summary label textarea input fieldset legend button".split(
     " ",
   ),
 );

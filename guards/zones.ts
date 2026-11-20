@@ -46,7 +46,7 @@ export const zones = {
       ],
     },
     testImports: vitest,
-    tags: "main section header footer h1 h2 h3 p span div ul ol li dl dt dd strong em small output br a".split(
+    tags: "main section header footer h1 h2 h3 p span div ul ol li dl dt dd strong em small output br a details summary".split(
       " ",
     ),
     attributes:
