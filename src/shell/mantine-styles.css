@@ -1,5 +1,5 @@
 /* Written by scripts/mantine-styles.ts from the style attributes Mantine renders, which the CSP refuses (ADR 0022). */
-.card.mantine-Paper-root[data-with-border="true"] {
+.card.mantine-Card-root.mantine-Paper-root[data-with-border="true"] {
   --paper-radius: var(--mantine-radius-md);
   --paper-shadow: var(--mantine-shadow-xs);
 }
@@ -37,6 +37,9 @@
   --button-fz: var(--mantine-font-size-md);
   --button-color: var(--mantine-color-white);
 }
+.mantine-Card-root.mantine-Paper-root.number-card {
+  --paper-radius: var(--mantine-radius-md);
+}
 .mantine-Group-root {
   --group-gap: var(--mantine-spacing-sm);
   --group-align: center;
@@ -72,6 +75,14 @@
   --stack-gap: var(--mantine-spacing-lg);
   --stack-align: stretch;
   --stack-justify: flex-start;
+}
+.mantine-Text-root.number-card-label[data-size="sm"] {
+  --text-fz: var(--mantine-font-size-sm);
+  --text-lh: var(--mantine-line-height-sm);
+}
+.mantine-Text-root.number-card-unit[data-size="sm"] {
+  --text-fz: var(--mantine-font-size-sm);
+  --text-lh: var(--mantine-line-height-sm);
 }
 .mantine-Title-root[data-order="1"] {
   --title-fw: var(--mantine-h1-font-weight);

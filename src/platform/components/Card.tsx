@@ -1,4 +1,4 @@
-import { Paper, Stack, Title } from "@mantine/core";
+import { Card as MantineCard, Stack, Title } from "@mantine/core";
 import type { ReactNode } from "react";
 
 export type CardProps = { title: string; children: ReactNode };
@@ -9,13 +9,13 @@ export type CardProps = { title: string; children: ReactNode };
  */
 export function Card({ title, children }: CardProps): ReactNode {
   return (
-    <Paper component="section" className="card" withBorder shadow="xs" radius="md">
+    <MantineCard component="section" className="card" withBorder shadow="xs" radius="md">
       <Stack gap="lg">
         <Title order={2} size="h3">
           {title}
         </Title>
         {children}
       </Stack>
-    </Paper>
+    </MantineCard>
   );
 }

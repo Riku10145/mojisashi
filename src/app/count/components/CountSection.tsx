@@ -1,5 +1,5 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
-import { Card, Choice, CopyButton, NumberField, TextBox } from "../../../platform";
+import { Card, Choice, CopyButton, NumberCard, NumberField, TextBox } from "../../../platform";
 import { formatNumber } from "../../lib/format-number";
 import { countCharacters, countingRules, gapMessage, type CountingRule } from "../lib/count";
 
@@ -27,13 +27,12 @@ export function CountSection(): ReactNode {
         <div className="stack">
           <dl className="counts">
             {countingRules.map(({ value, label }) => (
-              <div key={value} className="count">
-                <dt>{label}</dt>
-                <dd>
-                  <span className="count-number">{formatNumber(counts[value])}</span>
-                  <span className="count-unit">文字</span>
-                </dd>
-              </div>
+              <NumberCard
+                key={value}
+                label={label}
+                value={formatNumber(counts[value])}
+                unit="文字"
+              />
             ))}
           </dl>
           <div className="target">

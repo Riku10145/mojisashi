@@ -7,5 +7,6 @@ export { Choice } from "./components/Choice";
 export { Button } from "./components/Button";
 export { CopyButton } from "./components/CopyButton";
 export { Card } from "./components/Card";
+export { NumberCard } from "./components/NumberCard";
 export { PageLink, PageTitle, Text } from "./components/Typography";
 export { randomBytes } from "./random-bytes";

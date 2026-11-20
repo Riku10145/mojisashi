@@ -76,6 +76,7 @@ export const zones = {
       "@mantine/core": [
         "Anchor",
         "Button",
+        "Card",
         "Group",
         "InputLabel",
         "Paper",

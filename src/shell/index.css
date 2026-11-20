@@ -5,6 +5,7 @@
 @import "@mantine/core/styles/UnstyledButton.css";
 @import "@mantine/core/styles/Button.css";
 @import "@mantine/core/styles/Paper.css";
+@import "@mantine/core/styles/Card.css";
 @import "@mantine/core/styles/Stack.css";
 @import "@mantine/core/styles/Group.css";
 @import "@mantine/core/styles/Title.css";
@@ -130,31 +131,32 @@ body {
   margin: 0;
 }
 
-.count {
-  padding: var(--mantine-spacing-md);
-  border-radius: var(--mantine-radius-md);
+.number-card {
   background-color: var(--mantine-color-gray-1);
 }
 
-.count dt {
-  font-size: var(--mantine-font-size-sm);
+.number-card-label {
   color: var(--mantine-color-dimmed);
 }
 
-.count dd {
+.number-card-value {
   margin: var(--mantine-spacing-xs) 0 0;
-  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
-.count-number {
+/* Mantine's Text sets its own weight, so the <dd>'s bold does not reach these. */
+.number-card-number,
+.number-card-unit {
+  font-weight: 700;
+}
+
+.number-card-number {
   font-size: var(--mantine-h2-font-size);
   font-variant-numeric: tabular-nums;
 }
 
-.count-unit {
+.number-card-unit {
   margin-left: 0.25rem;
-  font-size: var(--mantine-font-size-sm);
 }
 
 .gap-message {
