@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
+import { pageUrl, pages } from "../scripts/pages";
 
 const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
 const sitemap = await readFile(new URL("../public/sitemap.xml", import.meta.url), "utf8");
@@ -27,5 +28,5 @@ describe("public/robots.txt は ADR 0016 のとおり", () => {
 
 it("public/sitemap.xml には、本番の URL だけが入る", () => {
   const urls = [...sitemap.matchAll(/<loc>([^<]*)<\/loc>/g)].map(([, url]) => url);
-  expect(urls).toEqual(["https://mojisashi.app/"]);
+  expect(urls).toEqual(pages.map(({ path }) => pageUrl(path)));
 });

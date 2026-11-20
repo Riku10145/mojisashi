@@ -80,7 +80,7 @@ export const zones = {
     dynamicAttributes:
       "id key htmlFor rows value name checked disabled onChange onClick children".split(" "),
   },
-  // Boot: renders the app into #root, and to HTML at build time.
+  // Boot: renders the page at the URL's path into #root, and each page to HTML at build time.
   shell: {
     dir: "src/shell/",
     tsconfig: "tsconfig.shell.json",
@@ -93,6 +93,9 @@ export const zones = {
       "Node.textContent",
       "Node.TEXT_NODE",
       "Node.COMMENT_NODE",
+      // Which page to hydrate (ADR 0020). Reading the path sends nothing and holds no text.
+      "location",
+      "Location.pathname",
     ],
     imports: {
       react: ["StrictMode"],

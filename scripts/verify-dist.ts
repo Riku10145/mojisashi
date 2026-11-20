@@ -12,6 +12,7 @@ import {
   reproductionProblems,
 } from "./dist-policy";
 import { injectAppHtml } from "./inject-app-html";
+import { pageUrl, pages } from "./pages";
 import { renderApp } from "./render-app";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -32,23 +33,37 @@ const expected = new Map<string, string | Uint8Array>(await filesUnder(`${root}p
 for (const file of built) {
   expected.set(file.name, file.content);
 }
-const template = expected.get("index.html");
-if (typeof template !== "string") {
-  throw new Error("決めた設定のビルドが index.html を作りませんでした");
+for (const { html, path } of pages) {
+  const template = expected.get(html);
+  if (typeof template !== "string") {
+    throw new Error(`決めた設定のビルドが ${html} を作りませんでした`);
+  }
+  expected.set(html, injectAppHtml(template, await renderApp(root, path)));
 }
-expected.set("index.html", injectAppHtml(template, await renderApp(root)));
 
 const actual = await filesUnder(`${root}dist/`);
 const decoder = new TextDecoder();
+const shipped = new Map(
+  pages.map(({ html, path }) => [pageUrl(path), { html, text: decoder.decode(actual.get(html)) }]),
+);
 const problems = [
-  ...provenanceProblems(root, `${root}index.html`, built),
+  ...provenanceProblems(
+    root,
+    pages.map(({ html }) => `${root}${html}`),
+    built,
+  ),
   ...reproductionProblems(expected, actual),
   ...assetNameProblems(actual.keys()),
-  ...htmlProblems(decoder.decode(actual.get("index.html"))),
-  ...canonicalProblems(decoder.decode(actual.get("index.html"))),
-  ...previewProblems(decoder.decode(actual.get("index.html"))),
+  ...[...shipped].flatMap(([url, { html, text }]) => [
+    ...htmlProblems(text, html),
+    ...canonicalProblems(text, url, html),
+    ...previewProblems(text, html),
+  ]),
   ...(actual.has("llms.txt")
-    ? llmsProblems(decoder.decode(actual.get("llms.txt")), decoder.decode(actual.get("index.html")))
+    ? llmsProblems(
+        decoder.decode(actual.get("llms.txt")),
+        new Map([...shipped].map(([url, { text }]) => [url, text])),
+      )
     : ["dist/llms.txt がありません"]),
   ...[...actual]
     .filter(([name]) => name.endsWith(".css"))

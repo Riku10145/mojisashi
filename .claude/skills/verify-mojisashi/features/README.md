@@ -28,11 +28,13 @@
 
 1. `Sub-features` に、短い ID と1行の説明を並べます。
 2. `How to get to it (user POV)` に、使う人の入口をすべて並べます。
-3. `Driving it with drive.mjs` は `Preconditions:` から始め、操作、確かめること、`js scenario` のコードブロックを書きます。
+3. `Driving it with drive.mjs` は `Preconditions:` から始め、操作、確かめること、`js scenario` のコードブロックを書きます。`drive.mjs` で確かめられない機能は、使う道具の名前を見出しにし（`Driving it with deployed.sh`）、道具のコードブロックを同じファイルに置きます。
 4. `Gotchas` に、確かめる時間をむだにしたり、結果を誤らせたりする落とし穴を書きます。
 
 ## 機能
 
 - [文字数を数える](./count.md) は、2つの数え方の文字数、目標の文字数との差、数え方の切り替えを確かめます。
 - [文章の扱い](./text-handling.md) は、文章を送らない、残さない、スペルチェックと自動入力を切っているという約束を確かめます。
+- [ページ](./pages.md) は、`/` と `/dummy-text/` の `<title>` と見出し、ページの間のリンク、JavaScript を切っても本文が見えることを確かめます。
+- [公開した環境](./deployed.md) は、dev環境の Cloudflare が返す転送、CSP と `Cache-Control` のヘッダー、HTML が書き換えられていないこと、canonical を、`drive.mjs` を使わずに curl で確かめます。
 - [テスト用の文章を作る](./generate.md) は、作った文章の文字数、文字の種類ごとの中身、ページに出ること、範囲の外で押せないこと、コピーして貼った文字数を確かめます。

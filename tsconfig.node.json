@@ -3,6 +3,7 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "lib": ["ES2023"],
+    "allowImportingTsExtensions": true,
     "types": ["bun"]
   },
   "include": ["guards", "vite.config.ts", "eslint.config.ts", "cloudflare.config.ts", "scripts"]

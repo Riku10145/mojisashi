@@ -17,7 +17,7 @@ export function GenerateSection(): ReactNode {
   const text = made?.kind === kind && made.length === length ? made.text : undefined;
 
   return (
-    <Card title="テスト用の文章を作る">
+    <Card title="文字数を決めて作る">
       <NumberField label="作る文字数" min={1} max={maxTestTextLength} onNumber={setLength} />
       <Choice legend="文字の種類" options={testTextKinds} value={kind} onChoose={setKind} />
       <Button

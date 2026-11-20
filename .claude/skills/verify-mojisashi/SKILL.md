@@ -1,11 +1,11 @@
 ---
 name: verify-mojisashi
-description: mojisashi のページを、書き出した dist/ と本番と同じ CSP の下で Playwright で動かし、機能が使う人に見えるとおりに動くかを確かめる。文字数を数える機能、テスト用の文章を作る機能、ページの約束（文章を送らない、残さない）を変えたあと、「ブラウザで確かめて」と頼まれたとき、PR の前の確認に使う。
+description: mojisashi の2つのページ（文字数を数える / と、テスト用の文章を作る /dummy-text/）を、書き出した dist/ と本番と同じ CSP の下で Playwright で動かし、機能が使う人に見えるとおりに動くかを確かめる。公開した dev環境の転送とヘッダーも curl で確かめる。文字数を数える機能、テスト用の文章を作る機能、ページの分け方、ページの約束（文章を送らない、残さない）を変えたあと、「ブラウザで確かめて」と頼まれたとき、PR の前と dev環境に公開したあとの確認に使う。
 ---
 
 # mojisashi をブラウザで確かめる
 
-mojisashi は、サーバーで何もしない1ページのサイトです。使う人が触るのはブラウザのページだけです。このスキルは、`bun run build` で書き出した `dist/` を Playwright の Chromium で開き、使う人と同じ操作で機能を動かします。
+mojisashi は、サーバーで何もしないサイトです。ページは、文字数を数える `/` と、テスト用の文章を作る `/dummy-text/` の2つです（ADR 0020）。使う人が触るのはブラウザのページだけです。このスキルは、`bun run build` で書き出した `dist/` を Playwright の Chromium で開き、使う人と同じ操作で機能を動かします。
 
 ページは本物のサーバーから配りません。Playwright が `https://mojisashi.test/` への要求を受け取り、`dist/` のファイルを返します。そのとき `public/_headers` の CSP をそのまま付けます。CSP が本番と同じなので、CSP に止められるコードはここでも止まります。`https://mojisashi.test/` 以外への要求は、すべて止めて記録します。
 
@@ -21,11 +21,13 @@ mojisashi は、サーバーで何もしない1ページのサイトです。使
 確かめる前と、結果がおかしいときに、次を動かします。どれも読むだけです。
 
 ```bash
-test -f dist/index.html && echo "dist あり" || echo "dist なし: bun run build"
+for page in index.html dummy-text/index.html; do test -f "dist/$page" && echo "dist/$page あり" || echo "dist/$page なし: bun run build"; done
 ```
 
+ページは `scripts/pages.ts` に並んでいます。ページを足したら、この行にも足します。
+
 ```bash
-find src public scripts index.html vite.config.ts package.json bun.lock tsconfig*.json -newer dist/index.html | head
+find src public scripts index.html dummy-text vite.config.ts package.json bun.lock tsconfig*.json -newer dist/index.html | head
 ```
 
 何か出たら、`dist/` がソースより古いので、`bun run build` をやり直します。
@@ -62,8 +64,8 @@ NODE_PATH=/opt/node-tools/node_modules node -e "require('playwright'); console.l
 
 手順のファイルは、`export default async function ({ page, open, storage, capture, step })` を書いた ES モジュールです。
 
-- `page` は Playwright の `Page` です。ページはもう開いています。
-- `open()` は、ページを開き直します。
+- `page` は Playwright の `Page` です。`/` のページはもう開いています。
+- `open(path)` は、`path` のページを開きます。`path` を省くと `/` を開き直します。
 - `storage()` は、cookie、`localStorage`、`sessionStorage`、IndexedDB に残っているものの数を返します。
 - `capture(name)` は、スクリーンショットと ARIA のスナップショットを証拠のフォルダに書きます。
 - `step(name, ok, detail)` は、確かめた結果を1つ記録します。
@@ -98,3 +100,4 @@ NODE_PATH=/opt/node-tools/node_modules node -e "require('playwright'); console.l
 
 - [driver.md](driver.md) の `drive.mjs` が、道具の本体です。取り出し方と動かし方は、上の Drive に書いたとおりです。
 - [features/](features/README.md) に、機能ごとの手順があります。新しい機能を足したら、ここにもファイルを足します。
+- [features/deployed.md](features/deployed.md) の `deployed.sh` は、`dist/` ではなく、公開した環境（ふだんは dev環境）を curl で確かめる道具です。転送と `_headers` のヘッダーは、`drive.mjs` では確かめられません。取り出し方と動かし方は、そのファイルに書いています。

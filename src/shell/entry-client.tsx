@@ -1,17 +1,13 @@
-import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import { App } from "../app/App";
+import { pageAt } from "./pages";
 import "./index.css";
 
 const root = document.getElementById("root");
 if (root === null) {
   throw new Error("#root が index.html にありません");
 }
-const app = (
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+// Cloudflare serves each page only at its path with a trailing slash, and redirects the others.
+const app = pageAt(location.pathname);
 // The dev server serves index.html as written, so #root holds only the placeholder comment
 // and maybe the whitespace around it.
 let isPrerendered = false;

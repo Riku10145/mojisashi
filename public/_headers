@@ -7,5 +7,8 @@ https://dev.mojisashi.app/*
 /
   Cache-Control: public, max-age=0, must-revalidate, no-transform
 
+/dummy-text/
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

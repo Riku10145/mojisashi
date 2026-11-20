@@ -1,6 +1,6 @@
 # drive.mjs
 
-`drive.mjs` は、書き出した `dist/` を本番と同じ CSP の下で開き、手順のファイルを動かす道具です。使い方は [SKILL.md](SKILL.md) の Drive に書いています。リポジトリには JavaScript のファイルを置けないので、コードはこのブロックに置き、使うたびにスクラッチパッドへ取り出します。
+`drive.mjs` は、書き出した `dist/` を本番と同じ CSP の下で開き、手順のファイルを動かす道具です。`/` で終わるパスには、そのフォルダの `index.html` を返します。使い方は [SKILL.md](SKILL.md) の Drive に書いています。リポジトリには JavaScript のファイルを置けないので、コードはこのブロックに置き、使うたびにスクラッチパッドへ取り出します。
 
 道具を直すときは、このブロックを書き換え、取り出して動かし、`ALL PASS` になることを確かめます。
 
@@ -62,7 +62,8 @@ await context.route("**/*", async (route) => {
     return route.abort();
   }
   const headers = headersFor(url.pathname);
-  const path = url.pathname === "/" ? "/index.html" : url.pathname;
+  // Each page is the index.html of its folder, as Cloudflare serves it at the path ending in /.
+  const path = url.pathname.endsWith("/") ? `${url.pathname}index.html` : url.pathname;
   try {
     const body = await readFile(join(dist, path));
     return route.fulfill({
@@ -82,8 +83,8 @@ page.on("console", (message) => {
 });
 page.on("pageerror", (error) => log.pageErrors.push(String(error)));
 
-async function open() {
-  await page.goto(`${origin}/`, { waitUntil: "load" });
+async function open(path = "/") {
+  await page.goto(`${origin}${path}`, { waitUntil: "load" });
 }
 
 async function storage() {
