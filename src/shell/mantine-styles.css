@@ -61,16 +61,10 @@
   --button-fz: var(--mantine-font-size-md);
   --button-color: var(--mantine-color-white);
 }
-.mantine-Button-root.mantine-UnstyledButton-root[data-size="md"][data-variant="light"] {
-  --button-height: var(--button-height-md);
-  --button-padding-x: var(--button-padding-x-md);
-  --button-fz: var(--mantine-font-size-md);
-  --button-bg: var(--mantine-color-blue-light);
-  --button-hover: var(--mantine-color-blue-light-hover);
-  --button-color: var(--mantine-color-blue-light-color);
-  --button-bd: calc(0.0625rem * var(--mantine-scale)) solid transparent;
-}
 .mantine-Card-root.mantine-Paper-root.number-card {
+  --paper-radius: var(--mantine-radius-md);
+}
+.mantine-Card-root.mantine-Paper-root.page-link[data-with-border="true"] {
   --paper-radius: var(--mantine-radius-md);
 }
 .mantine-Container-root.page[data-size="lg"] {
@@ -80,6 +74,12 @@
   --group-gap: var(--mantine-spacing-sm);
   --group-align: center;
   --group-justify: flex-start;
+  --group-wrap: nowrap;
+}
+.mantine-Group-root.page-link-row {
+  --group-gap: var(--mantine-spacing-sm);
+  --group-align: center;
+  --group-justify: space-between;
   --group-wrap: nowrap;
 }
 .mantine-Input-wrapper.mantine-Textarea-wrapper[data-multiline="true"][data-size="md"][data-variant="default"] {
@@ -132,6 +132,10 @@
   --text-lh: var(--mantine-line-height-sm);
 }
 .mantine-Text-root.number-card-unit[data-size="sm"] {
+  --text-fz: var(--mantine-font-size-sm);
+  --text-lh: var(--mantine-line-height-sm);
+}
+.mantine-Text-root.page-link-description[data-size="sm"] {
   --text-fz: var(--mantine-font-size-sm);
   --text-lh: var(--mantine-line-height-sm);
 }

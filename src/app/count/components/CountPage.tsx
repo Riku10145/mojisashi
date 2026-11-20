@@ -36,16 +36,14 @@ export function CountPage(): ReactNode {
   return (
     <PageLayout
       title="文字数カウント"
-      lead={
-        <>
-          <Text>文章はサーバーに送らず、あなたのブラウザの中だけで数えます。</Text>
-          <Box>
-            <PageLink href="/dummy-text/">テスト用の文章を作る</PageLink>
-          </Box>
-        </>
-      }
+      lead={<Text>文章はサーバーに送らず、あなたのブラウザの中だけで数えます。</Text>}
     >
       <CountSection />
+      <PageLink
+        href="/dummy-text/"
+        title="テスト用の文章を作る"
+        description="決めた文字数ちょうどの文章を、別のページで作れます。"
+      />
       <Box className="two-columns">
         <CountingRulesSection />
         <Faq items={faq} />
