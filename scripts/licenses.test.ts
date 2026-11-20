@@ -18,3 +18,8 @@ test("ライセンスの一覧は、ページに入るパッケージごとに�
     expect(section, name).toContain("Permission is hereby granted, free of charge");
   }
 });
+
+test(`${licensesFile} は ASCII の文字だけで書く。Cloudflare が charset を付けずに返し、ブラウザは UTF-8 として読まないため`, async () => {
+  const text = await readFile(`${root}${licensesFile}`, "utf8");
+  expect(text.match(/[^\t\n\r -~]+/g) ?? []).toEqual([]);
+});
